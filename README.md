@@ -1,127 +1,153 @@
-# Form & Function
+# Devfolio V2 — Form & Function
 
-A complete, editable creative developer portfolio. Built with Next.js App Router, strict TypeScript, React, Tailwind CSS 4, Motion, Three.js, React Three Fiber, Drei, and Lucide. Fonts and artwork are local; no external image or font services are required at runtime.
+**The Project Multiverse:** Sidharth Sood’s source-backed engineering portfolio. Next.js App Router, React, strict TypeScript, Tailwind CSS 4, Motion, Three.js / React Three Fiber / Drei, and Lucide. The original violet sculpture, themes, accessible quick overviews, pointer depth, and Color Field are preserved.
 
-## Start locally
+The home page leads to **ten dedicated project routes**: nine inspected public repositories and one independently authored penalty game. No private football code was read, embedded, or published. Every public project includes pinned implementation evidence, its actual stack, reconstructed architecture, and known limits.
 
-Requires Node.js 20.9 or newer (Node 22 or 24 recommended) and npm.
+## Run locally on macOS
+
+Use Node.js **20.9 or newer**; Node 22 or 24 is recommended. From the repository directory:
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Open **http://localhost:3000**. For production:
+Open **http://localhost:3000**. Next.js reports a different port if 3000 is occupied; you can explicitly choose one with `npm run dev -- --port 3005`.
+
+Production mode:
 
 ```sh
 npm run lint
 npm run typecheck
 npm run build
-npm run start
+npm run preview
 ```
 
-The normal build runs with the standard Next.js production server and is compatible with Vercel. No database, authentication, API key, or `.env` file is needed.
+`preview` and `start` both run the standard Next.js production server on port 3000. Run the normal build first; `next start` does not serve a static-export build. No database, API key, authentication provider, or environment file is required to run this portfolio. The engineering projects are explored through local demonstrations and source explanations, not external backends.
 
-## Make it yours
+No framework migration, duplicate animation engine, or runtime dependency was added for V2. The existing npm lockfile is retained.
 
-Edit **`src/data/profile.ts`**:
+## Explore the worlds
 
-- Name, initials, role, three headline lines, introduction, availability.
-- About, background, current focus, and interests.
-- Skills grouped by purpose; the template list is illustrative, not a proficiency claim.
-- Education, experience, and milestones in `journey`.
-- A real email address and social destinations. Leave missing values `null`.
-- SEO title, description, and absolute production origin in `site`.
+| Route                                  | Experience                                                                                                               | Scope                                                                                                                                                      |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/projects/student-burnout-ai/`        | Selectable input → features → ensemble → history guide                                                                   | Source-backed explainer. No health data collection, diagnosis, or model inference.                                                                         |
+| `/projects/mazera-ai-maze-solver/`     | Seeded maze generation; BFS, DFS, Dijkstra, A*; Start/Pause/Step/Reset/speed; cell inspection; optional 3D               | Independently implemented TypeScript educational adaptation of verified standard algorithms. The original source also implements Greedy and Bidirectional. |
+| `/projects/uco-recovery-station/`      | Selectable weight, capacitance/contamination, and color gates; accepted/rejected/ignored guide; optional spatial objects | Illustrative sample states. Hardware calibration, sensors, ledger transactions, and payment services are not connected.                                    |
+| `/projects/smart-parking-dbms/`        | Selectable bays, simulated arrival/release/reset, optional 3D floor map                                                  | Synthetic local occupancy only. No requests or mutations to the actual PostgreSQL system.                                                                  |
+| `/projects/predictive-maintenance/`    | Select computational modules and a model guide; inspect a synthetic RUL curve; optional symbolic engine                  | No checkpoints, real sensors, calibrated twin, confidence estimates, or trained-model inference.                                                           |
+| `/projects/football-penalty-shootout/` | Playable aim/power/keeper/scoring interaction                                                                            | Original local game, separate from the private repository. Deterministic rules are disclosed.                                                              |
+| `/projects/green-mobility/`            | Component walkthrough and architecture graph                                                                             | Public Java/JSP/JDBC/MySQL booking implementation. Emissions estimates are not measured impact.                                                            |
+| `/projects/aeris/`                     | Component walkthrough and architecture graph                                                                             | Public simulation research; later source is more developed than the stale README. No verified physical flight.                                             |
+| `/projects/rupeerise/`                 | Component walkthrough and architecture graph                                                                             | Public financial-literacy prototype. No hackathon award or placement is claimed.                                                                           |
+| `/projects/resume-screener/`           | Component walkthrough and architecture graph                                                                             | Public ingestion/OCR/redaction/retrieval/evidence-scoring pipeline. No candidate data or backend is connected.                                             |
 
-Edit **`src/data/projects.ts`** for project titles, descriptions, categories, technology lists, featured flags, detail text, preview style, and verified URLs. The four included entries are **original illustrative concept studies, not completed personal or client projects**. Their missing links render explanatory text, never dead navigation buttons. Set `placeholder: false` only for your real work. Categories are defined in the same file; keep the category union, category list, and data consistent if adding categories.
+Public repositories: `student-burnout-ai`, `mazera-ai-maze-solver`, `uco-recovery-station`, `DBMS_SMART_PARKING`, `rul-predictive-maintenance`, `pbl6-green-mobility`, `aeris`, `IIIT_HACKATHON`, and `resume-screener`, all under `github.com/EXCALIBUR303`.
 
-The previews in `src/components/project-preview.tsx` are custom HTML/CSS compositions. Replace a preview with your own local optimized image when available; include dimensions and descriptive alt text. Update `public/opengraph-image.png` and the wordmark in the header/footer if changing the identity. Font files are in `public/fonts`; their licenses are in `public/fonts/licenses`.
+The provided GitHub `PERSONAL_PORTFOLIO` repository was publicly visible but empty at audit time; this existing local portfolio and its history were preserved as the implementation base. No public GitHub push is implied by a private Sites deployment.
 
-Design tokens, responsive layouts, and reduced-motion rules live in **`src/app/globals.css`**. Named animation presets live in **`src/components/motion-config.ts`**; Motion features load separately through `motion-features.ts`. The theme toggle changes the current session; it intentionally does not store cookies or preferences.
+## How it works
 
-## Features
+- **App frame:** persistent theme, gallery query/category/featured state, navigation, route focus management, cursor enhancement, scroll progress, and a non-blocking color transition. Returning from a world preserves filters during client navigation. Browser Back and direct URLs continue to work.
+- **Gallery:** search across names, summaries, tools, and categories; category filters; featured switch; explicit empty state; keyboard-operable route links and native quick-overview dialogs.
+- **Curious Mind / Growing Toolkit:** stable skill clusters. Each selection explains actual project use or an explicitly labeled interest. No percentages or inferred expert status.
+- **Dimension Engine:** source-backed SVG diagrams with selectable components, highlighted connections, and an HTML inspector. Logical diagrams are reconstructions, not live network traffic.
+- **Chapters:** expandable education, independent experience, and implementation milestones. The degree is user-confirmed; university, academic dates, employment, awards, and contact email are not fabricated.
+- **3D:** the original hero auto-loads on eligible desktop devices. Spatial project views use demand rendering and instancing for maze blocks. Orbit controls have no continuous damping loop. Touch/data-saving devices opt in; reduced motion defaults to 2D project views. Every meaningful interaction has ordinary HTML controls and a 2D counterpart.
+- **Motion:** shared timing tokens, lazily loaded Motion features, restrained section/route entrances, card depth, and project-color feedback. The transition never waits before navigation or blocks controls. Reduced motion disables decorative movement. Theme colors switch together to preserve text contrast.
+- **Contact:** the public GitHub profile is linked and copyable. With no verified email, the message pad downloads a local `.eml` draft and explicitly says nothing was sent. It is not a backend submission form. Adding a verified address enables mailto/copy-email; sending still happens in the visitor’s email app.
 
-- Pointer-responsive violet knot with physically based material, local environment lighting, and lightweight satellites.
-- Lazy-loaded 3D bundle; capped pixel ratio (1–1.5); demand rendering capped at 30fps; pauses when offscreen, the document is hidden, or the user presses Pause. Reduced motion gives a static 3D composition.
-- CSS sculpture before WebGL initializes, when WebGL is unavailable, or if the 3D renderer fails. Touch and data-saving devices start with the lightweight CSS composition and can opt into WebGL with **Try in 3D**. Desktop loads it automatically.
-- Responsive section navigation, active section markers, mobile disclosure menu, Escape support, and skip link.
-- Animated category filtering, restrained desktop pointer tilt, and on-demand native project dialogs with focus trapping, Escape, and trigger focus restoration.
-- Keyboard-accessible Color Field experiment with three palettes, a spread slider, pause, and reset. CSS animation stops for reduced motion.
-- Semantic HTML, visible focus indicators, explicit placeholder content, local fonts, and no scroll hijacking.
-- Metadata, Open Graph image, favicon, robots, and sitemap. Set `site.url` to your final origin when moving hosts. A missing origin produces an empty sitemap rather than a fabricated domain.
+## Customize
 
-## Contact behavior
+| File                              | Edit here                                                                                                                                                                                                   |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/data/profile.ts`             | Public name, degree/role, hero, introduction, About, interests, availability, verified email/socials, SEO origin/title/description.                                                                         |
+| `src/data/projects.ts`            | The single project registry: ID/slug, categories, actual stack, status, source visibility, art kind/accent, features, problem/solution, architecture, limitations, pinned evidence, optional verified demo. |
+| `src/data/skills.ts`              | Skills, group, status, explanation, and optional project reference.                                                                                                                                         |
+| `src/data/education.ts`           | University, dates, year/semester, confirmed coursework, and technical activities.                                                                                                                           |
+| `src/data/experience.ts`          | Independent/academic/professional roles, organization, dates, responsibilities, outcomes, project and evidence links.                                                                                       |
+| `src/data/milestones.ts`          | Genuine implementation highlights, dates when supplied, project reference, and optional image.                                                                                                              |
+| `src/app/globals.css`             | Original design system and preserved compositions.                                                                                                                                                          |
+| `src/app/multiverse.css`          | V2 tokens, gallery artwork, toolkit, diagrams, chapters, responsive worlds, and interaction styles.                                                                                                         |
+| `src/components/motion-config.ts` | Named timing, easing, and spring presets.                                                                                                                                                                   |
 
-The template starts with `profile.email: null`:
+To add a project, add a typed record to `projects.ts`, use unique `id`/`slug` values, provide valid node IDs/edge references, and cite inspected public source. Put private source behind `githubUrl: null` and never copy its code or claims into the registry. Use the shared `architecture` kind for a source walkthrough, or add a focused module under `src/features/worlds/` and register it in `project-world.tsx`. Routes, sitemap, gallery, and engine selector are generated from the registry.
 
-- Direct email and copy-email are unavailable, clearly labeled.
-- Required name, email, and message inputs use browser validation plus whitespace validation.
-- **Prepare a message** downloads a local `.eml` draft. The feedback explicitly says there is no configured recipient and nothing was sent. No message is transmitted or stored by this site.
+Use `liveUrl` only after confirming a genuine working external deployment. SmartPark’s README lists a demo, but the available Vercel connection could not verify that deployment; the field intentionally stays null. This access limit is not evidence that the public application is down.
 
-After adding a real `profile.email`:
+The hero and local artwork contain no external font/image calls. Fonts live in `public/fonts` with licenses. Update both `public/opengraph-image.svg` and its rendered PNG when changing the identity.
 
-- Direct email uses `mailto:`.
-- Copy-email uses the Clipboard API with confirmation and a failure message. Clipboard access requires HTTPS or localhost.
-- The form prepares a `mailto:` draft with the entered message. The visitor reviews and sends it in their email app. Success text never claims delivery.
+## Test
 
-There is no contact backend. A fully server-submitted form would require a configured delivery service and server-side validation; do not put a private key in browser code.
+Fast algorithm and registry checks need no server:
 
-## Verification
+```sh
+npm run test:unit
+```
 
-The Playwright suite covers navigation, filtering, keyboard dialog behavior, mobile menu, six viewport widths (320–1920px), the Color Field controls, form validation and draft download, reduced motion, no-WebGL fallback, dark/light automated WCAG checks, and real WebGL loading/pause controls.
-
-Start a production server on port 3001 in another terminal:
+For the complete regression suite, first build and start a production server in one terminal:
 
 ```sh
 npm run build
 npm run start -- --port 3001
-npm run test:e2e
 ```
 
-By default the test configuration uses `/usr/bin/chromium`, available in the build environment. On another machine, use an installed Chromium executable:
+In a second terminal:
 
 ```sh
-CHROMIUM_PATH=/absolute/path/to/chromium npm run test:e2e
+npm test
 ```
 
-Or install Playwright Chromium with `npx playwright install chromium` and set `CHROMIUM_PATH` to its executable. Set `TEST_BASE_URL` to test another running instance. Browser binaries are not needed to run the application.
-
-Automated accessibility checks complement manual keyboard and visual inspection; they do not establish complete accessibility conformance. See `VERIFICATION.md` for actual measured results and limits.
-
-## Deployment
-
-### Vercel
-
-Import this directory into Vercel, select the **Next.js** framework preset, leave the build command as `npm run build`, and do not set an output-directory override. No environment variables are required. Update `site.url` to the final production origin and redeploy. No Vercel-specific runtime APIs are used.
-
-### Static hosting
-
-All application interactions work in a static export:
+The config uses installed Google Chrome on macOS or `/usr/bin/chromium` in the Linux build environment when available. Otherwise install Playwright Chromium:
 
 ```sh
-STATIC_EXPORT=1 npm run build
+npx playwright install chromium
+npm test
 ```
 
-Upload the generated **`out/`** directory to your static host. `STATIC_EXPORT` is a build switch, not a secret. With Node.js on Windows use PowerShell's `$env:STATIC_EXPORT='1'` before the build. The tracked `.openai/hosting.json` identifies this task’s private Sites deployment and its `out` directory. Remove the project identity before registering a separate copy as a new Site.
+To choose a browser explicitly on a Mac:
 
-## Structure
-
-```text
-src/app/                  App Router page, layout, global CSS, robots, sitemap
-src/components/           Focused hero, WebGL sculpture, projects, dialog,
-                          contact, Color Field, and shared motion/UI components
-src/data/                 Central profile and project configuration
-public/                   Original social preview, icon, local fonts/licenses
-tests/                    Browser interaction and accessibility regression tests
+```sh
+CHROMIUM_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" npm test
 ```
 
-## Troubleshooting
+`TEST_BASE_URL=http://localhost:3002 npm test` targets another running instance. `npm run test:e2e` remains an alias for the complete Playwright suite.
 
-- **Port already in use:** `npm run dev -- --port 3002`.
-- **3D absent:** the CSS fallback is intentional when WebGL is unavailable. Check browser graphics settings or the console; the rest of the page stays usable.
-- **Static sculpture:** check reduced-motion settings, Pause, tab visibility, and whether the hero is in view.
-- **Clipboard fails:** use HTTPS/localhost or select the visible email address manually.
-- **No email is sent:** this is a draft-based contact flow. Configure a real address and send from your email application.
-- **Wrong social metadata:** set the absolute `site.url` and rebuild; update the PNG when personalizing.
-- **Node or dependency failures:** use the supported Node version and `npm ci` with the committed lockfile. Avoid mixing package managers.
-- **Playwright browser not found:** set `CHROMIUM_PATH` to a real Chromium executable as described above.
+The suite checks seeded algorithm validity and shortest paths, deterministic game rules, registry integrity, home sections, all ten direct routes/refresh, search/filtering, state restoration, theme persistence, keyboard dialogs, architecture/skill selection, specific world controls, local draft/clipboard behavior, responsive widths, reduced motion, WCAG checks, and real desktop/mobile WebGL paths. See `VERIFICATION.md` for the actual executed results and measurement limits.
+
+## Deploy
+
+### Vercel / standard Next.js
+
+Import the source directory, choose **Next.js**, and use `npm run build`. Keep the standard framework output settings; do not set `STATIC_EXPORT`. No runtime secrets or environment variables are required. Update `site.url` in `profile.ts` to the final origin, rebuild, and deploy. Next.js handles deep-route refreshes and metadata.
+
+No Vercel account deployment is claimed. Publishing through the available Sites integration updates the existing Site and preserves its current audience.
+
+### Static host
+
+The cross-platform export command is:
+
+```sh
+npm run build:static
+```
+
+Upload **`out/`** to a static host with gzip/Brotli and long-lived caching for hashed `/_next/static/` assets. `trailingSlash: true` emits each project as `projects/<slug>/index.html`, so direct navigation and refresh do not need an SPA catch-all rewrite. Retain folder index handling on your host. Robots and all world URLs are generated at build time.
+
+`.openai/hosting.json` retains this Site’s existing opaque project ID and `out` directory. Do not reuse that identity to register an unrelated Site. No database, API key, or authentication is necessary for the portfolio’s own code; private hosting access, if enabled by the platform, is separate.
+
+## Troubleshooting and boundaries
+
+- **Missing browser:** install Playwright Chromium or set `CHROMIUM_PATH` as above.
+- **Wrong app under test:** ensure `TEST_BASE_URL` points at the server for the build being checked. The dev server and a production server can coexist on separate ports.
+- **Static build with `preview` error:** run `npm run build` before `npm run preview`, or serve `out/` with a static host.
+- **No 3D / unsupported WebGL:** use the fully functional 2D controls. Touch/data-saving devices opt in; reduced-motion project views start in 2D. The original hero uses a static composition with reduced motion.
+- **Blank or failed scene:** the scene boundary retains the technical fallback; try 2D mode. No important project information depends on WebGL.
+- **Clipboard unavailable:** use HTTPS or localhost and copy the visible GitHub/email link manually.
+- **No email delivered:** the message pad only prepares a local draft. Configure an actual email address and send from an email app, or connect a real server delivery service separately.
+- **New project absent:** verify its registry entry and rebuild; static routes and metadata are generated at build time.
+- **Academic placeholders:** only fill university, dates, coursework, jobs, and awards with confirmed information.
+- **Original ML/hardware systems:** this portfolio does not execute Python services, model checkpoints, PostgreSQL databases, kiosks, hardware, payment systems, or private repositories.
+- **macOS verification:** the local workflow is portable and documented for macOS; automated execution here occurs on managed Linux/Chromium, not a physical Mac.
+
+Public source research and pinned references are in `docs/research/repository-audit.md`. V1 verification is archived under `docs/history/` and is not a V2 performance claim.

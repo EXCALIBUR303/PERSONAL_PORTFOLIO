@@ -1,72 +1,92 @@
-# Verification — Form & Function
+# Verification — Devfolio V2 / The Project Multiverse
 
-Verified on 21 October 2026 using Node.js 24.19.0 and Chromium 154 in the managed build environment.
+Verified 21 October 2026 in managed Linux using Node.js 24.19.0 and Chromium 154.0.8037.57. macOS instructions are documented, but execution on a physical Mac or Safari is not claimed.
 
-The visitor story is: open the portfolio → explore real HTML content and the optional 3D enhancement → filter concept projects and inspect their details → try the color experiment → prepare an email draft. Profile and project data are local TypeScript modules. There is no API, database, or delivery service in this flow.
+## Baseline and preservation
+
+Before V2 changes, the existing lint, strict TypeScript, normal production build, and all 16 Playwright tests passed. The native hosting source matched local commit `43e973dad5dd3d9b2fc43f4b1adf8705420c805c`. Existing history, GitHub origin, lockfile, dependencies, original violet sculpture, Color Field, themes, and native quick-overview dialog behavior were preserved.
+
+The public GitHub PERSONAL_PORTFOLIO repository was empty at audit time. Source publication to the existing Sites repository is separate from the user’s GitHub origin; no GitHub push is claimed.
 
 ## Build and static checks
 
-- `npm run lint`: passes.
-- `npm run typecheck`: passes with strict TypeScript.
-- `npm run build`: normal Next.js production build supported.
-- `STATIC_EXPORT=1 npm run build`: passes and emits the static `out/` deployment.
-- Next.js 16.4.2, React 19.3.1, React Three Fiber 9.8.2, Drei 10.7.9, Three.js 0.185.1, and Motion 14.5.0 installed together without peer incompatibilities. The committed npm lockfile records exact dependencies.
+- `npm run lint`: passed.
+- `npm run typecheck`: passed with strict TypeScript.
+- `npm run build`: passed in normal Next.js production mode.
+- `npm run build:static`: passed and emitted the deployment in `out/`.
+- Ten project paths are generated through `generateStaticParams`; the export contains a folder `index.html` for each route.
+- `git diff --check`: passed.
+- No runtime dependency or lockfile change was necessary. The existing installed dependency set was reused.
 
-## Browser checks
+The cross-platform static build script sets `STATIC_EXPORT` in the child-process environment. The normal `build` and `preview` commands remain appropriate for Next.js/Vercel hosting. Static exports require an ordinary static host instead of `next start`.
 
-The 16 Playwright cases verify:
+## Automated browser and algorithm results
 
-1. All primary sections render, internal section destinations exist, and no page-level JavaScript errors occur.
-2. All category filters select the correct projects and restore the full collection.
-3. Project details open by keyboard, trap focus in a native modal, close with Escape, and restore focus to the trigger.
-4. Mobile menu opens, closes with Escape, restores focus, and navigates to a section.
-5. No horizontal overflow or clipped headings/buttons at 320px.
-6. The same layout check at 375px.
-7. The same layout check at 768px.
-8. The same layout check at 1024px.
-9. The same layout check at 1440px.
-10. The same layout check at 1920px.
-11. Color Field palette selection, keyboard slider adjustment, pause, and reset.
-12. Required contact input validation and an actual `.eml` draft download, with explicit “nothing was sent” feedback.
-13. CSS fallback without WebGL, and the reduced-motion experiment state.
-14. Automated WCAG 2 A/AA and WCAG 2.1 A/AA checks on both themes.
-15. A real WebGL canvas loads on desktop and its pause/play controls respond without page-level errors.
-16. Touch devices initially defer the WebGL scene and successfully load it after “Try in 3D”.
+**39 tests passed** against the compressed static export on `http://localhost:3003` (one worker, approximately 1.7 minutes).
 
-The HTML/interaction cases deliberately disable WebGL to exercise the graceful fallback independently. The two dedicated WebGL cases use separate, GPU-capable browser contexts. Browser binaries are test tooling, not an application requirement.
+The three algorithm/data cases cover reproducible seeded mazes; reachable, valid paths; shortest-path agreement among BFS, Dijkstra, and A* across several seeds; deterministic penalty rules; source-evidence and graph-reference integrity; and valid skill/project references.
 
-Desktop and mobile compositions were also visually inspected. The GPU scene, responsive recomposition, local previews, and major sections were checked in rendered Chromium, not inferred only from source.
+The 36 browser cases cover:
 
-## Measured mobile Lighthouse results
+- All home chapters, internal anchor destinations, and runtime errors.
+- Search, justified categories, featured filtering, and empty-state reset.
+- Dedicated route entry and return with gallery query/theme retained; route heading focus.
+- Native dialog focus trapping, Escape dismissal, and focus restoration.
+- Mobile navigation and Escape behavior.
+- Home layout at 320, 375, 768, 1024, 1440, and 1920 pixels.
+- Direct navigation and refresh of all ten project routes.
+- Toolkit and Dimension Engine selection, real component descriptions, and source-project links.
+- Maze generation, algorithm selection, stepping, Start/Pause/Reset, live reduced-motion preference changes, path rendering, and cell inspection.
+- Parking selection, local arrival/release/reset states, and backend separation.
+- ML, UCO, and RUL explanatory controls and clear synthetic-data boundaries.
+- Playable original football scoring and disclosed deterministic behavior.
+- Additional project architecture walkthroughs.
+- Preserved Color Field controls and reduced-motion behavior.
+- Local `.eml` download and actual GitHub clipboard behavior, with no delivery claim.
+- Representative 320px home and world layouts.
+- Automated WCAG 2/2.1 A/AA checks on the home, maze, student, parking, and football routes in **both themes**, with no violations returned.
+- Actual desktop WebGL sculpture and maze view, plus switching back to the technical fallback.
+- Actual touch-device opt-in for hero and parking WebGL.
 
-Lighthouse **13.5.0**, default mobile emulation, simulated slow 4G (~1.6Mbps, 150ms RTT), 4× CPU slowdown. The production static export was served locally with gzip for text assets and immutable caching for hashed Next.js assets, representative of production CDN delivery. No browser tests or builds ran during this measurement.
+The HTML cases explicitly disable WebGL to test usable fallbacks. The two dedicated 3D cases create separate contexts with WebGL enabled. Browser errors are checked in the home, direct-route, and desktop WebGL cases. Additional screenshots of the home, maze, parking, maintenance, UCO, football, toolkit, and chapters were visually inspected.
+
+Issues found during V2 QA were corrected: light-theme diagram contrast, parking visible/accessibility-name alignment, inert pre-hydration explorer controls, route slash expectations, and the installed motion hook’s failure to subscribe to runtime preference changes. Explorers now load on the client behind a useful loading state, while project summaries, evidence, and architecture remain available as ordinary page content. Maze animation observes media-query changes directly.
+
+A final contact-only regression also passed after deriving clipboard content from the editable profile record. This prevents a future profile URL edit from leaving the clipboard action out of sync.
+
+## Performance measurement
+
+Lighthouse **13.5.0**, default mobile emulation with simulated slow 4G and 4× CPU slowdown, measured the final static export served locally with gzip and immutable caching for hashed assets. Browser tests and builds were stopped during measurement. No run warnings were returned.
 
 | Category       | Score |
 | -------------- | ----: |
-| Performance    |    90 |
+| Performance    |    91 |
 | Accessibility  |   100 |
 | Best practices |   100 |
 | SEO            |   100 |
 
 | Metric                   | Measured value |
 | ------------------------ | -------------: |
-| First Contentful Paint   |           1.2s |
-| Largest Contentful Paint |           2.8s |
-| Total Blocking Time      |          270ms |
+| First Contentful Paint   |          1.1 s |
+| Largest Contentful Paint |          3.1 s |
+| Total Blocking Time      |         170 ms |
 | Cumulative Layout Shift  |              0 |
-| Speed Index              |           2.3s |
+| Speed Index              |          1.2 s |
 
-The run completed without Lighthouse warnings. The raw report is retained in `docs/lighthouse-mobile.json`. This is one local lab measurement, not a guarantee of hosted or real-user performance. LCP remains above the 2.5s “good” threshold in this simulated mobile run. TBT is a lab diagnostic, not measured field INP.
+Raw results are committed in `docs/lighthouse-v2-mobile.json`. This is one local laboratory result, not a claim about every route, the hosted origin, field INP, or all devices. LCP remains above the 2.5-second good threshold. The default touch experience defers WebGL until requested, so the score describes the initial mobile presentation; activated WebGL was functionally checked separately. Historical V1 reports are archived under `docs/history/` and are not evidence of V2 performance.
 
-On touch devices the default product experience uses the CSS sculpture until the visitor opts into WebGL. The mobile score therefore describes this initial experience; it does not claim the same score with 3D activated. Desktop WebGL and mobile activation were functionally verified separately. Actual GPU performance depends on the device.
+## Evidence and application boundaries
 
-An earlier software-rendered WebGL audit timed out, motivating the mobile opt-in behavior and a 30fps idle-render cap. An uncompressed Python preview also produced a lower score, so the final performance result explicitly uses compressed delivery. No performance score is claimed for the private hosted deployment or for desktop Lighthouse.
+Nine public repositories were inspected beyond their README files. Pinned source references and caveats live in `src/data/projects.ts` and `docs/research/repository-audit.md`. No model training or original Python/Java/Node backend was executed for this audit.
 
-## Boundaries and limitations
+The maze is an independently written TypeScript adaptation of verified standard algorithms. Parking uses synthetic local states. Student Burnout, UCO, maintenance, and the additional project workflows explain source behavior through interactive guides; they do not run trained models, operate sensors, connect payments, or mutate databases. The maintenance curve is explicitly synthetic; the symbolic engine is not a calibrated digital twin.
 
-- Personal identity, education, experience, availability, social links, and project ownership are editable placeholders. Concept studies are visibly identified and their details explain their illustrative status.
-- Missing project destinations show explanatory text. Missing social links are text, not fake destinations.
-- No contact address was supplied. The template downloads a local draft. Adding a real address enables mailto and copy-email; there is no server delivery or claim that a message was sent.
-- Clipboard behavior requires HTTPS or localhost and is intentionally unavailable until a real address is configured.
-- Automated accessibility results do not establish complete conformance. Manual checks here cover visual layout and primary keyboard interactions, not every browser, screen reader, or device.
-- The build is compatible with standard Next.js hosting, including Vercel; no Vercel account deployment is claimed. The provided private Sites link is a separate static deployment.
+Football source is private and was never read or published. The playable portfolio game is independently authored. No private implementation or achievement claim is made.
+
+The user’s degree and public GitHub profile name are populated. University, academic dates, employers, awards, and email remain unfilled when not supplied. The contact pad only prepares a local draft. SmartPark’s README demo could not be independently verified with the available Vercel access; it is not advertised as a working live demo. This does not establish that the external app is unavailable.
+
+3D quality and frame rate depend on the visitor’s hardware. Touch/data-saving devices opt in; project scenes use capped DPR and demand rendering. Unsupported WebGL retains functional HTML controls and 2D diagrams. Automated accessibility checks and Chromium keyboard testing do not establish complete conformance across every screen reader or browser.
+
+## Deployment
+
+The existing Site identity and private audience are retained. The static artifact is published only after successful checks and source synchronization. Deployment status and the returned URL are verified through the hosting integration; no public audience change or Vercel deployment is claimed.

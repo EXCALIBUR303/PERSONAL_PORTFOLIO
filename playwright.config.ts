@@ -1,4 +1,14 @@
 import { defineConfig } from "@playwright/test";
+import { existsSync } from "node:fs";
+const macChrome =
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const browserPath =
+  process.env.CHROMIUM_PATH ||
+  (process.platform === "darwin" && existsSync(macChrome)
+    ? macChrome
+    : existsSync("/usr/bin/chromium")
+      ? "/usr/bin/chromium"
+      : undefined);
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: false,
@@ -8,7 +18,7 @@ export default defineConfig({
     baseURL: process.env.TEST_BASE_URL || "http://localhost:3001",
     viewport: { width: 1440, height: 1000 },
     launchOptions: {
-      executablePath: process.env.CHROMIUM_PATH || "/usr/bin/chromium",
+      ...(browserPath ? { executablePath: browserPath } : {}),
       args: [
         "--no-sandbox",
         "--enable-unsafe-swiftshader",

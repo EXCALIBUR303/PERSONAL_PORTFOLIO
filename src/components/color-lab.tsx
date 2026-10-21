@@ -15,7 +15,7 @@ export default function ColorLab() {
   return (
     <section id="lab" className="lab-section section-pad">
       <div className="container">
-        <SectionLabel number="05">A LITTLE PLAY GOES A LONG WAY</SectionLabel>
+        <SectionLabel number="06">A LITTLE PLAY GOES A LONG WAY</SectionLabel>
         <div className="lab-layout">
           <Reveal className="lab-copy">
             <span className="eyebrow">THE INTERACTIVE LAB</span>

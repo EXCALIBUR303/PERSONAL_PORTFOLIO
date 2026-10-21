@@ -4,7 +4,11 @@ import { ArrowUpRight, Asterisk, CheckCheck, Copy, Send } from "lucide-react";
 import { profile } from "@/data/profile";
 import { SectionLabel, Reveal } from "./ui";
 export default function Contact() {
+  const githubUrl = profile.socials.find(
+    (social) => social.name === "GitHub",
+  )?.url;
   const [copied, setCopied] = useState(false);
+  const [profileCopied, setProfileCopied] = useState(false);
   const [status, setStatus] = useState("");
   const [preparing, setPreparing] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -24,6 +28,20 @@ export default function Contact() {
     } catch {
       setStatus(
         "Clipboard is unavailable. Select and copy the email address manually.",
+      );
+    }
+  }
+  async function copyProfile() {
+    if (!githubUrl) return;
+    try {
+      await navigator.clipboard.writeText(githubUrl);
+      setProfileCopied(true);
+      setStatus("GitHub profile copied.");
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => setProfileCopied(false), 2500);
+    } catch {
+      setStatus(
+        "Clipboard is unavailable. Copy the GitHub profile link manually.",
       );
     }
   }
@@ -61,7 +79,7 @@ export default function Contact() {
         link.click();
         setTimeout(() => URL.revokeObjectURL(url), 1500);
         setStatus(
-          "Email draft downloaded. No recipient is configured and nothing was sent. Add the owner’s email in profile.ts.",
+          "Email draft downloaded. No recipient is configured and nothing was sent. This is a local draft.",
         );
       }
     } catch {
@@ -75,7 +93,7 @@ export default function Contact() {
   return (
     <section id="contact" className="contact-section section-pad">
       <div className="container">
-        <SectionLabel number="06">GOOD THINGS START WITH A HELLO</SectionLabel>
+        <SectionLabel number="07">GOOD THINGS START WITH A HELLO</SectionLabel>
         <div className="contact-grid">
           <Reveal>
             <h2>
@@ -97,7 +115,7 @@ export default function Contact() {
                 </a>
               ) : (
                 <span>
-                  Email coming soon
+                  Email not shared
                   <ArrowUpRight size={21} />
                 </span>
               )}
@@ -111,6 +129,15 @@ export default function Contact() {
               </button>
             </div>
             <div className="contact-socials">
+              <button
+                className="copy-profile"
+                type="button"
+                onClick={copyProfile}
+                disabled={!githubUrl}
+              >
+                {profileCopied ? <CheckCheck size={13} /> : <Copy size={13} />}{" "}
+                {profileCopied ? "Profile copied" : "Copy GitHub profile"}
+              </button>
               {profile.socials.map((s) =>
                 s.url ? (
                   <a
@@ -131,7 +158,7 @@ export default function Contact() {
             </div>
           </Reveal>
           <form className="contact-form" onSubmit={submit}>
-            <h3>A small note, a new beginning.</h3>
+            <h3>A local message pad.</h3>
             <div className="form-row">
               <label>
                 Your name
@@ -169,14 +196,14 @@ export default function Contact() {
               <span>
                 {profile.email
                   ? "Opens your email app. You send it."
-                  : "Template mode · downloads an email draft."}
+                  : "Saved on your device. Nothing is submitted."}
               </span>
               <button
                 className="button button-dark"
                 type="submit"
                 disabled={preparing}
               >
-                {preparing ? "Preparing…" : "Prepare a message"}
+                {preparing ? "Preparing…" : "Prepare email draft"}
                 <Send size={16} />
               </button>
             </div>

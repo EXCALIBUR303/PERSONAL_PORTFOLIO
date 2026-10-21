@@ -1,149 +1,195 @@
+import type { CSSProperties } from "react";
 import {
-  ArrowUpRight,
-  AudioLines,
-  Command,
-  Plus,
-  Search,
-  SlidersHorizontal,
+  Activity,
+  BrainCircuit,
+  CircuitBoard,
+  FileSearch,
+  Network,
 } from "lucide-react";
-import type { Project } from "@/data/projects";
-export default function ProjectPreview({ type }: { type: Project["preview"] }) {
-  if (type === "orbit")
-    return (
-      <div className="preview preview-orbit" aria-hidden="true">
-        <div className="preview-grain" />
-        <span className="preview-caption">A CLEARER HEADSPACE.</span>
-        <div className="orbit-window">
-          <aside>
-            <div className="orbit-logo">
-              <Command size={17} /> orbit
-            </div>
-            <span>YOUR SPACE</span>
-            <b className="orbit-selected">◫ &nbsp; Overview</b>
-            <b>☷ &nbsp; My projects</b>
-            <b>◷ &nbsp; Activity</b>
-            <div className="orbit-bottom">
-              A little more focus.
-              <br />A little less noise.
-            </div>
-          </aside>
-          <div className="orbit-main">
-            <div className="orbit-top">
-              <span>Workspace / Overview</span>
-              <Search size={11} />
-            </div>
-            <div className="orbit-greeting">
-              <small>MAKE ROOM FOR GOOD WORK</small>
-              <h4>
-                A fresh perspective<span>✳</span>
-              </h4>
-              <p>Let’s make something meaningful today.</p>
-            </div>
-            <div className="orbit-stats">
-              <div>
-                <i>IN THE FLOW</i>
-                <strong>
-                  03<span> projects</span>
-                </strong>
-              </div>
-              <div>
-                <i>ROOM TO GROW</i>
-                <strong>
-                  ∞<span> possibilities</span>
-                </strong>
-              </div>
-            </div>
-            <div className="orbit-task">
-              <b>Today’s little victories</b>
-              <Plus size={12} />
-            </div>
-            <p className="orbit-check">
-              ✓ <span>Find a starting point</span>
-              <i>Done</i>
-            </p>
-            <p className="orbit-check">
-              ○ <span>Make something you love</span>
-              <i>In progress</i>
-            </p>
-          </div>
-        </div>
-        <div className="floating-note">
-          ✦ &nbsp; Less noise. More possibility.
-        </div>
-      </div>
-    );
-  if (type === "resonance")
-    return (
-      <div className="preview preview-resonance" aria-hidden="true">
-        <span className="preview-caption">EXPLORATIONS IN FREQUENCY / 002</span>
-        <div className="sound-sculpture">
-          {Array.from({ length: 22 }, (_, i) => (
-            <i key={i} style={{ "--i": i } as React.CSSProperties} />
-          ))}
-        </div>
-        <div className="resonance-title">
-          reso<span>nance</span>
-          <AudioLines size={30} />
-        </div>
-        <div className="resonance-footer">
-          <span>FEEL THE FREQUENCY</span>
-          <span>↗</span>
-        </div>
-      </div>
-    );
-  if (type === "fieldnotes")
-    return (
-      <div className="preview preview-fieldnotes" aria-hidden="true">
-        <div className="landscape">
-          <i />
-          <i />
-          <i />
-        </div>
-        <div className="field-top">
-          <b>
-            fieldnotes<span>↟</span>
-          </b>
-          <span>GO SOMEWHERE GOOD ↗</span>
-        </div>
-        <div className="field-title">
-          Take the
-          <br />
-          <em>long way.</em>
-        </div>
-        <div className="field-card">
-          <span>YOUR NEXT CHAPTER</span>
-          <strong>Somewhere off the beaten path.</strong>
-          <ArrowUpRight size={20} />
-        </div>
-        <span className="field-coordinates">
-          45° 31′ N &nbsp; 122° 40′ W · ILLUSTRATIVE
-        </span>
-      </div>
-    );
+import type { WorldKind } from "@/data/projects";
+export default function ProjectPreview({
+  type,
+  title = "",
+  accent = "#b8a0f0",
+}: {
+  type: WorldKind;
+  title?: string;
+  accent?: string;
+}) {
+  const style = { "--world-accent": accent } as CSSProperties;
   return (
-    <div className="preview preview-chromatic" aria-hidden="true">
-      <div className="chromatic-top">
-        <b>chromatic®</b>
-        <SlidersHorizontal size={18} />
-      </div>
-      <div className="color-blocks">
-        <i />
-        <i />
-        <i />
-        <i />
-      </div>
-      <div className="chromatic-bottom">
-        <span>
-          A STUDY IN
-          <br />
-          HAPPY COMBINATIONS.
-        </span>
-        <strong>
-          Let it
-          <br />
-          <em>happen.</em>
-        </strong>
-      </div>
+    <div
+      className={`preview universe-preview universe-${type}`}
+      style={style}
+      aria-hidden="true"
+    >
+      <div className="universe-preview-grid" />
+      <span className="universe-caption">
+        {type === "penalty"
+          ? "ORIGINAL INTERACTION STUDY"
+          : "ENGINEERING WORLDS / SOURCE VERIFIED"}
+      </span>
+      {type === "maze" ? (
+        <>
+          <div className="maze-cover">
+            {Array.from({ length: 81 }, (_, i) => (
+              <i
+                key={i}
+                className={
+                  (i * 7 + Math.floor(i / 9)) % 5 < 2
+                    ? "cover-wall"
+                    : i % 11 === 0
+                      ? "cover-path"
+                      : ""
+                }
+              />
+            ))}
+          </div>
+          <strong className="universe-cover-title">
+            Find
+            <br />
+            <em>a way.</em>
+          </strong>
+          <span className="universe-cover-meta">MAZERA / ALGORITHMS</span>
+        </>
+      ) : type === "signals" ? (
+        <>
+          <div className="signal-cover">
+            <svg viewBox="0 0 400 260">
+              <g stroke="currentColor" strokeWidth="1" opacity=".45">
+                {[50, 130, 210].flatMap((y) =>
+                  [65, 150, 235].map((end, i) => (
+                    <path
+                      key={`${y}-${end}`}
+                      d={`M90 ${y}L${210 + i * 40} ${end}`}
+                    />
+                  )),
+                )}
+              </g>
+              {[
+                [90, 50],
+                [90, 130],
+                [90, 210],
+                [210, 65],
+                [250, 150],
+                [290, 235],
+              ].map(([x, y], i) => (
+                <circle
+                  key={i}
+                  cx={x}
+                  cy={y}
+                  r={i % 2 ? 16 : 24}
+                  fill="var(--world-accent)"
+                  opacity={0.4 + i * 0.09}
+                />
+              ))}
+            </svg>
+            <BrainCircuit size={57} />
+          </div>
+          <strong className="universe-cover-title">
+            A human
+            <br />
+            <em>signal.</em>
+          </strong>
+          <span className="universe-cover-meta">
+            RESEARCH / NOT A DIAGNOSIS
+          </span>
+        </>
+      ) : type === "process" ? (
+        <>
+          <div className="process-cover">
+            {[1, 2, 3].map((i) => (
+              <div key={i}>
+                <span>0{i}</span>
+                <i />
+                <b>{["SENSE", "CLASSIFY", "RECORD"][i - 1]}</b>
+              </div>
+            ))}
+          </div>
+          <strong className="universe-cover-title">
+            Second life.
+            <br />
+            <em>Better loop.</em>
+          </strong>
+          <span className="universe-cover-meta">
+            CYCOIL / SUSTAINABLE SYSTEMS
+          </span>
+        </>
+      ) : type === "parking" ? (
+        <>
+          <div className="parking-cover">
+            {Array.from({ length: 18 }, (_, i) => (
+              <i key={i} className={i % 3 === 0 ? "parked" : ""}>
+                <span />
+              </i>
+            ))}
+          </div>
+          <strong className="universe-cover-title">
+            Space,
+            <br />
+            <em>allocated.</em>
+          </strong>
+          <span className="universe-cover-meta">
+            SMARTPARK / RELATIONAL SYSTEMS
+          </span>
+        </>
+      ) : type === "maintenance" ? (
+        <>
+          <div className="engine-cover">
+            {Array.from({ length: 12 }, (_, i) => (
+              <i key={i} style={{ "--i": i } as CSSProperties} />
+            ))}
+            <Activity size={50} />
+          </div>
+          <strong className="universe-cover-title">
+            Ahead of
+            <br />
+            <em>the curve.</em>
+          </strong>
+          <span className="universe-cover-meta">
+            C-MAPSS / REMAINING USEFUL LIFE
+          </span>
+        </>
+      ) : type === "penalty" ? (
+        <>
+          <div className="pitch-cover">
+            <i />
+            <span />
+            <b>+</b>
+          </div>
+          <strong className="universe-cover-title">
+            Make it
+            <br />
+            <em>count.</em>
+          </strong>
+          <span className="universe-cover-meta">
+            PLAYABLE / INDEPENDENT DEMO
+          </span>
+        </>
+      ) : (
+        <>
+          <div className="system-cover">
+            {title.toLowerCase().includes("resume") ? (
+              <FileSearch size={80} />
+            ) : title.toLowerCase().includes("aeris") ? (
+              <CircuitBoard size={80} />
+            ) : (
+              <Network size={80} />
+            )}
+            <i />
+            <i />
+            <i />
+          </div>
+          <strong className="universe-cover-title">
+            Look
+            <br />
+            <em>closer.</em>
+          </strong>
+          <span className="universe-cover-meta">
+            {title.toUpperCase()} / SYSTEM EXPLORER
+          </span>
+        </>
+      )}
     </div>
   );
 }

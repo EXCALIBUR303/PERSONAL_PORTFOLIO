@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { site } from "@/data/profile";
 import "./globals.css";
+import "./multiverse.css";
+import AppFrame from "@/components/app-frame";
 
 const display = localFont({
   src: "../../public/fonts/space-grotesk-latin.woff2",
@@ -49,7 +51,9 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${display.variable} ${body.variable}`}>{children}</body>
+      <body className={`${display.variable} ${body.variable}`}>
+        <AppFrame>{children}</AppFrame>
+      </body>
     </html>
   );
 }

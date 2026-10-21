@@ -8,7 +8,11 @@
     "start": "next start --hostname 0.0.0.0",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "preview": "next start --hostname 0.0.0.0",
+    "build:static": "node scripts/build-static.mjs",
+    "test": "playwright test",
+    "test:unit": "playwright test tests/algorithms.spec.ts"
   },
   "dependencies": {
     "next": "16.4.2",

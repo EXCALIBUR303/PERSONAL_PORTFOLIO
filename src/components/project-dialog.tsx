@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { m } from "motion/react";
+import Link from "next/link";
 import { Github, X, ArrowUpRight } from "lucide-react";
 import type { Project } from "@/data/projects";
 import ProjectPreview from "./project-preview";
@@ -47,21 +48,35 @@ export default function ProjectDialog({
         >
           <X size={22} />
         </button>
-        <ProjectPreview type={project.preview} />
+        <ProjectPreview
+          type={project.kind}
+          title={project.title}
+          accent={project.accent}
+        />
         <div className="dialog-copy">
           <span className="eyebrow">
-            {project.category} ·{" "}
-            {project.placeholder ? "ILLUSTRATIVE CONCEPT" : "PROJECT"}
+            {project.categories.join(" / ")} ·{" "}
+            {project.sourceVisibility === "public"
+              ? "PUBLIC SOURCE VERIFIED"
+              : "INDEPENDENT DEMO"}
           </span>
           <h2 id="project-dialog-title">{project.title}</h2>
-          <p className="dialog-subtitle">{project.subtitle}</p>
-          <p>{project.details}</p>
+          <p className="dialog-subtitle">{project.tagline}</p>
+          <p>{project.overview}</p>
           <div className="project-tags">
             {project.stack.map((tag) => (
               <span key={tag}>{tag}</span>
             ))}
           </div>
           <div className="dialog-actions">
+            <Link
+              href={`/projects/${project.slug}`}
+              prefetch={false}
+              className="button button-lime"
+            >
+              Enter project world
+              <ArrowUpRight size={16} />
+            </Link>
             {project.githubUrl ? (
               <a
                 href={project.githubUrl}
