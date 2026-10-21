@@ -1,0 +1,191 @@
+"use client";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { ArrowUpRight, Asterisk, CheckCheck, Copy, Send } from "lucide-react";
+import { profile } from "@/data/profile";
+import { SectionLabel, Reveal } from "./ui";
+export default function Contact() {
+  const [copied, setCopied] = useState(false);
+  const [status, setStatus] = useState("");
+  const [preparing, setPreparing] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
+    [],
+  );
+  async function copy() {
+    if (!profile.email) return;
+    try {
+      await navigator.clipboard.writeText(profile.email);
+      setCopied(true);
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => setCopied(false), 2500);
+    } catch {
+      setStatus(
+        "Clipboard is unavailable. Select and copy the email address manually.",
+      );
+    }
+  }
+  function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setPreparing(true);
+    const data = new FormData(e.currentTarget);
+    const name = String(data.get("name")).trim(),
+      email = String(data.get("email")).trim(),
+      message = String(data.get("message")).trim();
+    if (!name || !message) {
+      setStatus("Please add your name and a message.");
+      setPreparing(false);
+      return;
+    }
+    const subject = `Portfolio inquiry from ${name}`.replace(/[\r\n]/g, " ");
+    const body = `${message}\n\nFrom: ${name}\nReply to: ${email}`;
+    try {
+      if (profile.email) {
+        window.location.href = `mailto:${profile.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        setStatus(
+          "Email draft prepared in your email app. Review it and press send there.",
+        );
+      } else {
+        const blob = new Blob(
+          [
+            `Subject: ${subject}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${body}`,
+          ],
+          { type: "message/rfc822" },
+        );
+        const url = URL.createObjectURL(blob),
+          link = document.createElement("a");
+        link.href = url;
+        link.download = "portfolio-message.eml";
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+        setStatus(
+          "Email draft downloaded. No recipient is configured and nothing was sent. Add the owner’s email in profile.ts.",
+        );
+      }
+    } catch {
+      setStatus(
+        "The draft could not be prepared. Please try again or use the email address directly.",
+      );
+    } finally {
+      setPreparing(false);
+    }
+  }
+  return (
+    <section id="contact" className="contact-section section-pad">
+      <div className="container">
+        <SectionLabel number="06">GOOD THINGS START WITH A HELLO</SectionLabel>
+        <div className="contact-grid">
+          <Reveal>
+            <h2>
+              Have something
+              <br />
+              in <em>mind?</em>
+              <Asterisk className="contact-star" size={62} strokeWidth={1.4} />
+            </h2>
+            <p>
+              An idea, an opportunity, or just a good conversation.
+              <br />
+              Let’s see what we can make happen.
+            </p>
+            <div className="email-line">
+              {profile.email ? (
+                <a href={`mailto:${profile.email}`}>
+                  {profile.email}
+                  <ArrowUpRight size={21} />
+                </a>
+              ) : (
+                <span>
+                  Email coming soon
+                  <ArrowUpRight size={21} />
+                </span>
+              )}
+              <button
+                className="icon-button"
+                onClick={copy}
+                disabled={!profile.email}
+                aria-label={copied ? "Email copied" : "Copy email address"}
+              >
+                {copied ? <CheckCheck size={19} /> : <Copy size={19} />}
+              </button>
+            </div>
+            <div className="contact-socials">
+              {profile.socials.map((s) =>
+                s.url ? (
+                  <a
+                    key={s.name}
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {s.name}
+                    <ArrowUpRight size={15} />
+                  </a>
+                ) : (
+                  <span key={s.name}>
+                    {s.name} <span className="mono">/ ADD LINK</span>
+                  </span>
+                ),
+              )}
+            </div>
+          </Reveal>
+          <form className="contact-form" onSubmit={submit}>
+            <h3>A small note, a new beginning.</h3>
+            <div className="form-row">
+              <label>
+                Your name
+                <input
+                  name="name"
+                  autoComplete="name"
+                  placeholder="What should I call you?"
+                  maxLength={100}
+                  required
+                />
+              </label>
+              <label>
+                Your email
+                <input
+                  type="email"
+                  name="email"
+                  autoComplete="email"
+                  placeholder="hello@yourworld.com"
+                  maxLength={254}
+                  required
+                />
+              </label>
+            </div>
+            <label>
+              What’s on your mind?
+              <textarea
+                name="message"
+                placeholder="Tell me a little about your idea…"
+                rows={3}
+                maxLength={5000}
+                required
+              />
+            </label>
+            <div className="form-submit">
+              <span>
+                {profile.email
+                  ? "Opens your email app. You send it."
+                  : "Template mode · downloads an email draft."}
+              </span>
+              <button
+                className="button button-dark"
+                type="submit"
+                disabled={preparing}
+              >
+                {preparing ? "Preparing…" : "Prepare a message"}
+                <Send size={16} />
+              </button>
+            </div>
+            <p className="form-status" role="status" aria-live="polite">
+              {status || (copied ? "Email address copied." : "")}
+            </p>
+          </form>
+        </div>
+      </div>
+    </section>
+  );
+}
