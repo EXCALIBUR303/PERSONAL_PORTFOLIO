@@ -1,10 +1,12 @@
 "use client";
 import dynamic from "next/dynamic";
 import { Component, useEffect, useState, type ReactNode } from "react";
-import { Box, Grid2X2, Move3D } from "lucide-react";
+import { Box, Grid2X2, Move3D, RotateCcw } from "lucide-react";
 import type { Maze } from "@/lib/maze";
 export type SpatialProps = {
   kind: "maze" | "parking" | "maintenance" | "process";
+  cameraView?: "isometric" | "top";
+  resetKey?: number;
   maze?: Maze;
   visited?: number[];
   path?: number[];
@@ -29,6 +31,10 @@ export default function SpatialView({
   fallback,
   ...props
 }: SpatialProps & { fallback: ReactNode }) {
+  const [cameraView, setCameraView] = useState<"isometric" | "top">(
+    "isometric",
+  );
+  const [resetKey, setResetKey] = useState(0);
   const [supported, setSupported] = useState(false),
     [enabled, setEnabled] = useState(false),
     [ready, setReady] = useState(false);
@@ -89,6 +95,40 @@ export default function SpatialView({
           </button>
         </div>
       </div>
+      {enabled && (
+        <div
+          className="scene-camera-controls"
+          role="group"
+          aria-label="3D camera controls"
+        >
+          <button
+            aria-pressed={cameraView === "isometric"}
+            onClick={() => {
+              setCameraView("isometric");
+              setResetKey((key) => key + 1);
+            }}
+          >
+            Isometric
+          </button>
+          <button
+            aria-pressed={cameraView === "top"}
+            onClick={() => {
+              setCameraView("top");
+              setResetKey((key) => key + 1);
+            }}
+          >
+            Top view
+          </button>
+          <button
+            onClick={() => {
+              setCameraView("isometric");
+              setResetKey((key) => key + 1);
+            }}
+          >
+            <RotateCcw size={12} /> Reset camera
+          </button>
+        </div>
+      )}
       <div className="spatial-stage">
         {(!enabled || !ready) && (
           <div className="spatial-fallback">{fallback}</div>
@@ -102,7 +142,12 @@ export default function SpatialView({
               aria-label="Optional 3D view; use the surrounding controls for keyboard access"
               role="img"
             >
-              <Scene {...props} onReady={() => setReady(true)} />
+              <Scene
+                {...props}
+                cameraView={cameraView}
+                resetKey={resetKey}
+                onReady={() => setReady(true)}
+              />
             </div>
           </Boundary>
         )}

@@ -3,7 +3,7 @@ export const profile = {
   name: "Sidharth Sood",
   initials: "SS",
   role: "B.Tech CSE · Creative developer",
-  headline: ["Hello, world.", "I build", "worlds."],
+  headline: ["Hello, world.", "I build", "things."],
   introduction:
     "Intelligent systems. Thoughtful algorithms. A little unexpected magic. I’m a computer science student turning engineering questions into things you can explore.",
   availability: "B.Tech CSE / building & learning",
@@ -18,15 +18,15 @@ export const profile = {
     "Algorithms & simulation",
     "Sustainable engineering",
   ],
-  email: null as string | null,
+  email: "sidharthsood303@gmail.com" as string | null,
   socials: [
     { name: "GitHub", url: "https://github.com/EXCALIBUR303" as string | null },
   ],
 };
 export const site = {
-  title: "Sidharth Sood — Devfolio V2 / Form & Function",
+  title: "Sidharth Sood — Devfolio V3 / Form & Function",
   description:
-    "Enter the Project Multiverse: source-backed engineering projects, interactive worlds, and experiments by Sidharth Sood, a B.Tech CSE student.",
+    "Explore the Interactive Engineering Universe: source-backed engineering projects, interactive worlds, and experiments by Sidharth Sood, a B.Tech CSE student.",
   url: "https://form-function-creative-lab.starry-hare-3759.chatgpt.site" as
     string | null,
 };

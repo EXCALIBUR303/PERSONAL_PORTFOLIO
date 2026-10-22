@@ -1,16 +1,21 @@
 "use client";
 import { Canvas, useThree } from "@react-three/fiber";
-import { OrbitControls, OrthographicCamera } from "@react-three/drei";
+import {
+  OrbitControls,
+  OrthographicCamera,
+  Environment,
+  Lightformer,
+} from "@react-three/drei";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import * as THREE from "three";
 import type { SpatialProps } from "./spatial-view";
 import type { Maze } from "@/lib/maze";
-function Camera() {
+function Camera({ cameraView }: { cameraView?: "isometric" | "top" }) {
   const { size } = useThree();
   return (
     <OrthographicCamera
       makeDefault
-      position={[12, 16, 14]}
+      position={cameraView === "top" ? [0, 23, 0.01] : [12, 16, 14]}
       zoom={Math.min(size.width / 16, size.height / 10)}
       near={0.1}
       far={100}
@@ -224,11 +229,23 @@ export default function WorldScene({
       gl={{ antialias: true, powerPreference: "low-power" }}
       onCreated={onReady}
     >
-      <color attach="background" args={["#14211f"]} />
+      <color attach="background" args={["#18242e"]} />
       <ambientLight intensity={1.1} />
       <directionalLight position={[5, 8, 5]} intensity={2.3} color="#e3dfef" />
       <pointLight position={[-5, 4, 2]} intensity={18} color="#99dbc8" />
-      <Camera />
+      <Environment resolution={32} frames={1}>
+        <Lightformer position={[0, 7, 3]} scale={[8, 4, 1]} intensity={3} />
+        <Lightformer
+          position={[-5, 2, 0]}
+          scale={[3, 5, 1]}
+          intensity={2}
+          color="#bedfed"
+        />
+      </Environment>
+      <Camera
+        key={`${props.cameraView}-${props.resetKey}`}
+        cameraView={props.cameraView}
+      />
       {props.kind === "maze" && props.maze ? (
         <MazeBlocks {...props} maze={props.maze} />
       ) : props.kind === "parking" ? (
@@ -239,11 +256,12 @@ export default function WorldScene({
         <Process {...props} />
       )}
       <OrbitControls
+        key={`controls-${props.cameraView}-${props.resetKey}`}
         enableDamping={false}
         minZoom={12}
         maxZoom={90}
         maxPolarAngle={Math.PI * 0.46}
-        minPolarAngle={0.2}
+        minPolarAngle={0}
       />
     </Canvas>
   );

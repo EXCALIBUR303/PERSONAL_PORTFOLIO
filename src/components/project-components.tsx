@@ -99,7 +99,14 @@ export function ProjectCard({
       </div>
       <span className="project-status">
         <i />
-        {project.status}
+        {project.status} ·{" "}
+        {project.demo.type === "embedded"
+          ? "Original app"
+          : project.demo.type === "local"
+            ? "Run locally"
+            : project.demo.type === "unavailable"
+              ? "Demo unavailable"
+              : "Interactive simulation"}
       </span>
     </m.article>
   );

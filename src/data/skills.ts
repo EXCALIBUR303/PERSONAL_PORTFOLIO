@@ -118,4 +118,18 @@ export const skills: Skill[] = [
     explanation:
       "An engineering interest supported by simulation research. This does not claim verified physical flight or hardware deployment.",
   },
+  {
+    name: "Static deployment",
+    group: "Cloud & deployment",
+    status: "Used in a project",
+    explanation:
+      "This portfolio is exported from Next.js and deployed as a static site, with route folders, lazy-loaded scenes, and verified production assets.",
+  },
+  {
+    name: "Playwright",
+    group: "Developer tools",
+    status: "Used in a project",
+    explanation:
+      "This portfolio uses browser tests for navigation, demos, keyboard interactions, responsive layouts, and WebGL fallback behavior.",
+  },
 ];

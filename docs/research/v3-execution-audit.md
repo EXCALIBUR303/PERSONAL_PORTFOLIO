@@ -1,0 +1,62 @@
+# V3 repository execution audit
+
+Audit date: 22 October 2026. Source snapshots were inspected on 21–22 October. Execution used managed Linux, Node 24 and Python 3.12; this is not a physical Mac verification.
+
+The authorized paginated listing returned 10, 10, 1 and 0 entries: 21 total, 14 public and 7 private. Public PERSONAL_PORTFOLIO was empty. Private source was not copied into the portfolio. Last Mile DAA is included only under the owner-supplied name and College classification. Other private implementation details are withheld.
+
+The prior source audit supplies detailed pinned evidence for the nine original public projects. V3 adds burnout-backend, SIGSMITH, SWARMMIND and PathAble. Build/test statements below are bounded observations, not public-service readiness claims. Source links refer to the audited commits.
+
+## Results
+
+| Project                       | Collection | Demo        | Runtime                                                                                                                                     | Tests                                                                                                                                   |
+| ----------------------------- | ---------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Student Burnout AI            | College    | simulation  | Original React production build passed. Model inference and the complete backend were not run.                                              | 1 SQLite feedback test passed. Frontend Jest suite failed to resolve react-router-dom; no frontend tests executed.                      |
+| Mazera AI Maze Solver         | Personal   | embedded    | Original production build and all six solver browser workflows passed.                                                                      | 168 direct solver/generator/grid checks passed. No repository test suite is supplied.                                                   |
+| Cycoil · UCO Recovery Station | College    | simulation  | Original kiosk and dashboard builds passed. API build blocked by missing generated Prisma client; Prisma engine download returned HTTP 403. | 5 original classifier branches and 2 integer payout checks passed; database and payment workflows not run.                              |
+| SmartPark DBMS                | College    | simulation  | API startup attempted; PostgreSQL connection pool timed out because no database was configured.                                             | Database and authenticated end-to-end tests not run; local portfolio parking simulation is tested separately.                           |
+| Predictive Maintenance        | Personal   | simulation  | Actual Uvicorn API started on 127.0.0.1:18321; GET /health returned HTTP 200 with loaded:false.                                             | 18 selected repository ingestion, targets, preprocessing, sequence-window, metric, EDA and download-script tests passed.                |
+| Penalty Shootout              | Personal   | simulation  | Runs entirely in this portfolio using local game state.                                                                                     | Shot, score, mode and reset behavior are covered by portfolio browser tests.                                                            |
+| Campus Green Mobility         | College    | local       | Full Java application not run: this workspace lacks javac, Maven, Tomcat and configured MySQL.                                              | Java utility test harness prepared, but not executed because the JDK compiler is unavailable.                                           |
+| AERIS                         | Personal   | local       | CLI simulation startup attempted and failed explicitly with Px4NotFoundError: external PX4 checkout is absent.                              | 70 selected core configuration/types/units/logging/clock and A* tests passed in 2.71 s.                                                 |
+| RupeeRise                     | Personal   | local       | Actual Uvicorn API started on 127.0.0.1:18322; GET /api/health returned HTTP 200 with status:degraded,database:false.                       | 66 repository deterministic money, budget, savings and investing engine tests passed with --noconftest.                                 |
+| Privacy-first Resume Screener | Personal   | local       | Full API startup not verified; database, storage and service configuration are required.                                                    | 64 repository scoring/injection/evidence/fusion and ranking metric tests passed in 8.49 s using offline stub provider and --noconftest. |
+| Last Mile DAA                 | College    | unavailable | Not executed — private implementation withheld                                                                                              | Not executed — private implementation withheld                                                                                          |
+| Burnout AI · Backend          | College    | local       | Source-reviewed startup; inference not run.                                                                                                 | 1 SQLite feedback test passed in an isolated environment.                                                                               |
+| SIGSMITH                      | Personal   | unavailable | Not executable — documentation and design contract only.                                                                                    | No implementation or test suite supplied.                                                                                               |
+| SWARMMIND                     | Personal   | local       | Original frontend build and core simulation checks passed. Trained-policy API workflow not run.                                             | 88 core environment tests and 204 frontend tests passed; 1 frontend test skipped.                                                       |
+| PathAble                      | Personal   | local       | Original frontend production build passed. Pure routing engine executed; complete PostGIS workflow not run.                                 | 163 routing/oracle tests and 41 frontend tests passed.                                                                                  |
+
+## Reproducibility and limitations
+
+- Original Mazera: six algorithms, four generators and seven grid sizes produced 168 valid-path checks. Browser checks separately exercised all six algorithms, generation, pause/resume/stop, history and reload. The repository supplies no test script. See its dedicated verification report and retained bundle notices.
+- AERIS: 70 selected configuration, types, units, clock, logging and A* tests. Simulator startup raised `Px4NotFoundError`; PX4 and Gazebo were absent. No physical flight.
+- RUL: 18 selected ingestion, targets, preprocessing, windows, metrics, EDA and download tests. Actual API health returned 200 with `loaded:false`; prediction returned the expected missing-artifact error. No training or measured sensor integration.
+- RupeeRise: 66 deterministic money, budget, savings and investing tests with `--noconftest`. This bypassed database fixtures requiring a dedicated test database; the full suite was not run. Actual API health returned 200 with degraded/database-false status. No private answer keys or paid APIs were accessed.
+- Resume Screener: 64 scoring, injection, evidence, fusion and ranking tests passed using offline stubs and `--noconftest`. Installing missing pgvector resolved the initial dependency failure. Full API startup and upload/database journeys are not verified. No candidate files were accessed.
+- PathAble: `npm run build` and all 41 Vitest frontend tests passed. 163 pure routing/oracle tests passed separately. Full authentication, report review and PostGIS integration were not executed. Hazard inference remains disabled; campus data are fictional.
+- SWARMMIND: `npm run build`, 204 frontend tests and 88 core environment tests passed; one frontend test was skipped. Full PyTorch training and trained-policy serving were not run. Simulated robots do not establish physical hardware experience.
+- Both burnout repositories: one isolated SQLite feedback test each passed. Student Burnout's original frontend production build passed, but its Jest suite failed resolving `react-router-dom` before executing tests. Committed model pickles were not loaded. No diagnostic or clinical validity claim.
+- UCO: original kiosk and dashboard production builds passed. API build required a generated Prisma client; engine download returned HTTP 403 under the managed network policy, so generation and API verification stopped. No network-policy workaround was attempted. Five original classifier branches and two integer payout calculations passed through TypeScript transpilation in an isolated harness. No physical sensors or real payout calls.
+- SmartPark: dependencies installed and API startup attempted; pool initialization timed out with no configured PostgreSQL server. Database suites and reservation/authentication flows remain unverified.
+- PBL6: inspected original Java utilities and prepared a five-case utility harness. The workspace has a JRE but no `javac` or Maven; the harness and WAR were not executed. Tomcat/MySQL are not configured.
+- SIGSMITH: documentation and contract only. No application, trained model, test suite or performance measurements exist at the audited snapshot.
+
+## Pinned source and local setup
+
+The executable registry `src/data/projects.ts` contains commands, configuration names, verification date and remaining limitations for every entry. Commands assume a checkout of the named public repository; service processes and frontend processes run in separate terminals. Secrets are supplied locally and never included in this report.
+
+- [student-burnout-ai](https://github.com/EXCALIBUR303/student-burnout-ai/tree/8f80e29eaf152938cba8cd094bb94afacf107289): `8f80e29eaf152938cba8cd094bb94afacf107289`.
+- [mazera-ai-maze-solver](https://github.com/EXCALIBUR303/mazera-ai-maze-solver/tree/6fad8eddc8ad8c5d216ff9eb11d11c270572fb24): `6fad8eddc8ad8c5d216ff9eb11d11c270572fb24`.
+- [uco-recovery-station](https://github.com/EXCALIBUR303/uco-recovery-station/tree/44608149de81cd50ab75ad56e120fbbc5c0e84e1): `44608149de81cd50ab75ad56e120fbbc5c0e84e1`.
+- [DBMS_SMART_PARKING](https://github.com/EXCALIBUR303/DBMS_SMART_PARKING/tree/f4fe6b10e8ed189fe02afcf9931f960cd5c8b87a): `f4fe6b10e8ed189fe02afcf9931f960cd5c8b87a`.
+- [rul-predictive-maintenance](https://github.com/EXCALIBUR303/rul-predictive-maintenance/tree/9bb3742068623e99945a7ba9d66011e4c312eb37): `9bb3742068623e99945a7ba9d66011e4c312eb37`.
+- [pbl6-green-mobility](https://github.com/EXCALIBUR303/pbl6-green-mobility/tree/85ae0c58509590a1743d45e0c0c841b3087cc47f): `85ae0c58509590a1743d45e0c0c841b3087cc47f`.
+- [aeris](https://github.com/EXCALIBUR303/aeris/tree/b55ca2fb161b4b5d6f1be01bce70dcd8ea1539db): `b55ca2fb161b4b5d6f1be01bce70dcd8ea1539db`.
+- [IIIT_HACKATHON](https://github.com/EXCALIBUR303/IIIT_HACKATHON/tree/5ec8f7cada7bb187863aaeadc1182e8c1ea19361): `5ec8f7cada7bb187863aaeadc1182e8c1ea19361`.
+- [resume-screener](https://github.com/EXCALIBUR303/resume-screener/tree/3d7e8f0e2ab71cca28e614c6d8c2a55af213f3fd): `3d7e8f0e2ab71cca28e614c6d8c2a55af213f3fd`.
+- [burnout-backend](https://github.com/EXCALIBUR303/burnout-backend/tree/488d4c16d79e19dfab2d3d204246dd82a4365650): `488d4c16d79e19dfab2d3d204246dd82a4365650`.
+- [sigsmith](https://github.com/EXCALIBUR303/sigsmith/tree/11253c8b450acae412095e8276a84ecbca44e00c): `11253c8b450acae412095e8276a84ecbca44e00c`.
+- [swarmmind](https://github.com/EXCALIBUR303/swarmmind/tree/e2269fe8f5f08ba5f491e340d46e63b17acef2a7): `e2269fe8f5f08ba5f491e340d46e63b17acef2a7`.
+- [PATHABLE](https://github.com/EXCALIBUR303/PATHABLE/tree/7d29bbae1cdacd04e7c089a30f4fa2ba1144ef3e): `7d29bbae1cdacd04e7c089a30f4fa2ba1144ef3e`.
+
+No original full backend was publicly deployed in this audit. The portfolio embeds only the original static Mazera app; its other interactive demos are explicitly local simulations or documented component guides.

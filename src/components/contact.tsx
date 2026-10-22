@@ -10,6 +10,7 @@ export default function Contact() {
   const [copied, setCopied] = useState(false);
   const [profileCopied, setProfileCopied] = useState(false);
   const [status, setStatus] = useState("");
+  const [draftUrl, setDraftUrl] = useState<string | null>(null);
   const [preparing, setPreparing] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
@@ -61,9 +62,11 @@ export default function Contact() {
     const body = `${message}\n\nFrom: ${name}\nReply to: ${email}`;
     try {
       if (profile.email) {
-        window.location.href = `mailto:${profile.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        setDraftUrl(
+          `mailto:${profile.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`,
+        );
         setStatus(
-          "Email draft prepared in your email app. Review it and press send there.",
+          "Draft ready. Open it in your email app, review and send; nothing was sent by this site.",
         );
       } else {
         const blob = new Blob(
@@ -157,7 +160,14 @@ export default function Contact() {
               )}
             </div>
           </Reveal>
-          <form className="contact-form" onSubmit={submit}>
+          <form
+            className="contact-form"
+            onSubmit={submit}
+            onChange={() => {
+              setDraftUrl(null);
+              setStatus("");
+            }}
+          >
             <h3>A local message pad.</h3>
             <div className="form-row">
               <label>
@@ -195,7 +205,7 @@ export default function Contact() {
             <div className="form-submit">
               <span>
                 {profile.email
-                  ? "Opens your email app. You send it."
+                  ? "Prepares a draft. You open and send it."
                   : "Saved on your device. Nothing is submitted."}
               </span>
               <button
@@ -210,6 +220,11 @@ export default function Contact() {
             <p className="form-status" role="status" aria-live="polite">
               {status || (copied ? "Email address copied." : "")}
             </p>
+            {draftUrl && (
+              <a className="button button-dark" href={draftUrl}>
+                Open email draft <ArrowUpRight size={16} />
+              </a>
+            )}
           </form>
         </div>
       </div>

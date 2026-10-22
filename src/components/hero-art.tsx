@@ -1,8 +1,9 @@
 "use client";
 import dynamic from "next/dynamic";
 import { Component, useEffect, useRef, useState, type ReactNode } from "react";
-import { useReducedMotion } from "motion/react";
-import { Pause, Play, MoveUpRight } from "lucide-react";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
+import type { DeskMode } from "./engineering-desk";
+import { Pause, Play, MoveUpRight, RotateCcw } from "lucide-react";
 const Sculpture = dynamic(() => import("./sculpture"), { ssr: false });
 class SceneBoundary extends Component<
   { children: ReactNode; fallback: ReactNode },
@@ -26,12 +27,13 @@ function Fallback() {
     </div>
   );
 }
-export default function HeroArt() {
+export default function HeroArt({ mode = "systems" }: { mode?: DeskMode }) {
   const frame = useRef<HTMLDivElement>(null);
   const [supported, setSupported] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [visible, setVisible] = useState(true);
   const [paused, setPaused] = useState(false);
+  const [resetKey, setResetKey] = useState(0);
   const [ready, setReady] = useState(false);
   const reduced = useReducedMotion();
   useEffect(() => {
@@ -75,31 +77,46 @@ export default function HeroArt() {
   return (
     <div className="hero-art" ref={frame}>
       <div className="art-grid" aria-hidden="true" />
-      <div className="art-coordinate mono">FIG. 01 — HAPPY ACCIDENTS</div>
+      <div className="art-coordinate mono">
+        {enabled
+          ? "DRAG TO ORBIT / SCROLL TO ZOOM"
+          : "2D FORM STUDY / ENGINEERING DESK"}
+      </div>
       <div className="art-corner top-left" aria-hidden="true" />
       <div className="art-corner bottom-right" aria-hidden="true" />
       <div
         className="sculpture-stage"
         role="img"
-        aria-label="A glossy violet knot floating with lime and coral satellites"
+        aria-label={`Interactive ${mode} sculpture; a spatial metaphor for the selected discipline`}
       >
         {(!supported || !enabled || !ready) && <Fallback />}
         {supported && enabled && (
           <SceneBoundary fallback={<Fallback />}>
             <Sculpture
+              mode={mode}
+              resetKey={resetKey}
               animated={visible && !paused && !reduced}
               onReady={() => setReady(true)}
             />
           </SceneBoundary>
         )}
       </div>
-      <div className="art-sticker">
+      <div className="art-sticker" aria-hidden="true">
         <span>BUILT WITH</span>
         <strong>
-          curiosity <MoveUpRight size={21} aria-hidden="true" />
+          exploration <MoveUpRight size={21} aria-hidden="true" />
         </strong>
       </div>
       <div className="art-bottom">
+        {supported && enabled && (
+          <button
+            type="button"
+            aria-label="Reset sculpture view"
+            onClick={() => setResetKey((key) => key + 1)}
+          >
+            <RotateCcw size={14} />
+          </button>
+        )}
         <span className="mono">
           <i /> {enabled ? "REAL-TIME / THREE.JS" : "STATIC / CSS SCULPTURE"}
         </span>

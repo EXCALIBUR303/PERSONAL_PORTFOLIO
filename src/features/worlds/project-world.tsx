@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
@@ -10,6 +11,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import type { Project } from "@/data/projects";
+import DemoConsole from "@/components/demo-console";
 import ArchitectureExplorer from "@/components/architecture-explorer";
 import { Reveal, SectionLabel } from "@/components/ui";
 import { usePortfolioState } from "@/components/app-frame";
@@ -60,6 +62,13 @@ export default function ProjectWorld({
   nextProject: { slug: string; title: string };
 }) {
   const { beginPortal } = usePortfolioState();
+  const heading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() =>
+      heading.current?.focus({ preventScroll: true }),
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [project.slug]);
   return (
     <main
       id="main"
@@ -82,7 +91,9 @@ export default function ProjectWorld({
         <header className="world-header">
           <div>
             <span className="world-eyebrow eyebrow">{project.eyebrow}</span>
-            <h1 tabIndex={-1}>{project.title}</h1>
+            <h1 ref={heading} tabIndex={-1}>
+              {project.title}
+            </h1>
             <p className="world-tagline">{project.tagline}</p>
           </div>
           <div className="world-header-meta">
@@ -99,16 +110,24 @@ export default function ProjectWorld({
             <span className="world-stack-note mono">
               {project.sourceVisibility === "public"
                 ? "REPOSITORY STACK"
-                : "INDEPENDENT DEMO STACK"}
+                : "PUBLIC DEMO STACK"}
             </span>
           </div>
         </header>
+        <div className="world-collection-label mono">
+          {project.collection.toUpperCase()} PROJECTS /{" "}
+          {project.discipline.toUpperCase()}
+        </div>
         <nav className="world-section-nav" aria-label="Project sections">
+          <a href="#world-demo">Demo & local setup</a>
           <a href="#world-playground">Explore</a>
-          <a href="#world-architecture">Architecture</a>
+          {project.architecture.nodes.length > 0 && (
+            <a href="#world-architecture">Architecture</a>
+          )}
           <a href="#world-overview">The story</a>
           <a href="#world-evidence">Evidence & limits</a>
         </nav>
+        <DemoConsole project={project} />
         <section id="world-playground" className="world-playground">
           <div className="world-section-heading">
             <div>
@@ -119,7 +138,13 @@ export default function ProjectWorld({
             </div>
             <span className="world-mode-label">{project.interactionLabel}</span>
           </div>
-          {project.kind === "maze" ? (
+          {project.kind === "unavailable" ? (
+            <div className="private-project-note">
+              <ShieldCheck size={32} />
+              <h3>Private by design.</h3>
+              <p>{project.demo.summary}</p>
+            </div>
+          ) : project.kind === "maze" ? (
             <MazeWorld />
           ) : project.kind === "parking" ? (
             <ParkingWorld />
@@ -135,13 +160,17 @@ export default function ProjectWorld({
             <WorkflowWorld project={project} />
           )}
         </section>
-        <section id="world-architecture" className="world-architecture">
-          <SectionLabel number="A">DIMENSION ENGINE / SYSTEM MAP</SectionLabel>
-          <h2>
-            Trace the <em>connections.</em>
-          </h2>
-          <ArchitectureExplorer project={project} />
-        </section>
+        {project.architecture.nodes.length > 0 && (
+          <section id="world-architecture" className="world-architecture">
+            <SectionLabel number="A">
+              DIMENSION ENGINE / SYSTEM MAP
+            </SectionLabel>
+            <h2>
+              Trace the <em>connections.</em>
+            </h2>
+            <ArchitectureExplorer project={project} />
+          </section>
+        )}
         <section id="world-overview" className="world-story">
           <SectionLabel number="B">THE QUESTION / THE BUILD</SectionLabel>
           <div className="world-story-grid">
@@ -158,7 +187,7 @@ export default function ProjectWorld({
               <span className="eyebrow">THE APPROACH</span>
               <h3>{project.tagline}</h3>
               <p>{project.solution}</p>
-              <h4>What the source implements</h4>
+              <h4>Documented scope</h4>
               <ul>
                 {project.features.map((feature) => (
                   <li key={feature}>{feature}</li>
@@ -187,7 +216,9 @@ export default function ProjectWorld({
               <h3>
                 {project.sourceVisibility === "public"
                   ? "Follow it to the source."
-                  : "An independent study."}
+                  : project.kind === "unavailable"
+                    ? "Private implementation."
+                    : "An independent study."}
               </h3>
               {project.sourceCommit && (
                 <p className="source-commit mono">
@@ -210,9 +241,9 @@ export default function ProjectWorld({
               ))}
               {!project.sources.length && (
                 <p>
-                  The supplied football repository is private. Its code was not
-                  read or reproduced. All controls and visuals here belong to
-                  this original portfolio demonstration.
+                  {project.kind === "unavailable"
+                    ? "Only the name and college classification provided by the owner are displayed. Private source and internal project details are withheld."
+                    : "The supplied football repository is private. Its code was not read or reproduced. All controls and visuals here belong to this original portfolio demonstration."}
                 </p>
               )}
               <div className="world-source-actions">

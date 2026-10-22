@@ -24,7 +24,7 @@ test("home renders all chapters with valid anchors and no runtime errors", async
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
-  await expect(page.locator("h1")).toContainText("Hello, world.");
+  await expect(page.locator("h1")).toContainText("I build things.");
   for (const id of [
     "projects",
     "skills",
@@ -53,18 +53,31 @@ test("search, categories, featured filtering, and empty-state reset work", async
   page,
 }) => {
   await page.goto("/#projects");
-  await expect(page.locator(".project-card")).toHaveCount(10);
-  await page.getByRole("button", { name: "Algorithms", exact: true }).click();
-  await expect(page.locator(".project-card")).toHaveCount(2);
-  await expect(page.locator(".project-card h3")).toContainText([
-    "Mazera",
-    "AERIS",
-  ]);
-  await page.getByRole("button", { name: "All worlds" }).click();
+  await expect(page.locator(".project-card")).toHaveCount(projects.length);
+  await page
+    .getByRole("combobox", { name: "Filter projects by category" })
+    .selectOption("Algorithms");
+  await expect(
+    page.locator(".project-card h3").filter({ hasText: "Mazera" }),
+  ).toBeVisible();
+  await expect(
+    page.locator(".project-card h3").filter({ hasText: "AERIS" }),
+  ).toBeVisible();
+  await expect(
+    page.locator(".project-card h3").filter({ hasText: "Student Burnout" }),
+  ).toHaveCount(0);
+  await page
+    .getByRole("combobox", { name: "Filter projects by category" })
+    .selectOption("All worlds");
   await page
     .getByRole("searchbox", { name: "Search project worlds" })
     .fill("PostgreSQL");
-  await expect(page.locator(".project-card")).toHaveCount(4);
+  await expect(
+    page.locator(".project-card h3").filter({ hasText: "SmartPark" }),
+  ).toBeVisible();
+  await expect(
+    page.locator(".project-card h3").filter({ hasText: "Mazera" }),
+  ).toHaveCount(0);
   await page.getByRole("button", { name: "Clear project search" }).click();
   await page
     .getByRole("button", { name: "Featured only", exact: true })
@@ -75,7 +88,7 @@ test("search, categories, featured filtering, and empty-state reset work", async
     .fill("no-such-world");
   await expect(page.locator(".gallery-empty")).toBeVisible();
   await page.getByRole("button", { name: "Reset filters" }).click();
-  await expect(page.locator(".project-card")).toHaveCount(10);
+  await expect(page.locator(".project-card")).toHaveCount(projects.length);
 });
 
 test("primary cards enter routes and Back preserves gallery state and theme", async ({
@@ -352,7 +365,7 @@ test("Color Field controls and reduced-motion CSS are preserved", async ({
   ).toBe("none");
 });
 
-test("local draft and public-profile copy do not claim message delivery", async ({
+test("configured email and profile clipboard work without a delivery claim", async ({
   page,
   context,
 }) => {
@@ -368,10 +381,23 @@ test("local draft and public-profile copy do not claim message delivery", async 
   await form.getByLabel("Your name").fill("Test visitor");
   await form.getByLabel("Your email").fill("visitor@example.com");
   await form.getByLabel("What’s on your mind?").fill("A portfolio inquiry.");
-  const downloaded = page.waitForEvent("download");
+  await expect(
+    page.locator('a[href="mailto:sidharthsood303@gmail.com"]'),
+  ).toBeVisible();
   await form.getByRole("button", { name: "Prepare email draft" }).click();
-  expect((await downloaded).suggestedFilename()).toBe("portfolio-message.eml");
-  await expect(form.getByRole("status")).toContainText("nothing was sent");
+  await expect(form.getByRole("status")).toContainText(
+    "nothing was sent by this site",
+  );
+  await expect(
+    form.getByRole("link", { name: "Open email draft" }),
+  ).toHaveAttribute(
+    "href",
+    /mailto:sidharthsood303@gmail.com\?subject=Portfolio%20inquiry%20from%20Test%20visitor&body=/,
+  );
+  await page.getByRole("button", { name: "Copy email address" }).click();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+    "sidharthsood303@gmail.com",
+  );
   await page.getByRole("button", { name: "Copy GitHub profile" }).click();
   await expect(form.getByRole("status")).toContainText("GitHub profile copied");
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
@@ -407,7 +433,7 @@ for (const route of [
 test("home and representative worlds pass automated accessibility in both themes", async ({
   page,
 }) => {
-  test.setTimeout(90000);
+  test.setTimeout(180000);
   await page.emulateMedia({ reducedMotion: "reduce" });
   for (const route of [
     "/",
@@ -415,12 +441,30 @@ test("home and representative worlds pass automated accessibility in both themes
     "/projects/student-burnout-ai/",
     "/projects/smart-parking-dbms/",
     "/projects/football-penalty-shootout/",
+    "/projects/last-mile-daa/",
+    "/projects/burnout-backend/",
+    "/projects/sigsmith/",
+    "/projects/swarmmind/",
+    "/projects/pathable/",
   ]) {
     await page.goto(route);
+    if (route !== "/" && !route.includes("last-mile-daa"))
+      await expect(page.locator(".interactive-module")).toBeVisible();
     for (const theme of ["light", "dark"]) {
       await page
         .getByRole("button", { name: `Switch to ${theme} theme` })
         .click();
+      await expect(page.locator(".portfolio-root")).toHaveAttribute(
+        "data-theme",
+        theme,
+      );
+      // Audit the completed theme paint after the lazy world has mounted.
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+          ),
+      );
       const result = await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
         .analyze();
@@ -458,6 +502,14 @@ test("desktop sculpture and project spatial view use WebGL with working controls
   await page.goto("/projects/mazera-ai-maze-solver/");
   await expect(page.locator("canvas")).toBeVisible({ timeout: 20000 });
   await expect(page.locator(".spatial-fallback")).toHaveCount(0);
+  await page.getByRole("button", { name: "Top view", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Top view", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Reset camera", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Isometric", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: "2D", exact: true }).click();
   await expect(page.locator("canvas")).toHaveCount(0);
   await expect(page.locator(".maze-grid-svg")).toBeVisible();

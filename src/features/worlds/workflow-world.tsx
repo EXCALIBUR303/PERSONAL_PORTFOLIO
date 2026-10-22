@@ -16,7 +16,9 @@ export default function WorkflowWorld({ project }: { project: Project }) {
           <i />
         </div>
         <span className="eyebrow">
-          FOLLOW THE IMPLEMENTATION / READ-ONLY GUIDE
+          {project.demo.type === "unavailable"
+            ? "PROPOSED DESIGN / READ-ONLY GUIDE"
+            : "FOLLOW THE IMPLEMENTATION / READ-ONLY GUIDE"}
         </span>
         <div className="workflow-stage-content" aria-live="polite">
           <span className="workflow-large-number">
@@ -66,10 +68,10 @@ export default function WorkflowWorld({ project }: { project: Project }) {
         </button>
       </div>
       <p className="module-disclaimer">
-        Source-backed component guide. These controls navigate implementation
-        notes; they do not execute the original application, model, or external
-        services. Use the architecture map below to inspect actual logical
-        connections.
+        Source-backed component guide. These controls navigate documented
+        component notes; they do not execute the original application, model, or
+        external services. Use the architecture map below to inspect actual
+        logical connections.
       </p>
     </div>
   );

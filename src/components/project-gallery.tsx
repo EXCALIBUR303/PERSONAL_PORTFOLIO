@@ -1,18 +1,34 @@
 "use client";
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import { AnimatePresence } from "motion/react";
-import { Search, X, ArrowUpRight } from "lucide-react";
+import Link from "next/link";
+import {
+  Search,
+  X,
+  ArrowUpRight,
+  GraduationCap,
+  FlaskConical,
+  Layers3,
+  List,
+  Monitor,
+  CircuitBoard,
+  ScanLine,
+} from "lucide-react";
 import { projects, categories, type Project } from "@/data/projects";
 import { usePortfolioState } from "./app-frame";
 import { ProjectCard } from "./project-components";
-import { SectionLabel, Reveal } from "./ui";
+import ProjectPreview from "./project-preview";
+import { SectionLabel } from "./ui";
 const ProjectDialog = dynamic(() => import("./project-dialog"), { ssr: false });
 export default function ProjectGallery() {
-  const { gallery, setGallery } = usePortfolioState();
+  const { gallery, setGallery, beginPortal } = usePortfolioState();
   const [selected, setSelected] = useState<Project | null>(null);
   const filtered = projects.filter(
     (project) =>
+      (gallery.collection === "All" ||
+        project.collection === gallery.collection) &&
+      (gallery.discipline === "All" ||
+        project.discipline === gallery.discipline) &&
       (gallery.category === "All worlds" ||
         project.categories.includes(gallery.category)) &&
       (!gallery.featuredOnly || project.featured) &&
@@ -20,119 +36,303 @@ export default function ProjectGallery() {
         .toLowerCase()
         .includes(gallery.query.toLowerCase().trim()),
   );
+  const spotlight =
+    filtered.find((p) => p.slug === gallery.selectedSlug) || filtered[0];
+  function reset() {
+    setGallery({
+      ...gallery,
+      query: "",
+      category: "All worlds",
+      featuredOnly: false,
+      collection: "All",
+      discipline: "All",
+    });
+  }
   return (
     <section id="projects" className="projects-section section-pad">
       <div className="container">
         <SectionLabel number="01">
-          THE PROJECT MULTIVERSE / CHOOSE YOUR WORLD
+          THE PROJECT COLLECTIONS / OPEN THE LAB
         </SectionLabel>
-        <Reveal className="section-heading">
+        <div className="universe-section-heading">
           <h2>
-            Different worlds.
+            Built to be
             <br />
-            One <em>curious mind.</em>
+            <em>explored.</em>
           </h2>
-          <div>
-            <p>
-              Algorithms to intelligent systems.
-              <br />
-              Follow a question. Enter a world. See how it works.
-            </p>
-            <span className="template-note mono">
-              {projects.filter((p) => p.sourceVisibility === "public").length}{" "}
-              PUBLIC REPOSITORIES / 1 INDEPENDENT STUDY
-            </span>
-          </div>
-        </Reveal>
-        <div className="gallery-toolbar">
-          <label className="project-search">
-            <Search size={16} />
-            <span className="sr-only">Search project worlds</span>
-            <input
-              type="search"
-              value={gallery.query}
-              placeholder="Find a world, a tool, an idea…"
-              onChange={(event) =>
-                setGallery({ ...gallery, query: event.target.value })
-              }
-            />
-            {gallery.query && (
-              <button
-                aria-label="Clear project search"
-                onClick={() => setGallery({ ...gallery, query: "" })}
-              >
-                <X size={14} />
-              </button>
-            )}
-          </label>
-          <button
-            className="featured-toggle"
-            aria-pressed={gallery.featuredOnly}
-            onClick={() =>
-              setGallery({ ...gallery, featuredOnly: !gallery.featuredOnly })
-            }
-          >
-            Featured only
-          </button>
-          <span className="mono gallery-count" role="status">
-            {filtered.length} / {projects.length} WORLDS
+          <p>
+            Coursework and curiosity, made tangible.
+            <br />
+            Choose a collection. Open a system. Try the idea.
+          </p>
+          <span className="collection-total">
+            {String(projects.length).padStart(2, "0")}
+            <small>PROJECT WORLDS</small>
           </span>
         </div>
-        <div
-          className="project-filters"
-          role="group"
-          aria-label="Filter projects by category"
-        >
-          {categories.map((category) => (
-            <button
-              key={category}
-              aria-pressed={gallery.category === category}
-              onClick={() => setGallery({ ...gallery, category })}
+        <div className="collection-layout">
+          <aside className="collection-sidebar">
+            <span className="eyebrow">THE ARCHIVE</span>
+            <div
+              role="group"
+              aria-label="Project collections"
+              className="collection-buttons"
             >
-              {category}
-              {category === "All worlds" && <span>{projects.length}</span>}
-            </button>
-          ))}
-        </div>
-        <div className="project-grid">
-          <AnimatePresence mode="popLayout">
-            {filtered.map((project) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                index={projects.indexOf(project)}
-                onOpen={() => setSelected(project)}
-              />
-            ))}
-          </AnimatePresence>
-        </div>
-        {filtered.length === 0 && (
-          <div className="gallery-empty">
-            <Search size={30} />
-            <h3>No worlds match that signal.</h3>
-            <p>Try a project name, technology, or a different category.</p>
-            <button
-              className="button button-lime"
-              onClick={() =>
-                setGallery({
-                  query: "",
-                  category: "All worlds",
-                  featuredOnly: false,
-                })
-              }
+              {(["All", "College", "Personal"] as const).map((collection) => {
+                const Icon =
+                  collection === "College"
+                    ? GraduationCap
+                    : collection === "Personal"
+                      ? FlaskConical
+                      : Layers3;
+                return (
+                  <button
+                    key={collection}
+                    aria-pressed={gallery.collection === collection}
+                    onClick={() =>
+                      setGallery({ ...gallery, collection, selectedSlug: null })
+                    }
+                  >
+                    <Icon size={19} />
+                    <span>
+                      {collection === "All"
+                        ? "All projects"
+                        : `${collection} Projects`}
+                    </span>
+                    <small>
+                      {
+                        projects.filter(
+                          (p) =>
+                            collection === "All" || p.collection === collection,
+                        ).length
+                      }
+                    </small>
+                  </button>
+                );
+              })}
+            </div>
+            <span className="eyebrow sidebar-subtitle">PROJECT TYPE</span>
+            <div
+              role="group"
+              aria-label="Software or hardware"
+              className="discipline-buttons"
             >
-              Reset filters
-              <X size={15} />
-            </button>
+              {(["All", "Software", "Hardware"] as const).map((discipline) => (
+                <button
+                  key={discipline}
+                  aria-pressed={gallery.discipline === discipline}
+                  onClick={() =>
+                    setGallery({ ...gallery, discipline, selectedSlug: null })
+                  }
+                >
+                  {discipline === "Hardware" ? (
+                    <CircuitBoard size={16} />
+                  ) : discipline === "Software" ? (
+                    <Monitor size={16} />
+                  ) : (
+                    <Layers3 size={16} />
+                  )}
+                  <span>{discipline === "All" ? "All types" : discipline}</span>
+                </button>
+              ))}
+            </div>
+            <p className="classification-note">
+              College and Personal collections are confirmed by me. Hardware is
+              reserved for physical builds; simulations stay in Software.
+            </p>
+            <a
+              className="sidebar-source"
+              href="https://github.com/EXCALIBUR303?tab=repositories"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Browse GitHub <ArrowUpRight size={14} />
+            </a>
+          </aside>
+          <div className="collection-main">
+            <div className="gallery-toolbar">
+              <label className="project-search">
+                <Search size={17} />
+                <span className="sr-only">Search project worlds</span>
+                <input
+                  type="search"
+                  value={gallery.query}
+                  placeholder="Search projects, tools, ideas…"
+                  onChange={(event) =>
+                    setGallery({ ...gallery, query: event.target.value })
+                  }
+                />
+                {gallery.query && (
+                  <button
+                    aria-label="Clear project search"
+                    onClick={() => setGallery({ ...gallery, query: "" })}
+                  >
+                    <X size={15} />
+                  </button>
+                )}
+              </label>
+              <div
+                className="gallery-view-toggle"
+                role="group"
+                aria-label="Project layout"
+              >
+                <button
+                  aria-label="Exhibit view"
+                  aria-pressed={gallery.layout === "exhibits"}
+                  onClick={() => setGallery({ ...gallery, layout: "exhibits" })}
+                >
+                  <ScanLine size={17} />
+                </button>
+                <button
+                  aria-label="Index view"
+                  aria-pressed={gallery.layout === "index"}
+                  onClick={() => setGallery({ ...gallery, layout: "index" })}
+                >
+                  <List size={17} />
+                </button>
+              </div>
+            </div>
+            <div className="gallery-filter-line">
+              <label className="category-select">
+                <span className="sr-only">Filter projects by category</span>
+                <select
+                  value={gallery.category}
+                  onChange={(event) =>
+                    setGallery({ ...gallery, category: event.target.value })
+                  }
+                >
+                  {categories.map((category) => (
+                    <option key={category}>{category}</option>
+                  ))}
+                </select>
+              </label>
+              <button
+                className="featured-toggle"
+                aria-pressed={gallery.featuredOnly}
+                onClick={() =>
+                  setGallery({
+                    ...gallery,
+                    featuredOnly: !gallery.featuredOnly,
+                  })
+                }
+              >
+                Featured only
+              </button>
+              <span className="mono gallery-count" role="status">
+                {filtered.length} / {projects.length} WORLDS
+              </span>
+            </div>
+            {spotlight && gallery.layout === "exhibits" && (
+              <div
+                className={`project-exhibit exhibit-${spotlight.kind}`}
+                style={
+                  { "--world-accent": spotlight.accent } as React.CSSProperties
+                }
+              >
+                <div className="exhibit-art">
+                  <ProjectPreview
+                    type={spotlight.kind}
+                    title={spotlight.title}
+                    accent={spotlight.accent}
+                  />
+                  <span className="exhibit-coordinate mono">
+                    EXHIBIT{" "}
+                    {String(projects.indexOf(spotlight) + 1).padStart(2, "0")} /{" "}
+                    {spotlight.collection.toUpperCase()}
+                  </span>
+                </div>
+                <div className="exhibit-copy">
+                  <span className="eyebrow">
+                    {spotlight.discipline} /{" "}
+                    {spotlight.demo.type === "embedded"
+                      ? "ORIGINAL APPLICATION"
+                      : spotlight.demo.type === "unavailable"
+                        ? "DOCUMENTED SCOPE"
+                        : "INTERACTIVE EXPLORER"}
+                  </span>
+                  <h3>{spotlight.title}</h3>
+                  <p>{spotlight.tagline}</p>
+                  <Link
+                    className="button button-lime"
+                    href={`/projects/${spotlight.slug}/`}
+                    prefetch={false}
+                    onClick={() => beginPortal(spotlight.accent)}
+                  >
+                    Explore project <ArrowUpRight size={17} />
+                  </Link>
+                </div>
+              </div>
+            )}
+            <div
+              className={`project-grid project-index-list ${gallery.layout === "index" ? "compact-index" : ""}`}
+            >
+              {filtered.map((project) => (
+                <div className="project-index-entry" key={project.id}>
+                  <ProjectCard
+                    project={project}
+                    index={projects.indexOf(project)}
+                    onOpen={() => setSelected(project)}
+                  />
+                  <button
+                    className="exhibit-select"
+                    aria-label={`Preview ${project.title} in exhibit`}
+                    aria-pressed={spotlight?.id === project.id}
+                    onClick={() => {
+                      setGallery({
+                        ...gallery,
+                        selectedSlug: project.slug,
+                        layout: "exhibits",
+                      });
+                      requestAnimationFrame(() =>
+                        document
+                          .querySelector(".project-exhibit")
+                          ?.scrollIntoView({
+                            block: "center",
+                            behavior: matchMedia(
+                              "(prefers-reduced-motion: reduce)",
+                            ).matches
+                              ? "instant"
+                              : "smooth",
+                          }),
+                      );
+                    }}
+                  >
+                    <ScanLine size={15} />
+                    <span>Preview</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+            {!filtered.length && (
+              <div className="gallery-empty">
+                {gallery.discipline === "Hardware" ? (
+                  <CircuitBoard size={36} />
+                ) : (
+                  <Search size={30} />
+                )}
+                <h3>
+                  {gallery.discipline === "Hardware"
+                    ? "Physical builds, when they’re ready."
+                    : "No worlds match that signal."}
+                </h3>
+                <p>
+                  {gallery.discipline === "Hardware"
+                    ? "No verified physical hardware project is listed in this collection yet. Explore the software systems and simulations, or choose another collection."
+                    : "Try a project name, technology, or a different category."}
+                </p>
+                <button className="button button-lime" onClick={reset}>
+                  Reset filters <X size={15} />
+                </button>
+              </div>
+            )}
           </div>
-        )}
+        </div>
         <div className="work-end mono">
           <span>
-            EVERY TECHNICAL CLAIM HAS A SOURCE. EVERY WORLD HAS A WAY IN.
+            SOURCE EVIDENCE, EXECUTION STATUS & DEMO OPTIONS INSIDE EACH WORLD.
           </span>
           <a href="#engine">
-            EXPLORE THE ARCHITECTURE
-            <ArrowUpRight size={14} />
+            INSPECT THE SYSTEMS <ArrowUpRight size={14} />
           </a>
         </div>
       </div>

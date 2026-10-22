@@ -39,11 +39,13 @@ export default function DimensionEngine() {
               value={slug}
               onChange={(event) => setSlug(event.target.value)}
             >
-              {projects.map((p) => (
-                <option key={p.slug} value={p.slug}>
-                  {p.title}
-                </option>
-              ))}
+              {projects
+                .filter((p) => p.architecture.nodes.length > 0)
+                .map((p) => (
+                  <option key={p.slug} value={p.slug}>
+                    {p.title}
+                  </option>
+                ))}
             </select>
             <div className="engine-project-meta">
               <span className="mono">

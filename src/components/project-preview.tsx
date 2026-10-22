@@ -5,6 +5,7 @@ import {
   CircuitBoard,
   FileSearch,
   Network,
+  LockKeyhole,
 } from "lucide-react";
 import type { WorldKind } from "@/data/projects";
 export default function ProjectPreview({
@@ -25,11 +26,27 @@ export default function ProjectPreview({
     >
       <div className="universe-preview-grid" />
       <span className="universe-caption">
-        {type === "penalty"
-          ? "ORIGINAL INTERACTION STUDY"
-          : "ENGINEERING WORLDS / SOURCE VERIFIED"}
+        {type === "unavailable"
+          ? "PRIVATE PROJECT / DETAILS WITHHELD"
+          : type === "penalty"
+            ? "ORIGINAL INTERACTION STUDY"
+            : "ENGINEERING WORLDS / SOURCE VERIFIED"}
       </span>
-      {type === "maze" ? (
+      {type === "unavailable" ? (
+        <>
+          <div className="system-cover">
+            <LockKeyhole size={80} />
+          </div>
+          <strong className="universe-cover-title">
+            Private
+            <br />
+            <em>by design.</em>
+          </strong>
+          <span className="universe-cover-meta">
+            OWNER-SUPPLIED NAME / NO SOURCE PUBLISHED
+          </span>
+        </>
+      ) : type === "maze" ? (
         <>
           <div className="maze-cover">
             {Array.from({ length: 81 }, (_, i) => (

@@ -5,7 +5,8 @@ export type WorldKind =
   | "parking"
   | "maintenance"
   | "penalty"
-  | "architecture";
+  | "architecture"
+  | "unavailable";
 export type ArchitectureNode = {
   id: string;
   label: string;
@@ -17,7 +18,24 @@ export type Architecture = {
   edges: [string, string][];
 };
 export type Evidence = { label: string; path: string; url: string };
+export type ProjectCollection = "College" | "Personal";
+export type ProjectDiscipline = "Software" | "Hardware" | "Unverified";
+export type DemoInfo = {
+  type: "embedded" | "simulation" | "local" | "unavailable";
+  url: string | null;
+  summary: string;
+  commands: string[];
+  environment: { name: string; purpose: string }[];
+  runtimeStatus: string;
+  testStatus: string;
+  verifiedOn: string;
+  notes: string[];
+};
 export type Project = {
+  collection: ProjectCollection;
+  discipline: ProjectDiscipline;
+  classificationNote: string;
+  demo: DemoInfo;
   id: string;
   slug: string;
   repository: string;
@@ -44,11 +62,53 @@ export type Project = {
   sourceCommit: string | null;
   eyebrow: string;
 };
-// Public source was audited on 2026-10-21. Evidence is pinned to the inspected commits.
+// Source audit: 2026-10-21–22. Evidence is pinned; bounded execution is recorded per project.
 // The football entry describes only the independently implemented portfolio demo.
 export const projects: Project[] = [
   {
     id: "student-burnout-ai",
+    collection: "College",
+    discipline: "Software",
+    classificationNote:
+      "Collection confirmed by the project owner. Physical hardware completion has not been verified.",
+    demo: {
+      type: "simulation",
+      url: null,
+      summary:
+        "Explore the documented idea through a local interactive demonstration. Original services are not connected.",
+      commands: [
+        "# From the original repository root. Run frontend and backend in separate terminals.",
+        "cd burnout-frontend",
+        "npm ci --ignore-scripts",
+        "npm start",
+        "# Backend, from the repository root:",
+        "cd burnout-backend",
+        "python3.12 -m venv .venv",
+        "source .venv/bin/activate",
+        "pip install -r requirements.txt",
+        "uvicorn main:app --host 127.0.0.1 --port 8000",
+      ],
+      environment: [
+        {
+          name: "JWT_SECRET",
+          purpose: "Private signing secret for local accounts.",
+        },
+        {
+          name: "GEMINI_API_KEY",
+          purpose:
+            "Optional wellness chatbot API key; offline fallback without it.",
+        },
+      ],
+      runtimeStatus:
+        "Original React production build passed. Model inference and the complete backend were not run.",
+      testStatus:
+        "1 SQLite feedback test passed. Frontend Jest suite failed to resolve react-router-dom; no frontend tests executed.",
+      verifiedOn: "2026-10-22",
+      notes: [
+        "Portfolio interaction explains the pipeline; it does not diagnose burnout or run the trained model.",
+        "Full startup loads committed model artifacts; those were not deserialized in this audit.",
+      ],
+    },
     slug: "student-burnout-ai",
     repository: "student-burnout-ai",
     title: "Student Burnout AI",
@@ -89,7 +149,7 @@ export const projects: Project[] = [
       "v5 metadata reports primary holdout accuracy 0.7672 and macro-F1 0.7932, but real-lifestyle benchmark accuracy 0.337 and macro-F1 0.168. Prefer not highlighting a single accuracy figure.",
       "Trainer comments initially claim 19 features; actual feature arrays, model metadata and inference source have 18.",
       "Source includes older duplicate frontend/backend trees; current primary backend main.py tries v5 artifact before v4/v3/legacy.",
-      "No model training or backend execution was rerun during this portfolio audit.",
+      "Model training and inference were not rerun; bounded verification is documented in the execution bay.",
     ],
     architecture: {
       kind: "Reconstructed from verified source",
@@ -168,6 +228,34 @@ export const projects: Project[] = [
   },
   {
     id: "mazera-ai-maze-solver",
+    collection: "Personal",
+    discipline: "Software",
+    classificationNote:
+      "Collection confirmed by the project owner. Physical hardware completion has not been verified.",
+    demo: {
+      type: "embedded",
+      url: "/demos/mazera/",
+      summary:
+        "Launch the original Mazera React application: six real search algorithms, maze generation, replay controls and browser-local history.",
+      commands: [
+        "git clone https://github.com/EXCALIBUR303/mazera-ai-maze-solver.git",
+        "cd mazera-ai-maze-solver",
+        "npm ci --ignore-scripts",
+        "npm run dev",
+      ],
+      environment: [],
+      runtimeStatus:
+        "Original production build and all six solver browser workflows passed.",
+      testStatus:
+        "168 direct solver/generator/grid checks passed. No repository test suite is supplied.",
+      verifiedOn: "2026-10-22",
+      notes: [
+        "Original desktop interface needs horizontal scrolling on small screens.",
+        "The Memory Usage chart counts explored nodes plus path length; it does not measure bytes.",
+        "DFS and Greedy do not guarantee shortest paths. The original Step control replays the animation.",
+        "Classical search algorithms; no neural inference service.",
+      ],
+    },
     slug: "mazera-ai-maze-solver",
     repository: "mazera-ai-maze-solver",
     title: "Mazera AI Maze Solver",
@@ -275,6 +363,45 @@ export const projects: Project[] = [
   },
   {
     id: "uco-recovery-station",
+    collection: "College",
+    discipline: "Software",
+    classificationNote:
+      "Collection confirmed by the project owner. Physical hardware completion has not been verified.",
+    demo: {
+      type: "simulation",
+      url: null,
+      summary:
+        "Explore the documented idea through a local interactive demonstration. Original services are not connected.",
+      commands: [
+        "npm ci --ignore-scripts",
+        "npm run db:generate -w @uco/api",
+        "# Configure local PostgreSQL and the API environment before migration.",
+        "npm run db:migrate",
+        "npm run dev:api",
+        "# Separate terminals from the repository root:",
+        "npm run dev -w @uco/kiosk",
+        "npm run dev -w @uco/dashboard",
+      ],
+      environment: [
+        {
+          name: "DATABASE_URL",
+          purpose: "Local PostgreSQL connection.",
+        },
+        {
+          name: "JWT_SECRET",
+          purpose: "Private authentication signing secret.",
+        },
+      ],
+      runtimeStatus:
+        "Original kiosk and dashboard builds passed. API build blocked by missing generated Prisma client; Prisma engine download returned HTTP 403.",
+      testStatus:
+        "5 original classifier branches and 2 integer payout checks passed; database and payment workflows not run.",
+      verifiedOn: "2026-10-22",
+      notes: [
+        "Portfolio station is an illustrative software simulation. No physical station or real payment is connected.",
+        "A local database is required. Payment integration is optional and unverified here.",
+      ],
+    },
     slug: "uco-recovery-station",
     repository: "uco-recovery-station",
     title: "Cycoil · UCO Recovery Station",
@@ -405,6 +532,40 @@ export const projects: Project[] = [
   },
   {
     id: "smart-parking-dbms",
+    collection: "College",
+    discipline: "Software",
+    classificationNote:
+      "Collection confirmed by the project owner. Physical hardware completion has not been verified.",
+    demo: {
+      type: "simulation",
+      url: null,
+      summary:
+        "Explore the documented idea through a local interactive demonstration. Original services are not connected.",
+      commands: [
+        "# Requires a local PostgreSQL server; run in the original repository root.",
+        "./setup.sh",
+        "./.venv/bin/uvicorn api.main:app --port 8077",
+      ],
+      environment: [
+        {
+          name: "SMARTPARK_DATABASE_URL",
+          purpose: "Local PostgreSQL database connection.",
+        },
+        {
+          name: "SMARTPARK_JWT_SECRET",
+          purpose: "Private authentication signing secret.",
+        },
+      ],
+      runtimeStatus:
+        "API startup attempted; PostgreSQL connection pool timed out because no database was configured.",
+      testStatus:
+        "Database and authenticated end-to-end tests not run; local portfolio parking simulation is tested separately.",
+      verifiedOn: "2026-10-22",
+      notes: [
+        "The interactive parking lot is a browser-only demonstration, not connected to the original database.",
+        "Original setup creates local database/schema resources; use a dedicated development database.",
+      ],
+    },
     slug: "smart-parking-dbms",
     repository: "DBMS_SMART_PARKING",
     title: "SmartPark DBMS",
@@ -522,6 +683,42 @@ export const projects: Project[] = [
   },
   {
     id: "predictive-maintenance",
+    collection: "Personal",
+    discipline: "Software",
+    classificationNote:
+      "Collection confirmed by the project owner. Physical hardware completion has not been verified.",
+    demo: {
+      type: "simulation",
+      url: null,
+      summary:
+        "The portfolio shows a synthetic sensor demonstration. The original API needs locally trained artifacts.",
+      commands: [
+        "make install-all",
+        "make data-fd001",
+        "make train-xgboost-fd001",
+        "export RULPM_ARTIFACT_DIR=runs/FD001/xgboost/latest",
+        "make serve",
+      ],
+      environment: [
+        {
+          name: "RULPM_ARTIFACT_DIR",
+          purpose:
+            "Directory containing a locally trained model, preprocessor, config and metadata.",
+        },
+      ],
+      runtimeStatus:
+        "Actual Uvicorn API started on 127.0.0.1:18321; GET /health returned HTTP 200 with loaded:false.",
+      testStatus:
+        "18 selected repository ingestion, targets, preprocessing, sequence-window, metric, EDA and download-script tests passed.",
+      verifiedOn: "2026-10-22",
+      notes: [
+        "Raw C-MAPSS data and trained artifacts not committed",
+        "No full model inference or training reproduction",
+        "NASA C-MAPSS is simulated degradation data, not physical sensor integration.",
+        "First bounded startup check ended before scientific imports completed; second startup succeeded.",
+        "API was shut down after local verification; this is not a live public demo.",
+      ],
+    },
     slug: "predictive-maintenance",
     repository: "rul-predictive-maintenance",
     title: "Predictive Maintenance",
@@ -663,6 +860,25 @@ export const projects: Project[] = [
   },
   {
     id: "football-penalty-shootout",
+    collection: "Personal",
+    discipline: "Software",
+    classificationNote:
+      "Collection confirmed by the project owner. Physical hardware completion has not been verified.",
+    demo: {
+      type: "simulation",
+      url: null,
+      summary:
+        "An original browser penalty game built for this portfolio. It does not reproduce or expose the private project.",
+      commands: [],
+      environment: [],
+      runtimeStatus: "Runs entirely in this portfolio using local game state.",
+      testStatus:
+        "Shot, score, mode and reset behavior are covered by portfolio browser tests.",
+      verifiedOn: "2026-10-22",
+      notes: [
+        "Independent portfolio implementation; private repository contents were not inspected.",
+      ],
+    },
     slug: "football-penalty-shootout",
     repository: "FootBall_Penalty_Shootout",
     title: "Penalty Shootout",
@@ -728,6 +944,31 @@ export const projects: Project[] = [
   },
   {
     id: "green-mobility",
+    collection: "College",
+    discipline: "Software",
+    classificationNote:
+      "Collection confirmed by the project owner. Physical hardware completion has not been verified.",
+    demo: {
+      type: "local",
+      url: null,
+      summary:
+        "Explore the documented idea through a local interactive demonstration. Original services are not connected.",
+      commands: [
+        "# Requires Java, Maven, Tomcat and a configured local MySQL database.",
+        "mvn clean package",
+        "# Deploy target/green-mobility.war to your local Tomcat webapps directory.",
+      ],
+      environment: [],
+      runtimeStatus:
+        "Full Java application not run: this workspace lacks javac, Maven, Tomcat and configured MySQL.",
+      testStatus:
+        "Java utility test harness prepared, but not executed because the JDK compiler is unavailable.",
+      verifiedOn: "2026-10-22",
+      notes: [
+        "Carbon savings are estimates using fixed factors, not measured emissions.",
+        "Portfolio guide does not book real vehicles or connect to MySQL.",
+      ],
+    },
     slug: "green-mobility",
     repository: "pbl6-green-mobility",
     title: "Campus Green Mobility",
@@ -825,6 +1066,41 @@ export const projects: Project[] = [
   },
   {
     id: "aeris",
+    collection: "Personal",
+    discipline: "Software",
+    classificationNote:
+      "Collection confirmed by the project owner. Physical hardware completion has not been verified.",
+    demo: {
+      type: "local",
+      url: null,
+      summary:
+        "Inspect the source-backed component guide, then run the original application locally with its required services.",
+      commands: [
+        "uv sync --extra sim --extra dev",
+        "uv run python -m aeris.cli sim up --profile headless_x500",
+        "uv run pytest -q tests/unit/autonomy/planning/test_astar.py",
+      ],
+      environment: [
+        {
+          name: "AERIS_PX4_DIR",
+          purpose:
+            "Path to externally built PX4-Autopilot checkout; Gazebo Harmonic also required.",
+        },
+      ],
+      runtimeStatus:
+        "CLI simulation startup attempted and failed explicitly with Px4NotFoundError: external PX4 checkout is absent.",
+      testStatus:
+        "70 selected core configuration/types/units/logging/clock and A* tests passed in 2.71 s.",
+      verifiedOn: "2026-10-22",
+      notes: [
+        "Built PX4-Autopilot checkout absent",
+        "Gazebo Harmonic simulator and integration not exercised",
+        "PyTorch learning extras not installed; no training attempted",
+        "Initial A* collection failed because numba was absent; installing numba resolved collection and all 70 selected tests passed.",
+        "Physical flight is out of scope; classify as software simulation.",
+        "No public deployment URL verified.",
+      ],
+    },
     slug: "aeris",
     repository: "aeris",
     title: "AERIS",
@@ -936,6 +1212,74 @@ export const projects: Project[] = [
   },
   {
     id: "rupeerise",
+    collection: "Personal",
+    discipline: "Software",
+    classificationNote:
+      "Collection confirmed by the project owner. Physical hardware completion has not been verified.",
+    demo: {
+      type: "local",
+      url: null,
+      summary:
+        "Inspect the source-backed component guide, then run the original application locally with its required services.",
+      commands: [
+        "# From the original repository root; configure local PostgreSQL and environment first.",
+        "createdb rupeerise",
+        "cd backend",
+        "uv sync",
+        "uv run alembic upgrade head",
+        "RUPEERISE_PRIVATE_CONTENT_DIR=none uv run python -m app.seed --demo",
+        "RUPEERISE_PRIVATE_CONTENT_DIR=none uv run uvicorn app.main:app --reload --port 8000",
+        "# In a second terminal from the repository root:",
+        "cd frontend",
+        "npm install",
+        "npm run dev",
+      ],
+      environment: [
+        {
+          name: "RUPEERISE_DATABASE_URL",
+          purpose: "Local PostgreSQL connection.",
+        },
+        {
+          name: "RUPEERISE_SECRET_KEY",
+          purpose: "Application signing secret; configure privately.",
+        },
+        {
+          name: "RUPEERISE_PRIVATE_CONTENT_DIR",
+          purpose:
+            "Private answer-key directory; none explicitly selects public placeholder development mode.",
+        },
+        {
+          name: "RUPEERISE_ANTHROPIC_API_KEY",
+          purpose:
+            "Optional tutor service; deterministic fallback without key.",
+        },
+        {
+          name: "ALPHA_VANTAGE_API_KEY",
+          purpose: "Optional market reference data.",
+        },
+        {
+          name: "MARKETAUX_API_TOKEN",
+          purpose: "Optional news reference data.",
+        },
+        {
+          name: "VITE_API_BASE_URL",
+          purpose: "Frontend API origin.",
+        },
+      ],
+      runtimeStatus:
+        "Actual Uvicorn API started on 127.0.0.1:18322; GET /api/health returned HTTP 200 with status:degraded,database:false.",
+      testStatus:
+        "66 repository deterministic money, budget, savings and investing engine tests passed with --noconftest.",
+      verifiedOn: "2026-10-22",
+      notes: [
+        "No PostgreSQL instance/schema configured",
+        "Private answer keys intentionally not accessed; production requires them",
+        "Full suite includes autouse DROP SCHEMA fixture and requires a dedicated isolated test database",
+        "--noconftest intentionally bypassed repository database fixtures to safely execute independent pure-engine tests; does not claim full suite pass.",
+        "Five-member hackathon project; user classifies Personal. No sole-authorship claim.",
+        "Fictional money; optional paid API integrations not called.",
+      ],
+    },
     slug: "rupeerise",
     repository: "IIIT_HACKATHON",
     title: "RupeeRise",
@@ -1042,6 +1386,73 @@ export const projects: Project[] = [
   },
   {
     id: "resume-screener",
+    collection: "Personal",
+    discipline: "Software",
+    classificationNote:
+      "Collection confirmed by the project owner. Physical hardware completion has not been verified.",
+    demo: {
+      type: "local",
+      url: null,
+      summary:
+        "Inspect the source-backed component guide, then run the original application locally with its required services.",
+      commands: [
+        "cp .env.example .env # set fresh private APP_KEK, JWT_SECRET and POSTGRES_PASSWORD",
+        "make bootstrap",
+        "make up",
+        "make migrate",
+        "make seed",
+      ],
+      environment: [
+        {
+          name: "APP_KEK",
+          purpose: "Private encryption key.",
+        },
+        {
+          name: "JWT_SECRET",
+          purpose: "Private authentication signing secret.",
+        },
+        {
+          name: "POSTGRES_PASSWORD",
+          purpose: "Private database credential.",
+        },
+        {
+          name: "POSTGRES_HOST",
+          purpose: "PostgreSQL/pgvector host.",
+        },
+        {
+          name: "LLM_PROVIDER",
+          purpose: "Local model provider selection or offline stub.",
+        },
+        {
+          name: "LLM_BASE_URL",
+          purpose: "Local Ollama/model endpoint.",
+        },
+        {
+          name: "LLM_MODEL",
+          purpose: "Configured local model identifier.",
+        },
+        {
+          name: "SPACY_MODEL",
+          purpose: "Installed NLP model for redaction.",
+        },
+        {
+          name: "EMBEDDING_MODEL",
+          purpose: "Embedding model used for retrieval.",
+        },
+      ],
+      runtimeStatus:
+        "Full API startup not verified; database, storage and service configuration are required.",
+      testStatus:
+        "64 repository scoring/injection/evidence/fusion and ranking metric tests passed in 8.49 s using offline stub provider and --noconftest.",
+      verifiedOn: "2026-10-22",
+      notes: [
+        "Full deployment needs PostgreSQL with pgvector, parse worker, OCR binaries, spaCy/embedding models and local model service",
+        "Only synthetic data used; no real candidate files or live models accessed",
+        "Initial selected suite had 63 pass / 1 dependency failure (pgvector absent). Installing pgvector resolved it; rerun passed all 64.",
+        "The test subset skips application/database conftest and does not establish end-to-end upload or hiring validity.",
+        "Local-only deployment guidance; no verified public URL.",
+      ],
+    },
     slug: "resume-screener",
     repository: "resume-screener",
     title: "Privacy-first Resume Screener",
@@ -1150,6 +1561,671 @@ export const projects: Project[] = [
       "Understanding a technical project requires following its actual boundaries and implementation, rather than inferring a system from its title.",
     solution:
       "A resume research system that separates untrusted-document parsing/redaction from retrieval and evidence-constrained scoring.",
+  },
+  {
+    id: "last-mile-daa",
+    slug: "last-mile-daa",
+    repository: "",
+    title: "Last Mile DAA",
+    tagline: "A college project. Details kept private.",
+    description:
+      "A college project identified by its owner. The implementation is private, so its technical details and original application are not included here.",
+    collection: "College",
+    discipline: "Unverified",
+    classificationNote:
+      "College classification supplied by the owner. Technical and hardware/software scope has not been published.",
+    demo: {
+      type: "unavailable",
+      url: null,
+      summary:
+        "The original project is private. No source, internal data, or speculative reconstruction is published.",
+      commands: [],
+      environment: [],
+      runtimeStatus: "Not executed — private implementation withheld",
+      testStatus: "Not executed — private implementation withheld",
+      verifiedOn: "2026-10-22",
+      notes: [
+        "The title and College collection are supplied by the owner. A public description or explicitly approved demonstration can be added later.",
+      ],
+    },
+    categories: [],
+    stack: [],
+    status: "Private project / details withheld",
+    kind: "unavailable",
+    accent: "#b7bec8",
+    featured: false,
+    githubUrl: null,
+    liveUrl: null,
+    sourceVisibility: "private",
+    interactionLabel: "Private project / no demonstration published",
+    overview:
+      "Owner-confirmed college project; implementation details are not public.",
+    problem:
+      "The technical problem statement has not been supplied for public presentation.",
+    solution:
+      "This entry records only the project name and college classification shared by its owner.",
+    features: [
+      "Included in the College collection by the owner.",
+      "Original implementation and private details are withheld.",
+    ],
+    limitations: [
+      "No original source was inspected or published.",
+      "Technology, architecture, physical hardware, and runtime claims are intentionally unspecified.",
+    ],
+    architecture: {
+      kind: "Not publicly documented",
+      nodes: [],
+      edges: [],
+    },
+    sources: [],
+    sourceCommit: null,
+    eyebrow: "College project / private",
+  },
+  {
+    id: "burnout-backend",
+    slug: "burnout-backend",
+    repository: "burnout-backend",
+    title: "Burnout AI · Backend",
+    tagline: "The service behind the signal.",
+    description:
+      "A separate FastAPI deployment of the burnout research API, with model inference, SQLite account and prediction history, feedback, and optional wellness chat.",
+    overview:
+      "A separate FastAPI deployment of the burnout research API, with model inference, SQLite account and prediction history, feedback, and optional wellness chat.",
+    collection: "College",
+    discipline: "Software",
+    classificationNote:
+      "College collection confirmed by the owner; software API, not a physical hardware build.",
+    demo: {
+      type: "local",
+      url: null,
+      summary:
+        "Inspect the source-backed component guide, then run the original application locally with its required services.",
+      commands: [
+        "python3.12 -m venv .venv",
+        "source .venv/bin/activate",
+        "pip install -r requirements.txt",
+        "uvicorn main:app --host 127.0.0.1 --port 8000",
+      ],
+      environment: [
+        {
+          name: "JWT_SECRET",
+          purpose: "Provide a private signing secret before shared use.",
+        },
+        {
+          name: "DB_PATH",
+          purpose: "Path to local SQLite database.",
+        },
+        {
+          name: "GEMINI_API_KEY",
+          purpose:
+            "Optional external chatbot; leave unset for offline fallback.",
+        },
+      ],
+      runtimeStatus: "Source-reviewed startup; inference not run.",
+      testStatus: "1 SQLite feedback test passed in an isolated environment.",
+      verifiedOn: "2026-10-22",
+      notes: [
+        "No README exists at this snapshot.",
+        "Separate backend of the same burnout research project; not an independent clinical result.",
+        "Full startup automatically deserializes model artifacts; this audit did not load them.",
+        "Not a clinical diagnostic tool; public hosting needs security review of permissive CORS, debug routes and development secret defaults.",
+      ],
+    },
+    categories: ["AI/ML", "Web Development"],
+    stack: [
+      "Python",
+      "FastAPI",
+      "SQLite",
+      "scikit-learn",
+      "XGBoost",
+      "LightGBM",
+    ],
+    status: "Research backend",
+    kind: "architecture",
+    accent: "#79dce5",
+    featured: false,
+    githubUrl: "https://github.com/EXCALIBUR303/burnout-backend",
+    liveUrl: null,
+    sourceVisibility: "public",
+    interactionLabel: "Source-backed component guide",
+    problem:
+      "Serve the burnout research model through an account-aware API with persistent feedback and prediction history.",
+    solution:
+      "A separate FastAPI deployment of the burnout research API, with model inference, SQLite account and prediction history, feedback, and optional wellness chat.",
+    features: [
+      "FastAPI prediction, account, history, and feedback routes.",
+      "Prioritizes committed v5, then v3 and legacy artifacts; inference not rerun in this audit.",
+      "SQLite stores account, prediction, and feedback records.",
+      "Gemini REST integration has an offline fallback when no key is configured.",
+    ],
+    limitations: [
+      "No README exists at this snapshot.",
+      "Separate backend of the same burnout research project; not an independent clinical result.",
+      "Full startup automatically deserializes model artifacts; this audit did not load them.",
+      "Not a clinical diagnostic tool; public hosting needs security review of permissive CORS, debug routes and development secret defaults.",
+    ],
+    architecture: {
+      kind: "Reconstructed from verified public source",
+      nodes: [
+        {
+          id: "component-0",
+          label: "API boundary",
+          description:
+            "FastAPI prediction, account, history, and feedback routes.",
+        },
+        {
+          id: "component-1",
+          label: "Model loading",
+          description:
+            "Prioritizes committed v5, then v3 and legacy artifacts; inference not rerun in this audit.",
+        },
+        {
+          id: "component-2",
+          label: "Persistence",
+          description:
+            "SQLite stores account, prediction, and feedback records.",
+        },
+        {
+          id: "component-3",
+          label: "Optional chat",
+          description:
+            "Gemini REST integration has an offline fallback when no key is configured.",
+        },
+      ],
+      edges: [
+        ["component-0", "component-1"],
+        ["component-0", "component-2"],
+        ["component-0", "component-3"],
+      ],
+    },
+    sources: [
+      {
+        label: "main.py",
+        url: "https://github.com/EXCALIBUR303/burnout-backend/blob/488d4c16d79e19dfab2d3d204246dd82a4365650/main.py",
+        path: "main.py",
+      },
+      {
+        label: "requirements.txt",
+        url: "https://github.com/EXCALIBUR303/burnout-backend/blob/488d4c16d79e19dfab2d3d204246dd82a4365650/requirements.txt",
+        path: "requirements.txt",
+      },
+      {
+        label: "feedback.py",
+        url: "https://github.com/EXCALIBUR303/burnout-backend/blob/488d4c16d79e19dfab2d3d204246dd82a4365650/feedback.py",
+        path: "feedback.py",
+      },
+      {
+        label: "Dockerfile",
+        url: "https://github.com/EXCALIBUR303/burnout-backend/blob/488d4c16d79e19dfab2d3d204246dd82a4365650/Dockerfile",
+        path: "Dockerfile",
+      },
+    ],
+    sourceCommit: "488d4c16d79e19dfab2d3d204246dd82a4365650",
+    eyebrow: "College / Research API",
+  },
+  {
+    id: "sigsmith",
+    slug: "sigsmith",
+    repository: "sigsmith",
+    title: "SIGSMITH",
+    tagline: "A design before a detector.",
+    description:
+      "A technical blueprint for offline, schema-conditioned Sigma detection-rule synthesis. Implementation has not started.",
+    overview:
+      "A technical blueprint for offline, schema-conditioned Sigma detection-rule synthesis. Implementation has not started.",
+    collection: "Personal",
+    discipline: "Software",
+    classificationNote:
+      "Personal collection confirmed by the owner. Software scope only; no physical hardware claim.",
+    demo: {
+      type: "unavailable",
+      url: null,
+      summary:
+        "Read the proposed architecture and evaluation contract. An executable application has not been implemented.",
+      commands: [],
+      environment: [],
+      runtimeStatus: "Not executable — documentation and design contract only.",
+      testStatus: "No implementation or test suite supplied.",
+      verifiedOn: "2026-10-22",
+      notes: [
+        "Documentation only; no application, model, tests or measured performance has been implemented.",
+        "Architecture is proposed, not a working system.",
+      ],
+    },
+    categories: ["AI/ML", "Engineering"],
+    stack: [
+      "Planned Python",
+      "Planned Qwen3-1.7B",
+      "Planned QLoRA",
+      "Planned GGUF",
+    ],
+    status: "Design phase",
+    kind: "architecture",
+    accent: "#d5acff",
+    featured: false,
+    githubUrl: "https://github.com/EXCALIBUR303/sigsmith",
+    liveUrl: null,
+    sourceVisibility: "public",
+    interactionLabel: "Proposed design walkthrough",
+    problem:
+      "Explore how local detection-rule generation could remain constrained to a supplied telemetry schema.",
+    solution:
+      "A technical blueprint for offline, schema-conditioned Sigma detection-rule synthesis. Implementation has not started.",
+    features: [
+      "Completed technical blueprint",
+      "Locked task and evaluation contract",
+      "Planned execution-based rule evaluation",
+    ],
+    limitations: [
+      "Documentation only; no application, model, tests or measured performance has been implemented.",
+      "Architecture is proposed, not a working system.",
+    ],
+    architecture: {
+      kind: "Proposed design — not implemented",
+      nodes: [
+        {
+          id: "component-0",
+          label: "Telemetry schema card",
+          description:
+            "A proposed input card restricts the telemetry fields available to the rule generator.",
+        },
+        {
+          id: "component-1",
+          label: "Threat-behaviour description",
+          description:
+            "A threat-behaviour description supplies the intended detection behaviour.",
+        },
+        {
+          id: "component-2",
+          label: "Planned local model",
+          description:
+            "The blueprint proposes local schema-conditioned rule synthesis; no model has been implemented.",
+        },
+        {
+          id: "component-3",
+          label: "Planned Sigma rule evaluation",
+          description:
+            "The contract describes planned execution-based evaluation; no measured evaluation results exist.",
+        },
+      ],
+      edges: [
+        ["component-0", "component-2"],
+        ["component-1", "component-2"],
+        ["component-2", "component-3"],
+      ],
+    },
+    sources: [
+      {
+        label: "README.md",
+        path: "README.md",
+        url: "https://github.com/EXCALIBUR303/sigsmith/blob/11253c8b450acae412095e8276a84ecbca44e00c/README.md",
+      },
+      {
+        label: "docs/BLUEPRINT.md",
+        path: "docs/BLUEPRINT.md",
+        url: "https://github.com/EXCALIBUR303/sigsmith/blob/11253c8b450acae412095e8276a84ecbca44e00c/docs/BLUEPRINT.md",
+      },
+      {
+        label: "docs/CONTRACT.json",
+        path: "docs/CONTRACT.json",
+        url: "https://github.com/EXCALIBUR303/sigsmith/blob/11253c8b450acae412095e8276a84ecbca44e00c/docs/CONTRACT.json",
+      },
+    ],
+    sourceCommit: "11253c8b450acae412095e8276a84ecbca44e00c",
+    eyebrow: "Personal / Proposed system",
+  },
+  {
+    id: "swarmmind",
+    slug: "swarmmind",
+    repository: "swarmmind",
+    title: "SWARMMIND",
+    tagline: "Many agents. One search.",
+    description:
+      "A 2D robot-swarm search-and-rescue simulator comparing IPPO and MAPPO policies with random and frontier baselines.",
+    overview:
+      "A 2D robot-swarm search-and-rescue simulator comparing IPPO and MAPPO policies with random and frontier baselines.",
+    collection: "Personal",
+    discipline: "Software",
+    classificationNote:
+      "Personal collection confirmed by the owner. Software scope only; no physical hardware claim.",
+    demo: {
+      type: "local",
+      url: null,
+      summary:
+        "Inspect the source-backed component guide, then run the original application locally with its required services.",
+      commands: [
+        "python3.11 -m venv .venv",
+        '.venv/bin/pip install -c requirements.lock -e ".[dev]"',
+        "npm ci --prefix frontend",
+        "make demo",
+      ],
+      environment: [
+        {
+          name: "VITE_API_BASE_URL",
+          purpose: "Optional browser API endpoint override",
+        },
+        {
+          name: "SWARMMIND_HOST",
+          purpose: "Local API binding",
+        },
+        {
+          name: "SWARMMIND_PORT",
+          purpose: "Local API port",
+        },
+        {
+          name: "SWARMMIND_CORS_ORIGIN",
+          purpose: "Permitted UI origin",
+        },
+      ],
+      runtimeStatus:
+        "Original frontend build and core simulation checks passed. Trained-policy API workflow not run.",
+      testStatus:
+        "88 core environment tests and 204 frontend tests passed; 1 frontend test skipped.",
+      verifiedOn: "2026-10-22",
+      notes: [
+        "Software simulator; no physical robotics claim.",
+        "Local single-user application is not hardened for public hosting.",
+        "Five seeds on one L2 configuration; no claim of emergent coordination or MAPPO superiority.",
+        "Full training and learned-policy inference not rerun in portfolio audit.",
+      ],
+    },
+    categories: ["AI/ML", "Engineering"],
+    stack: [
+      "Python",
+      "PyTorch",
+      "PettingZoo",
+      "Gymnasium",
+      "FastAPI",
+      "React",
+      "TypeScript",
+      "Vite",
+    ],
+    status: "Local simulation research application",
+    kind: "architecture",
+    accent: "#edb76e",
+    featured: false,
+    githubUrl: "https://github.com/EXCALIBUR303/swarmmind",
+    liveUrl: null,
+    sourceVisibility: "public",
+    interactionLabel: "Source-backed component guide",
+    problem:
+      "A 2D robot-swarm search-and-rescue simulator comparing IPPO and MAPPO policies with random and frontier baselines.",
+    solution:
+      "A 2D robot-swarm search-and-rescue simulator comparing IPPO and MAPPO policies with random and frontier baselines.",
+    features: [
+      "Partially observed multi-robot environment",
+      "IPPO and MAPPO training implementations",
+      "Committed trained actors and recorded replays",
+      "Interactive simulation, comparison and behaviour analysis",
+    ],
+    limitations: [
+      "Software simulator; no physical robotics claim.",
+      "Local single-user application is not hardened for public hosting.",
+      "Five seeds on one L2 configuration; no claim of emergent coordination or MAPPO superiority.",
+      "Full training and learned-policy inference not rerun in portfolio audit.",
+    ],
+    architecture: {
+      kind: "Source-backed logical component map",
+      nodes: [
+        {
+          id: "component-0",
+          label: "Grid world and local observations",
+          description:
+            "A two-dimensional grid exposes partial local observations for simulated robots.",
+        },
+        {
+          id: "component-1",
+          label: "IPPO / MAPPO policies",
+          description:
+            "IPPO and MAPPO policies are compared with random and frontier baselines.",
+        },
+        {
+          id: "component-2",
+          label: "Evaluation and replay artifacts",
+          description:
+            "Evaluation outputs and recorded replays support bounded comparisons across seeded runs.",
+        },
+        {
+          id: "component-3",
+          label: "FastAPI and WebSockets",
+          description:
+            "The backend exposes local simulation state and updates through HTTP and WebSockets.",
+        },
+        {
+          id: "component-4",
+          label: "React Swarm Lab",
+          description:
+            "The React application provides simulation, comparison and behaviour-analysis views.",
+        },
+      ],
+      edges: [
+        ["component-0", "component-1"],
+        ["component-1", "component-2"],
+        ["component-2", "component-3"],
+        ["component-3", "component-4"],
+      ],
+    },
+    sources: [
+      {
+        label: "README.md",
+        path: "README.md",
+        url: "https://github.com/EXCALIBUR303/swarmmind/blob/e2269fe8f5f08ba5f491e340d46e63b17acef2a7/README.md",
+      },
+      {
+        label: "pyproject.toml",
+        path: "pyproject.toml",
+        url: "https://github.com/EXCALIBUR303/swarmmind/blob/e2269fe8f5f08ba5f491e340d46e63b17acef2a7/pyproject.toml",
+      },
+      {
+        label: "frontend/package.json",
+        path: "frontend/package.json",
+        url: "https://github.com/EXCALIBUR303/swarmmind/blob/e2269fe8f5f08ba5f491e340d46e63b17acef2a7/frontend/package.json",
+      },
+      {
+        label: "marl/envs/core/world.py",
+        path: "marl/envs/core/world.py",
+        url: "https://github.com/EXCALIBUR303/swarmmind/blob/e2269fe8f5f08ba5f491e340d46e63b17acef2a7/marl/envs/core/world.py",
+      },
+      {
+        label: "backend/app/settings.py",
+        path: "backend/app/settings.py",
+        url: "https://github.com/EXCALIBUR303/swarmmind/blob/e2269fe8f5f08ba5f491e340d46e63b17acef2a7/backend/app/settings.py",
+      },
+    ],
+    sourceCommit: "e2269fe8f5f08ba5f491e340d46e63b17acef2a7",
+    eyebrow: "Personal / Software system",
+  },
+  {
+    id: "pathable",
+    slug: "pathable",
+    repository: "PATHABLE",
+    title: "PathAble",
+    tagline: "A route that considers you.",
+    description:
+      "A campus navigation application with accessibility-constrained graph routing, community reports, review and durable rerouting updates.",
+    overview:
+      "A campus navigation application with accessibility-constrained graph routing, community reports, review and durable rerouting updates.",
+    collection: "Personal",
+    discipline: "Software",
+    classificationNote:
+      "Personal collection confirmed by the owner. Software scope only; no physical hardware claim.",
+    demo: {
+      type: "local",
+      url: null,
+      summary:
+        "Inspect the source-backed component guide, then run the original application locally with its required services.",
+      commands: [
+        "bash scripts/install.sh",
+        "bash scripts/start.sh",
+        "bash scripts/test.sh",
+        "bash scripts/test_frontend.sh",
+      ],
+      environment: [
+        {
+          name: "POSTGRES_HOST",
+          purpose: "PostGIS host",
+        },
+        {
+          name: "POSTGRES_PORT",
+          purpose: "PostGIS port",
+        },
+        {
+          name: "POSTGRES_DB",
+          purpose: "Database name",
+        },
+        {
+          name: "POSTGRES_USER",
+          purpose: "Database owner role",
+        },
+        {
+          name: "POSTGRES_PASSWORD",
+          purpose: "Generated owner credential",
+        },
+        {
+          name: "APP_DB_USER",
+          purpose: "Restricted API database role",
+        },
+        {
+          name: "APP_DB_PASSWORD",
+          purpose: "Generated API database credential",
+        },
+        {
+          name: "CSRF_SECRET",
+          purpose: "Generated request protection secret",
+        },
+        {
+          name: "RATE_LIMIT_HASH_KEY",
+          purpose: "Generated rate-limit key",
+        },
+        {
+          name: "APP_ORIGIN",
+          purpose: "Permitted frontend origin",
+        },
+        {
+          name: "ML_ENABLED",
+          purpose: "Optional inference gate; disabled by default",
+        },
+      ],
+      runtimeStatus:
+        "Original frontend production build passed. Pure routing engine executed; complete PostGIS workflow not run.",
+      testStatus: "163 routing/oracle tests and 41 frontend tests passed.",
+      verifiedOn: "2026-10-22",
+      notes: [
+        "All campus examples are fictional demonstration data, not a university survey.",
+        "Hazard inference remains disabled because no approved evaluated weights exist.",
+        "Full authenticated workflow requires PostGIS and generated local secrets.",
+        "Public operational readiness and macOS execution remain separate checks.",
+      ],
+    },
+    categories: ["Algorithms", "Web Development"],
+    stack: [
+      "React",
+      "TypeScript",
+      "Vite",
+      "Leaflet",
+      "FastAPI",
+      "PostgreSQL",
+      "PostGIS",
+    ],
+    status: "Local accessibility navigation application",
+    kind: "architecture",
+    accent: "#79dce5",
+    featured: false,
+    githubUrl: "https://github.com/EXCALIBUR303/PATHABLE",
+    liveUrl: null,
+    sourceVisibility: "public",
+    interactionLabel: "Source-backed component guide",
+    problem:
+      "A campus navigation application with accessibility-constrained graph routing, community reports, review and durable rerouting updates.",
+    solution:
+      "A campus navigation application with accessibility-constrained graph routing, community reports, review and durable rerouting updates.",
+    features: [
+      "Dijkstra and A* with explicit accessibility constraints",
+      "Bounded alternative routes and geometry instructions",
+      "Cookie authentication and saved preferences",
+      "Private reports, review and live rerouting",
+    ],
+    limitations: [
+      "All campus examples are fictional demonstration data, not a university survey.",
+      "Hazard inference remains disabled because no approved evaluated weights exist.",
+      "Full authenticated workflow requires PostGIS and generated local secrets.",
+      "Public operational readiness and macOS execution remain separate checks.",
+    ],
+    architecture: {
+      kind: "Source-backed logical component map",
+      nodes: [
+        {
+          id: "component-0",
+          label: "Leaflet route map",
+          description:
+            "Leaflet renders fictional campus geometry, route alternatives and navigation instructions.",
+        },
+        {
+          id: "component-1",
+          label: "FastAPI boundaries",
+          description:
+            "FastAPI validates requests and coordinates authentication, preferences and route access.",
+        },
+        {
+          id: "component-2",
+          label: "Pure constrained routing engine",
+          description:
+            "Dijkstra and A* honor explicit accessibility constraints in the pure routing engine.",
+        },
+        {
+          id: "component-3",
+          label: "PostgreSQL / PostGIS graph",
+          description:
+            "PostgreSQL with PostGIS stores the route graph, geometry and application state.",
+        },
+        {
+          id: "component-4",
+          label: "Reviewed reports and durable events",
+          description:
+            "Reviewed reports and durable events support rerouting updates; full integration requires a database.",
+        },
+      ],
+      edges: [
+        ["component-0", "component-1"],
+        ["component-1", "component-2"],
+        ["component-1", "component-3"],
+        ["component-3", "component-4"],
+      ],
+    },
+    sources: [
+      {
+        label: "README.md",
+        path: "README.md",
+        url: "https://github.com/EXCALIBUR303/PATHABLE/blob/7d29bbae1cdacd04e7c089a30f4fa2ba1144ef3e/README.md",
+      },
+      {
+        label: "frontend/package.json",
+        path: "frontend/package.json",
+        url: "https://github.com/EXCALIBUR303/PATHABLE/blob/7d29bbae1cdacd04e7c089a30f4fa2ba1144ef3e/frontend/package.json",
+      },
+      {
+        label: "backend/app/routing/engine.py",
+        path: "backend/app/routing/engine.py",
+        url: "https://github.com/EXCALIBUR303/PATHABLE/blob/7d29bbae1cdacd04e7c089a30f4fa2ba1144ef3e/backend/app/routing/engine.py",
+      },
+      {
+        label: "backend/app/core/config.py",
+        path: "backend/app/core/config.py",
+        url: "https://github.com/EXCALIBUR303/PATHABLE/blob/7d29bbae1cdacd04e7c089a30f4fa2ba1144ef3e/backend/app/core/config.py",
+      },
+      {
+        label: "scripts/install.sh",
+        path: "scripts/install.sh",
+        url: "https://github.com/EXCALIBUR303/PATHABLE/blob/7d29bbae1cdacd04e7c089a30f4fa2ba1144ef3e/scripts/install.sh",
+      },
+      {
+        label: "scripts/start.sh",
+        path: "scripts/start.sh",
+        url: "https://github.com/EXCALIBUR303/PATHABLE/blob/7d29bbae1cdacd04e7c089a30f4fa2ba1144ef3e/scripts/start.sh",
+      },
+    ],
+    sourceCommit: "7d29bbae1cdacd04e7c089a30f4fa2ba1144ef3e",
+    eyebrow: "Personal / Software system",
   },
 ];
 

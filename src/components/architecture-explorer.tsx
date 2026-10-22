@@ -38,9 +38,11 @@ export default function ArchitectureExplorer({
           <Network size={13} /> SELECT A COMPONENT TO FOLLOW ITS CONNECTIONS
         </span>
         <span className="diagram-badge">
-          {project.sourceVisibility === "public"
-            ? "SOURCE-BACKED RECONSTRUCTION"
-            : "THIS PORTFOLIO DEMO"}
+          {project.demo.type === "unavailable"
+            ? "PROPOSED DESIGN / NOT IMPLEMENTED"
+            : project.sourceVisibility === "public"
+              ? "SOURCE-BACKED RECONSTRUCTION"
+              : "THIS PORTFOLIO DEMO"}
         </span>
       </div>
       <svg

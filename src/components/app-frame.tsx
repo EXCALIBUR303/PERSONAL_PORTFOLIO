@@ -38,7 +38,15 @@ const navigation = [
   { id: "about", name: "About" },
   { id: "contact", name: "Contact" },
 ];
-type GalleryState = { query: string; category: string; featuredOnly: boolean };
+type GalleryState = {
+  query: string;
+  category: string;
+  featuredOnly: boolean;
+  collection: "All" | "College" | "Personal";
+  discipline: "All" | "Software" | "Hardware";
+  layout: "exhibits" | "index";
+  selectedSlug: string | null;
+};
 type AppState = {
   gallery: GalleryState;
   setGallery: (value: GalleryState) => void;
@@ -93,6 +101,10 @@ export default function AppFrame({ children }: { children: ReactNode }) {
     query: "",
     category: "All worlds",
     featuredOnly: false,
+    collection: "All",
+    discipline: "All",
+    layout: "exhibits",
+    selectedSlug: null,
   });
   const [portal, setPortal] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null),
@@ -166,7 +178,7 @@ export default function AppFrame({ children }: { children: ReactNode }) {
       >
         <LazyMotion features={loadFeatures}>
           <div
-            className="portfolio-root multiverse"
+            className="portfolio-root multiverse engineering-universe"
             data-theme={light ? "light" : "dark"}
           >
             <a className="skip-link" href="#main">
@@ -295,7 +307,7 @@ export default function AppFrame({ children }: { children: ReactNode }) {
                   <span>
                     © {new Date().getFullYear()} {profile.name.toUpperCase()}
                   </span>
-                  <span>DEVFOLIO V2 / THE PROJECT MULTIVERSE</span>
+                  <span>DEVFOLIO V3 / THE ENGINEERING UNIVERSE</span>
                   <a
                     href="https://github.com/EXCALIBUR303"
                     target="_blank"

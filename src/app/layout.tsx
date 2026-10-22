@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { site } from "@/data/profile";
 import "./globals.css";
 import "./multiverse.css";
+import "./universe.css";
 import AppFrame from "@/components/app-frame";
 
 const display = localFont({
