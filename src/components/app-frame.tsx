@@ -7,6 +7,7 @@ import {
   useEffect,
   useRef,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import {
@@ -14,21 +15,13 @@ import {
   LazyMotion,
   MotionConfig,
   m,
-  useMotionValue,
   useScroll,
   useSpring,
 } from "motion/react";
-import {
-  ArrowUp,
-  ArrowUpRight,
-  Asterisk,
-  Menu,
-  Moon,
-  Sun,
-  X,
-} from "lucide-react";
+import { ArrowUp, ArrowUpRight, Asterisk, Menu, X } from "lucide-react";
 import { profile } from "@/data/profile";
 import { motionTokens } from "./motion-config";
+import ModeSwitcher, { useMode } from "./mode";
 const loadFeatures = () =>
   import("./motion-features").then((module) => module.default);
 const navigation = [
@@ -58,44 +51,94 @@ export function usePortfolioState() {
   if (!value) throw new Error("Portfolio state requires AppFrame");
   return value;
 }
+/**
+ * Creative-mode cursor. The dot is written straight from the pointer event, so
+ * it can never trail the mouse. Only the ring eases, and it settles in ~80 ms.
+ */
+const finePointerQuery =
+  "(pointer:fine) and (prefers-reduced-motion:no-preference)";
+function useFinePointer() {
+  return useSyncExternalStore(
+    (notify) => {
+      const query = matchMedia(finePointerQuery);
+      query.addEventListener("change", notify);
+      return () => query.removeEventListener("change", notify);
+    },
+    () => matchMedia(finePointerQuery).matches,
+    () => false,
+  );
+}
 function Cursor() {
-  const x = useMotionValue(-100),
-    y = useMotionValue(-100),
-    sx = useSpring(x, { stiffness: 180, damping: 30 }),
-    sy = useSpring(y, { stiffness: 180, damping: 30 });
+  const [mode] = useMode();
+  const finePointer = useFinePointer();
+  const dot = useRef<HTMLDivElement>(null);
+  const ring = useRef<HTMLDivElement>(null);
+  const [label, setLabel] = useState("");
+  const [grow, setGrow] = useState(false);
+  const active = mode === "creative" && finePointer;
   useEffect(() => {
-    if (
-      !matchMedia("(pointer:fine) and (prefers-reduced-motion:no-preference)")
-        .matches
-    )
-      return;
+    if (!active) return;
+    document.documentElement.classList.add("has-cursor");
+    let raf = 0;
+    let x = -100,
+      y = -100,
+      rx = -100,
+      ry = -100,
+      seen = false;
+    const tick = () => {
+      rx += (x - rx) * 0.35;
+      ry += (y - ry) * 0.35;
+      if (ring.current)
+        ring.current.style.transform = `translate3d(${rx}px,${ry}px,0)`;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
     const move = (event: PointerEvent) => {
-      x.set(event.clientX - 13);
-      y.set(event.clientY - 13);
+      if (event.pointerType !== "mouse") return;
+      x = event.clientX;
+      y = event.clientY;
+      if (!seen) {
+        seen = true;
+        rx = x;
+        ry = y;
+        dot.current?.removeAttribute("hidden");
+        ring.current?.removeAttribute("hidden");
+      }
+      if (dot.current)
+        dot.current.style.transform = `translate3d(${x}px,${y}px,0)`;
+      const target = (event.target as HTMLElement | null)?.closest<HTMLElement>(
+        "[data-cursor], a, button, summary, select, input, textarea, label",
+      );
+      setGrow(Boolean(target));
+      setLabel(target?.dataset.cursor ?? "");
     };
     const leave = () => {
-      x.set(-100);
-      y.set(-100);
+      dot.current?.setAttribute("hidden", "");
+      ring.current?.setAttribute("hidden", "");
+      seen = false;
     };
     window.addEventListener("pointermove", move, { passive: true });
     document.addEventListener("pointerleave", leave);
     return () => {
+      cancelAnimationFrame(raf);
+      document.documentElement.classList.remove("has-cursor");
       window.removeEventListener("pointermove", move);
       document.removeEventListener("pointerleave", leave);
     };
-  }, [x, y]);
+  }, [active]);
+  if (!active) return null;
   return (
-    <m.div
-      className="cursor-aura"
-      style={{ x: sx, y: sy }}
-      aria-hidden="true"
-    />
+    <>
+      <div ref={ring} className="cursor-ring" hidden aria-hidden="true">
+        <span className={grow ? "is-grown" : undefined}>{label}</span>
+      </div>
+      <div ref={dot} className="cursor-dot" hidden aria-hidden="true" />
+    </>
   );
 }
 export default function AppFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [light, setLight] = useState(false),
-    [menu, setMenu] = useState(false),
+  const [menu, setMenu] = useState(false),
     [active, setActive] = useState("");
   const [gallery, setGallery] = useState<GalleryState>({
     query: "",
@@ -179,7 +222,7 @@ export default function AppFrame({ children }: { children: ReactNode }) {
         <LazyMotion features={loadFeatures}>
           <div
             className="portfolio-root multiverse engineering-universe"
-            data-theme={light ? "light" : "dark"}
+            data-theme="light"
           >
             <a className="skip-link" href="#main">
               Skip to content
@@ -233,13 +276,7 @@ export default function AppFrame({ children }: { children: ReactNode }) {
                   ))}
                 </nav>
                 <div className="nav-actions">
-                  <button
-                    className="theme-button icon-button"
-                    onClick={() => setLight(!light)}
-                    aria-label={`Switch to ${light ? "dark" : "light"} theme`}
-                  >
-                    {light ? <Moon size={18} /> : <Sun size={18} />}
-                  </button>
+                  <ModeSwitcher />
                   <Link href="/#contact" className="nav-contact">
                     Let’s talk
                     <ArrowUpRight size={16} />

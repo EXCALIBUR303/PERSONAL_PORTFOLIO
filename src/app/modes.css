@@ -1,0 +1,1475 @@
+/*
+ * Two visual modes over one application.
+ *   html[data-mode="pro"]       Professional: editorial, structured, recruiter friendly
+ *   html[data-mode="creative"]  Creative: tactile desk, stickers, playful
+ * The attribute is set before first paint (see mode.tsx). Everything here is a
+ * presentation layer; routes, data and behaviour are shared.
+ */
+
+/* ---------- tokens ---------- */
+html[data-mode] .portfolio-root[data-theme] {
+  --m-ink: #17171d;
+  --m-paper: #f7f6f0;
+  --m-card: #ffffff;
+  --m-cobalt: #2f4bf5;
+  --m-lime: #d9f542;
+  --m-pink: #ff8fc0;
+  --m-tan: #ff6538;
+  --m-sky: #8edbff;
+  --m-graphite: #4b5262;
+  --m-edge: 1.5px solid var(--m-ink);
+  --m-shadow: 4px 4px 0 var(--m-ink);
+  --m-shadow-hover: 6px 6px 0 var(--m-ink);
+  --mini-ink: var(--m-ink);
+  --mini-paper: var(--m-card);
+  --mini-cobalt: var(--m-cobalt);
+  --mini-lime: var(--m-lime);
+  --mini-pink: var(--m-pink);
+  --mini-tan: var(--m-tan);
+  --mini-sky: var(--m-sky);
+
+  --bg: var(--m-paper);
+  --surface: var(--m-card);
+  --fg: var(--m-ink);
+  --muted: var(--m-graphite);
+  --border: #17171d38;
+  --accent: var(--m-cobalt);
+  --lime: var(--m-lime);
+  --ink: var(--m-ink);
+  --paper: var(--m-paper);
+  --amber: #b23a14;
+  --steel: var(--m-graphite);
+  --desk-shadow: none;
+  --depth-shadow: none;
+  --radius: 4px;
+  --font-mono-set: var(--font-mono), ui-monospace, "SFMono-Regular", monospace;
+  background-color: var(--bg);
+  color: var(--fg);
+}
+html[data-mode="pro"] .portfolio-root[data-theme] {
+  --font-display: var(--font-playfair), Georgia, serif;
+  --m-paper: #f7f6f0;
+  --bg: #f7f6f0;
+  background-image:
+    linear-gradient(#17171d0b 1px, transparent 1px),
+    linear-gradient(90deg, #17171d0b 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+html[data-mode="creative"] .portfolio-root[data-theme] {
+  --font-display: var(--font-instrument), Georgia, serif;
+  --font-body: var(--font-familjen), var(--font-inter, Arial), sans-serif;
+  --m-paper: #fafaf6;
+  --m-cobalt: #2f4bff;
+  --m-lime: #c8f13b;
+  --m-edge: 2px solid var(--m-ink);
+  --m-shadow: 5px 5px 0 var(--m-ink);
+  --m-shadow-hover: 8px 8px 0 var(--m-ink);
+  --bg: #fafaf6;
+  --radius: 14px;
+  background-image: radial-gradient(#17171d24 1px, transparent 1.3px);
+  background-size: 22px 22px;
+}
+html[data-mode] body {
+  background: var(--m-paper, #f7f6f0);
+}
+
+/* ---------- typography ---------- */
+html[data-mode] .portfolio-root .mono,
+html[data-mode] .portfolio-root .eyebrow {
+  font-family: var(--font-mono-set);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+}
+html[data-mode] .portfolio-root h1,
+html[data-mode] .portfolio-root h2,
+html[data-mode] .portfolio-root h3,
+html[data-mode] .portfolio-root h4,
+html[data-mode] .portfolio-root .wordmark {
+  font-family: var(--font-display);
+  font-weight: 600;
+  text-wrap: balance;
+}
+html[data-mode="creative"] .portfolio-root h1,
+html[data-mode="creative"] .portfolio-root h2,
+html[data-mode="creative"] .portfolio-root h3,
+html[data-mode="creative"] .portfolio-root h4,
+html[data-mode="creative"] .portfolio-root .wordmark {
+  font-weight: 400;
+}
+html[data-mode] .portfolio-root em {
+  font-family: inherit;
+  font-style: italic;
+  font-weight: inherit;
+}
+html[data-mode] .portfolio-root h2 {
+  font-size: clamp(34px, 4.6vw, 60px);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+}
+html[data-mode] .portfolio-root h3 {
+  letter-spacing: -0.01em;
+}
+html[data-mode] .portfolio-root h2 em {
+  color: var(--m-cobalt);
+}
+html[data-mode] .portfolio-root p {
+  line-height: 1.65;
+}
+
+/* ---------- header, nav, mode switcher ---------- */
+html[data-mode] .portfolio-root .site-header {
+  background: var(--m-paper);
+  border-bottom: var(--m-edge);
+  height: 76px;
+}
+html[data-mode] .portfolio-root .wordmark {
+  font-size: 21px;
+  letter-spacing: -0.02em;
+}
+html[data-mode] .portfolio-root .wordmark > svg {
+  color: var(--m-tan);
+}
+html[data-mode] .portfolio-root .desktop-nav a {
+  font-family: var(--font-mono-set);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  padding: 10px 13px;
+  color: var(--m-ink);
+  border: 1.5px solid transparent;
+}
+html[data-mode] .portfolio-root .desktop-nav a:hover {
+  border-color: var(--m-ink);
+  background: var(--m-card);
+}
+html[data-mode] .portfolio-root .desktop-nav a[aria-current] {
+  background: var(--m-ink);
+  color: var(--m-paper);
+}
+html[data-mode] .portfolio-root .desktop-nav a i {
+  display: none;
+}
+html[data-mode] .portfolio-root .nav-contact {
+  background: var(--m-ink);
+  color: var(--m-paper);
+  border: var(--m-edge);
+  border-radius: 4px;
+  box-shadow: 3px 3px 0 var(--m-cobalt);
+  font-weight: 700;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+html[data-mode] .portfolio-root .nav-contact:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 var(--m-tan);
+}
+html[data-mode] .portfolio-root .nav-contact:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 var(--m-ink);
+}
+html[data-mode="creative"] .portfolio-root .nav-contact,
+html[data-mode="creative"] .portfolio-root .desktop-nav a {
+  border-radius: 999px;
+}
+html[data-mode="creative"] .portfolio-root .nav-contact {
+  background: var(--m-lime);
+  color: var(--m-ink);
+  box-shadow: 3px 3px 0 var(--m-ink);
+}
+.mode-switcher {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  background: var(--m-card, #fff);
+  border: 1.5px solid var(--m-ink, #17171d);
+  border-radius: 999px;
+}
+.mode-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 13px;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--m-ink, #17171d);
+  font-family: var(--font-mono-set, monospace);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    transform 0.2s;
+}
+.mode-option:hover {
+  background: #17171d12;
+}
+html[data-mode="pro"] .mode-option[data-mode-option="pro"] {
+  background: var(--m-ink, #17171d);
+  color: #fff;
+}
+html[data-mode="creative"] .mode-option[data-mode-option="creative"] {
+  background: var(--m-lime, #c8f13b);
+  color: var(--m-ink, #17171d);
+  box-shadow: inset 0 0 0 1.5px var(--m-ink, #17171d);
+}
+@media (max-width: 1100px) {
+  .mode-option span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .mode-option {
+    padding: 0 10px;
+  }
+}
+html[data-mode] .portfolio-root .icon-button,
+html[data-mode] .portfolio-root .mobile-menu-toggle {
+  border: var(--m-edge);
+  background: var(--m-card);
+  color: var(--m-ink);
+  border-radius: 4px;
+}
+html[data-mode] .portfolio-root .mobile-nav {
+  background: var(--m-paper);
+  border-bottom: var(--m-edge);
+}
+html[data-mode] .portfolio-root .mobile-nav a {
+  font-family: var(--font-display);
+  color: var(--m-ink);
+}
+html[data-mode] .portfolio-root .scroll-progress {
+  background: var(--m-tan);
+  height: 3px;
+}
+
+/* ---------- buttons ---------- */
+html[data-mode] .portfolio-root .button {
+  border: var(--m-edge);
+  border-radius: 4px;
+  box-shadow: 4px 4px 0 var(--m-cobalt);
+  background: var(--m-ink);
+  color: #fff;
+  font-weight: 700;
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s,
+    background 0.2s,
+    color 0.2s;
+}
+html[data-mode] .portfolio-root .button:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--m-tan);
+  background: var(--m-ink);
+}
+html[data-mode] .portfolio-root .button:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 var(--m-ink);
+}
+html[data-mode] .portfolio-root .button svg {
+  transition: transform 0.25s;
+}
+html[data-mode] .portfolio-root .button:hover svg {
+  transform: rotate(45deg);
+}
+html[data-mode] .portfolio-root .button-outline {
+  background: var(--m-card);
+  color: var(--m-ink);
+  box-shadow: 3px 3px 0 var(--m-ink);
+}
+html[data-mode] .portfolio-root .button-outline:hover {
+  background: var(--m-card);
+  box-shadow: 5px 5px 0 var(--m-ink);
+}
+html[data-mode="creative"] .portfolio-root .button {
+  border-radius: 999px;
+  background: var(--m-lime);
+  color: var(--m-ink);
+  box-shadow: 4px 4px 0 var(--m-ink);
+}
+html[data-mode="creative"] .portfolio-root .button:hover {
+  background: var(--m-lime);
+  box-shadow: 7px 7px 0 var(--m-ink);
+}
+html[data-mode="creative"] .portfolio-root .button::before,
+html[data-mode] .portfolio-root .button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+/* shine sweep */
+html[data-mode] .portfolio-root .button::after {
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    #ffffff80 50%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+}
+html[data-mode] .portfolio-root .button:hover::after {
+  transform: translateX(120%);
+  transition: transform 0.7s;
+}
+/* liquid wipe (creative) */
+html[data-mode="creative"] .portfolio-root .button::before {
+  background: var(--m-ink);
+  border-radius: 50% 50% 0 0 / 40% 40% 0 0;
+  transform: translateY(101%);
+  transition:
+    transform 0.45s cubic-bezier(0.6, 0, 0.2, 1),
+    border-radius 0.45s;
+  z-index: 0;
+}
+html[data-mode="creative"] .portfolio-root .button:hover::before {
+  transform: translateY(0);
+  border-radius: 0;
+}
+html[data-mode="creative"] .portfolio-root .button:hover {
+  color: var(--m-paper);
+}
+html[data-mode="creative"] .portfolio-root .button > * {
+  position: relative;
+  z-index: 1;
+}
+html[data-mode="creative"] .portfolio-root .button-outline {
+  background: var(--m-card);
+}
+html[data-mode="creative"] .portfolio-root .button-outline::before {
+  background: var(--m-sky);
+}
+html[data-mode="creative"] .portfolio-root .button-outline:hover {
+  color: var(--m-ink);
+}
+html[data-mode] .portfolio-root .hero-contact {
+  font-family: var(--font-mono-set);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  border-bottom: 2px solid var(--m-tan);
+  padding-bottom: 2px;
+}
+
+/* ---------- sections ---------- */
+html[data-mode] .portfolio-root .section-pad {
+  padding-block: clamp(64px, 9vw, 112px);
+}
+html[data-mode] .portfolio-root .section-label {
+  color: var(--m-ink);
+  border-top: var(--m-edge);
+  padding-top: 14px;
+}
+html[data-mode] .portfolio-root .section-label > span {
+  color: var(--m-cobalt);
+  font-weight: 700;
+}
+html[data-mode] .portfolio-root main > section {
+  border-color: var(--m-ink);
+}
+
+/* ---------- hero ---------- */
+html[data-mode] .portfolio-root .engineering-hero {
+  background: transparent;
+  border-bottom: var(--m-edge);
+}
+html[data-mode] .portfolio-root .desk-topline {
+  font-size: 11px;
+  color: var(--m-graphite);
+  border-bottom: 1.5px solid #17171d30;
+}
+html[data-mode] .portfolio-root .status-dot {
+  background: var(--m-tan);
+  box-shadow: 0 0 0 3px #ff653833;
+}
+html[data-mode] .portfolio-root .desk-introduction {
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  gap: clamp(28px, 5vw, 64px);
+  padding: clamp(32px, 5vw, 56px) 0 clamp(28px, 4vw, 44px);
+}
+html[data-mode] .portfolio-root .desk-introduction .eyebrow {
+  font-size: 12px;
+  color: var(--m-cobalt);
+  font-weight: 700;
+}
+html[data-mode] .portfolio-root .desk-introduction h1 {
+  font-size: clamp(44px, 6.4vw, 92px);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  font-weight: 700;
+  max-width: 14ch;
+}
+html[data-mode="creative"] .portfolio-root .desk-introduction h1 {
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  font-size: clamp(48px, 6.8vw, 100px);
+  line-height: 0.98;
+  max-width: 15ch;
+}
+html[data-mode] .portfolio-root .desk-introduction h1 em {
+  font-size: 1em;
+  letter-spacing: -0.02em;
+  color: var(--m-cobalt);
+  font-weight: inherit;
+}
+html[data-mode] .portfolio-root .desk-introduction h1 .hero-underlined {
+  color: var(--m-ink);
+  background-image: linear-gradient(var(--m-tan), var(--m-tan));
+  background-repeat: no-repeat;
+  background-size: 100% 0.12em;
+  background-position: 0 92%;
+  animation: m-underline 0.9s 0.5s cubic-bezier(0.2, 0.9, 0.2, 1) backwards;
+}
+@keyframes m-underline {
+  from {
+    background-size: 0 0.12em;
+  }
+}
+html[data-mode] .portfolio-root .degree-chip {
+  font-family: var(--font-mono-set);
+  font-size: 11px;
+  background: var(--m-lime);
+  border: var(--m-edge);
+  border-radius: 999px;
+  font-weight: 700;
+  color: var(--m-ink);
+}
+html[data-mode] .portfolio-root .desk-intro-aside > p {
+  font-size: 16px;
+  color: var(--m-graphite);
+}
+html[data-mode] .portfolio-root .engineering-desk {
+  background: var(--m-card);
+  border: var(--m-edge);
+  border-radius: 4px;
+  box-shadow: var(--m-shadow);
+}
+html[data-mode="creative"] .portfolio-root .engineering-desk {
+  border-radius: 18px;
+}
+html[data-mode] .portfolio-root .desk-rail,
+html[data-mode] .portfolio-root .desk-inspector {
+  border-color: var(--m-ink);
+}
+html[data-mode] .portfolio-root .desk-rail > .mono,
+html[data-mode] .portfolio-root .desk-inspector .eyebrow,
+html[data-mode] .portfolio-root .desk-metaphor,
+html[data-mode] .portfolio-root .desk-axis {
+  font-size: 10px;
+  color: var(--m-graphite);
+}
+html[data-mode] .portfolio-root .desk-mode-controls button {
+  font-size: 12px;
+  font-family: var(--font-mono-set);
+  color: var(--m-ink);
+  border: 1.5px solid transparent;
+}
+html[data-mode] .portfolio-root .desk-mode-controls button:hover {
+  border-color: var(--m-ink);
+}
+html[data-mode]
+  .portfolio-root
+  .desk-mode-controls
+  button[aria-pressed="true"] {
+  background: var(--m-ink);
+  color: #fff;
+  border-color: var(--m-ink);
+}
+html[data-mode] .portfolio-root .desk-inspector h2 {
+  font-size: 30px;
+}
+html[data-mode] .portfolio-root .desk-footer {
+  color: var(--m-graphite);
+  font-size: 11px;
+}
+
+/* ---------- gallery ---------- */
+html[data-mode] .portfolio-root .projects-section {
+  background: transparent;
+}
+html[data-mode] .portfolio-root .universe-section-heading p,
+html[data-mode] .portfolio-root .classification-note {
+  color: var(--m-graphite);
+}
+html[data-mode] .portfolio-root .collection-total {
+  font-family: var(--font-display);
+  color: var(--m-cobalt);
+}
+html[data-mode] .portfolio-root .collection-sidebar {
+  background: var(--m-card);
+  border: var(--m-edge);
+  border-radius: 4px;
+  box-shadow: var(--m-shadow);
+}
+html[data-mode] .portfolio-root .collection-buttons button,
+html[data-mode] .portfolio-root .discipline-buttons button {
+  border: 1.5px solid transparent;
+  border-radius: 4px;
+  color: var(--m-ink);
+  font-weight: 600;
+}
+html[data-mode] .portfolio-root .collection-buttons button:hover,
+html[data-mode] .portfolio-root .discipline-buttons button:hover {
+  border-color: var(--m-ink);
+}
+html[data-mode] .portfolio-root .collection-buttons button[aria-pressed="true"],
+html[data-mode] .portfolio-root .discipline-buttons button[aria-pressed="true"],
+html[data-mode]
+  .portfolio-root
+  .gallery-view-toggle
+  button[aria-pressed="true"],
+html[data-mode] .portfolio-root .featured-toggle[aria-pressed="true"] {
+  background: var(--m-ink);
+  color: #fff;
+  border-color: var(--m-ink);
+}
+html[data-mode] .portfolio-root .project-search,
+html[data-mode] .portfolio-root .category-select select,
+html[data-mode] .portfolio-root .featured-toggle,
+html[data-mode] .portfolio-root .gallery-view-toggle {
+  background: var(--m-card);
+  border: var(--m-edge);
+  border-radius: 4px;
+  color: var(--m-ink);
+}
+html[data-mode] .portfolio-root .project-search:focus-within,
+html[data-mode] .portfolio-root .category-select select:focus {
+  box-shadow: 3px 3px 0 var(--m-cobalt);
+  outline: none;
+}
+html[data-mode] .portfolio-root .gallery-count {
+  color: var(--m-graphite);
+}
+html[data-mode] .portfolio-root .project-exhibit {
+  background: var(--m-card);
+  border: var(--m-edge);
+  border-radius: 4px;
+  box-shadow: var(--m-shadow);
+}
+html[data-mode="creative"] .portfolio-root .project-exhibit {
+  border-radius: 18px;
+}
+html[data-mode] .portfolio-root .exhibit-art {
+  background: color-mix(in srgb, var(--world-accent, var(--m-sky)) 14%, #fff);
+  border-right: var(--m-edge);
+}
+html[data-mode] .portfolio-root .exhibit-coordinate {
+  color: var(--m-ink);
+  background: var(--m-card);
+  border: 1.5px solid var(--m-ink);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+html[data-mode] .portfolio-root .exhibit-copy h3 {
+  font-size: clamp(32px, 3.4vw, 52px);
+  line-height: 1.02;
+}
+html[data-mode] .portfolio-root .project-card {
+  background: var(--m-card);
+  border: var(--m-edge);
+  border-radius: 4px;
+  box-shadow: var(--m-shadow);
+  color: var(--m-ink);
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+html[data-mode] .portfolio-root .project-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--m-shadow-hover);
+}
+html[data-mode="creative"] .portfolio-root .project-card {
+  border-radius: 18px;
+  padding: 12px;
+}
+html[data-mode="creative"]
+  .portfolio-root
+  .project-index-entry:nth-child(3n + 1)
+  .project-card {
+  transform: rotate(-1deg);
+  background: color-mix(in srgb, var(--world-accent, var(--m-sky)) 14%, #fff);
+}
+html[data-mode="creative"]
+  .portfolio-root
+  .project-index-entry:nth-child(3n + 2)
+  .project-card {
+  transform: rotate(0.8deg);
+}
+html[data-mode="creative"]
+  .portfolio-root
+  .project-index-entry:nth-child(3n)
+  .project-card {
+  transform: rotate(-0.4deg);
+  background: color-mix(in srgb, var(--world-accent, var(--m-pink)) 12%, #fff);
+}
+html[data-mode="creative"]
+  .portfolio-root
+  .project-index-entry
+  .project-card:hover {
+  transform: translate(-3px, -6px) rotate(0deg);
+}
+html[data-mode] .portfolio-root .project-preview-frame {
+  background: color-mix(in srgb, var(--world-accent, var(--m-sky)) 12%, #fff);
+  border: 1.5px solid var(--m-ink);
+  border-radius: 4px;
+  overflow: hidden;
+}
+html[data-mode="creative"] .portfolio-root .project-preview-frame {
+  border-width: 2px;
+  border-radius: 10px;
+}
+.mini-anim {
+  display: block;
+  width: 100%;
+  aspect-ratio: 240 / 150;
+  height: auto;
+}
+html[data-mode] .portfolio-root .project-demo {
+  bottom: auto;
+  top: 10px;
+  height: fit-content;
+  background: var(--m-card);
+  color: var(--m-ink);
+  border: 1.5px solid var(--m-ink);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 10px;
+}
+html[data-mode] .portfolio-root .project-open {
+  background: var(--m-lime);
+  color: var(--m-ink);
+  border: 1.5px solid var(--m-ink);
+}
+html[data-mode] .portfolio-root .project-info h3 {
+  font-size: clamp(24px, 2.2vw, 32px);
+  line-height: 1.08;
+}
+html[data-mode] .portfolio-root .project-info p {
+  color: var(--m-graphite);
+  font-size: 14px;
+}
+html[data-mode] .portfolio-root .project-index {
+  color: var(--m-cobalt);
+  font-weight: 700;
+}
+html[data-mode] .portfolio-root .project-tags span {
+  background: var(--m-paper);
+  color: var(--m-ink);
+  border: 1.5px solid var(--m-ink);
+  border-radius: 3px;
+  font-family: var(--font-mono-set);
+  font-size: 11px;
+}
+html[data-mode="creative"] .portfolio-root .project-tags span {
+  background: var(--m-lime);
+}
+html[data-mode] .portfolio-root .project-status {
+  font-family: var(--font-mono-set);
+  font-size: 11px;
+  color: var(--m-ink);
+}
+html[data-mode] .portfolio-root .project-status i {
+  background: #16a34a;
+  box-shadow: 0 0 0 3px #4ade8055;
+}
+html[data-mode] .portfolio-root .exhibit-select,
+html[data-mode] .portfolio-root .project-quick {
+  border: 1.5px solid var(--m-ink);
+  background: var(--m-card);
+  color: var(--m-ink);
+  border-radius: 4px;
+}
+html[data-mode] .portfolio-root .gallery-empty {
+  background: var(--m-card);
+  border: var(--m-edge);
+  box-shadow: var(--m-shadow);
+  color: var(--m-ink);
+}
+html[data-mode] .portfolio-root .work-end {
+  color: var(--m-graphite);
+}
+
+/* ---------- toolkit, engine, about, chapters, color, contact ---------- */
+html[data-mode] .portfolio-root .skills-section,
+html[data-mode] .portfolio-root .engine-section,
+html[data-mode] .portfolio-root .about-section,
+html[data-mode] .portfolio-root .chapters-section,
+html[data-mode] .portfolio-root .contact-section {
+  background: transparent;
+  border-color: var(--m-ink);
+}
+html[data-mode] .portfolio-root .toolkit-layout > *,
+html[data-mode] .portfolio-root .skill-inspector,
+html[data-mode] .portfolio-root .skill-map,
+html[data-mode] .portfolio-root .engine-selector,
+html[data-mode] .portfolio-root .engine-layout > *,
+html[data-mode] .portfolio-root .chapter-card,
+html[data-mode] .portfolio-root .contact-form,
+html[data-mode] .portfolio-root .contact-link,
+html[data-mode] .portfolio-root .about-facts > div {
+  background: var(--m-card);
+  border: var(--m-edge);
+  border-radius: 4px;
+  box-shadow: var(--m-shadow);
+  color: var(--m-ink);
+}
+html[data-mode="creative"] .portfolio-root .chapter-card,
+html[data-mode="creative"] .portfolio-root .contact-form,
+html[data-mode="creative"] .portfolio-root .skill-inspector {
+  border-radius: 16px;
+}
+html[data-mode="creative"] .portfolio-root .chapter-card:nth-child(odd) {
+  transform: rotate(-0.7deg);
+}
+html[data-mode="creative"] .portfolio-root .chapter-card:nth-child(even) {
+  transform: rotate(0.6deg);
+}
+html[data-mode] .portfolio-root .skill-cluster button,
+html[data-mode] .portfolio-root .skill-orbit button,
+html[data-mode] .portfolio-root .engine-selector button,
+html[data-mode] .portfolio-root .interest-tags span,
+html[data-mode] .portfolio-root .chapter-tags span {
+  border: 1.5px solid var(--m-ink);
+  background: var(--m-paper);
+  color: var(--m-ink);
+  border-radius: 4px;
+  font-family: var(--font-mono-set);
+}
+html[data-mode] .portfolio-root .skill-cluster button[aria-pressed="true"],
+html[data-mode] .portfolio-root .skill-orbit button[aria-pressed="true"],
+html[data-mode] .portfolio-root .engine-selector button[aria-pressed="true"] {
+  background: var(--m-ink);
+  color: #fff;
+}
+html[data-mode] .portfolio-root .about-visual {
+  background: var(--m-lime);
+  border: var(--m-edge);
+  border-radius: 4px;
+  box-shadow: var(--m-shadow);
+  color: var(--m-ink);
+}
+html[data-mode] .portfolio-root .about-copy p,
+html[data-mode] .portfolio-root .contact-section p {
+  color: var(--m-graphite);
+}
+html[data-mode] .portfolio-root .about-lead {
+  color: var(--m-ink);
+  font-family: var(--font-display);
+  font-size: 22px;
+}
+html[data-mode] .portfolio-root input,
+html[data-mode] .portfolio-root textarea,
+html[data-mode] .portfolio-root select {
+  background: var(--m-card);
+  color: var(--m-ink);
+  border: var(--m-edge);
+  border-radius: 4px;
+  font-size: 15px;
+}
+html[data-mode] .portfolio-root input:focus,
+html[data-mode] .portfolio-root textarea:focus,
+html[data-mode] .portfolio-root select:focus {
+  outline: none;
+  box-shadow: 3px 3px 0 var(--m-cobalt);
+}
+html[data-mode] .portfolio-root ::placeholder {
+  color: #5b6272;
+}
+
+/* ---------- footer ---------- */
+html[data-mode] .portfolio-root .site-footer {
+  background: var(--m-ink);
+  color: var(--m-paper);
+  border-top: var(--m-edge);
+}
+html[data-mode] .portfolio-root .site-footer a,
+html[data-mode] .portfolio-root .site-footer span {
+  color: var(--m-paper);
+}
+html[data-mode] .portfolio-root .site-footer .wordmark > svg {
+  color: var(--m-lime);
+}
+
+/* ---------- project pages ---------- */
+html[data-mode] .portfolio-root .project-world {
+  background: transparent;
+  color: var(--m-ink);
+}
+html[data-mode] .portfolio-root .world-header h1 {
+  font-size: clamp(44px, 6.2vw, 92px);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+html[data-mode="creative"] .portfolio-root .world-header h1 {
+  font-weight: 400;
+}
+html[data-mode] .portfolio-root .world-color-wash {
+  display: none;
+}
+html[data-mode] .portfolio-root .world-section-nav {
+  border: var(--m-edge);
+  background: var(--m-card);
+  border-radius: 4px;
+  box-shadow: 3px 3px 0 var(--m-ink);
+}
+html[data-mode] .portfolio-root .world-section-nav a {
+  font-family: var(--font-mono-set);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--m-ink);
+}
+html[data-mode] .portfolio-root .world-section-nav a:hover {
+  background: var(--m-lime);
+}
+html[data-mode] .portfolio-root .demo-console,
+html[data-mode] .portfolio-root .interactive-module,
+html[data-mode] .portfolio-root .penalty-module,
+html[data-mode] .portfolio-root .architecture-explorer,
+html[data-mode] .portfolio-root .component-inspector,
+html[data-mode] .portfolio-root .source-ledger,
+html[data-mode] .portfolio-root .world-story-grid > *,
+html[data-mode] .portfolio-root .evidence-grid > div {
+  background: var(--m-card);
+  border: var(--m-edge);
+  border-radius: 4px;
+  box-shadow: var(--m-shadow);
+  color: var(--m-ink);
+}
+html[data-mode="creative"] .portfolio-root .demo-console,
+html[data-mode="creative"] .portfolio-root .architecture-explorer,
+html[data-mode="creative"] .portfolio-root .interactive-module {
+  border-radius: 16px;
+}
+html[data-mode] .portfolio-root .world-story-grid > *,
+html[data-mode] .portfolio-root .evidence-grid > div {
+  padding: clamp(20px, 3vw, 34px);
+}
+html[data-mode] .portfolio-root .diagram-node rect {
+  fill: var(--m-card);
+  stroke: var(--m-ink);
+  stroke-width: 1.5px;
+}
+html[data-mode] .portfolio-root .diagram-node text {
+  fill: var(--m-ink);
+}
+html[data-mode] .portfolio-root .diagram-node.selected rect {
+  fill: var(--m-lime);
+}
+html[data-mode] .portfolio-root .diagram-node.connected rect {
+  fill: var(--m-sky);
+}
+html[data-mode] .portfolio-root .diagram-edge {
+  color: var(--m-ink);
+}
+html[data-mode] .portfolio-root .diagram-edge path {
+  stroke: var(--m-ink);
+  opacity: 0.35;
+}
+html[data-mode] .portfolio-root .diagram-edge.highlighted path {
+  stroke: var(--m-cobalt);
+  opacity: 1;
+  stroke-width: 3px;
+}
+html[data-mode] .portfolio-root .architecture-node-buttons button {
+  border: 1.5px solid var(--m-ink);
+  background: var(--m-paper);
+  color: var(--m-ink);
+  border-radius: 4px;
+}
+html[data-mode]
+  .portfolio-root
+  .architecture-node-buttons
+  button[aria-pressed="true"] {
+  background: var(--m-ink);
+  color: #fff;
+}
+html[data-mode] .portfolio-root .world-next a {
+  background: var(--m-card);
+  border: var(--m-edge);
+  box-shadow: var(--m-shadow);
+  color: var(--m-ink);
+  border-radius: 4px;
+}
+
+/* timeline player */
+.arch-player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0 4px;
+  padding: 8px;
+  border: 1.5px solid var(--m-ink, #17171d);
+  border-radius: 999px;
+  background: var(--m-paper, #f7f6f0);
+}
+.arch-player button {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 50%;
+  border: 1.5px solid var(--m-ink, #17171d);
+  background: var(--m-ink, #17171d);
+  color: #fff;
+}
+.arch-player button:hover {
+  background: var(--m-cobalt, #2f4bf5);
+}
+.arch-player input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--m-cobalt, #2f4bf5);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+.arch-player output {
+  flex: none;
+  min-width: 3.2em;
+  text-align: right;
+  font-family: var(--font-mono-set, monospace);
+  font-size: 12px;
+  color: var(--m-ink, #17171d);
+  padding-right: 8px;
+}
+
+/* ---------- cursor (creative only) ---------- */
+html.has-cursor,
+html.has-cursor body,
+html.has-cursor .portfolio-root a,
+html.has-cursor .portfolio-root button,
+html.has-cursor .portfolio-root label,
+html.has-cursor .portfolio-root summary,
+html.has-cursor .portfolio-root select {
+  cursor: none;
+}
+html.has-cursor .portfolio-root input,
+html.has-cursor .portfolio-root textarea {
+  cursor: text;
+}
+.cursor-dot,
+.cursor-ring {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1000;
+  pointer-events: none;
+  will-change: transform;
+}
+.cursor-dot[hidden],
+.cursor-ring[hidden] {
+  display: none;
+}
+.cursor-dot::before {
+  content: "";
+  display: block;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  border-radius: 50%;
+  background: #17171d;
+}
+.cursor-ring > span {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin: -16px 0 0 -16px;
+  border: 2px solid #17171d;
+  border-radius: 50%;
+  font: 700 10px/1 var(--font-mono-set, monospace);
+  letter-spacing: 0.06em;
+  color: #17171d;
+  transition:
+    width 0.2s,
+    height 0.2s,
+    margin 0.2s,
+    background 0.2s;
+}
+.cursor-ring > span.is-grown {
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  background: #c8f13b;
+}
+.cursor-aura {
+  display: none;
+}
+
+/* ---------- mode switch transition ---------- */
+html.mode-switching .portfolio-root,
+html.mode-switching .portfolio-root * {
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-mode] .portfolio-root .button::after,
+  html[data-mode] .portfolio-root .button::before {
+    transition: none;
+  }
+  html[data-mode] .portfolio-root .desk-introduction h1 .hero-underlined {
+    animation: none;
+  }
+  html.mode-switching .portfolio-root,
+  html.mode-switching .portfolio-root * {
+    transition: none !important;
+  }
+}
+@media (max-width: 760px) {
+  html[data-mode] .portfolio-root .desk-introduction {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  html[data-mode="creative"] .portfolio-root .project-index-entry .project-card,
+  html[data-mode="creative"] .portfolio-root .chapter-card {
+    transform: none;
+  }
+}
+
+/* ---------- gallery as a grid of playing cards ---------- */
+html[data-mode] .portfolio-root .project-index-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr));
+  gap: 28px;
+  align-items: start;
+}
+html[data-mode] .portfolio-root .project-index-list.compact-index {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+html[data-mode] .portfolio-root .project-index-entry {
+  padding: 0;
+  border-top: 0;
+  min-width: 0;
+}
+html[data-mode] .portfolio-root .project-index-entry .project-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+  margin: 0;
+  height: 100%;
+}
+html[data-mode] .portfolio-root .project-index-entry .project-preview-frame {
+  height: auto;
+  grid-row: auto;
+  width: 100%;
+}
+html[data-mode] .portfolio-root .project-index-entry .project-info {
+  padding: 0;
+  gap: 10px;
+  align-items: start;
+}
+html[data-mode] .portfolio-root .project-index-entry .project-info h3 {
+  font-size: clamp(24px, 2vw, 30px);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  margin-top: 4px;
+}
+html[data-mode] .portfolio-root .project-index-entry .project-info p {
+  font-size: 14px;
+  line-height: 1.55;
+  max-width: none;
+  margin-top: 8px;
+}
+html[data-mode] .portfolio-root .project-index-entry .project-index {
+  font-size: 11px;
+}
+html[data-mode] .portfolio-root .project-index-entry .project-tags {
+  margin: 0;
+  gap: 6px;
+}
+html[data-mode] .portfolio-root .project-index-entry .project-tags span {
+  font-size: 11px;
+  padding: 3px 7px;
+  border: 1.5px solid var(--m-ink);
+  background: var(--m-paper);
+}
+html[data-mode="creative"]
+  .portfolio-root
+  .project-index-entry
+  .project-tags
+  span {
+  background: var(--m-lime);
+}
+html[data-mode] .portfolio-root .project-index-entry .project-status {
+  margin: 0;
+  font-size: 11px;
+  color: var(--m-ink);
+  padding-right: 96px;
+}
+html[data-mode] .portfolio-root .project-index-entry .project-demo {
+  display: inline-flex;
+  align-items: center;
+  height: auto;
+  top: 10px;
+  bottom: auto;
+  left: 10px;
+}
+html[data-mode] .portfolio-root .project-index-entry .exhibit-select {
+  top: auto;
+  bottom: 16px;
+  right: 16px;
+  font-size: 11px;
+  z-index: 2;
+}
+html[data-mode] .portfolio-root .project-index-entry .project-open {
+  width: 38px;
+  height: 38px;
+}
+html[data-mode] .portfolio-root .project-index-entry .project-quick {
+  width: 36px;
+  height: 36px;
+}
+html[data-mode]
+  .portfolio-root
+  .project-index-list.compact-index
+  .project-index-entry
+  .project-card {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+/* readable small text everywhere */
+html[data-mode] .portfolio-root .work-end,
+html[data-mode] .portfolio-root .gallery-count,
+html[data-mode] .portfolio-root .exhibit-copy > p,
+html[data-mode] .portfolio-root .desk-mode-controls button,
+html[data-mode] .portfolio-root .collection-buttons small,
+html[data-mode] .portfolio-root .sidebar-source {
+  font-size: 12px;
+}
+html[data-mode] .portfolio-root .exhibit-copy > p {
+  font-size: 16px;
+  color: var(--m-graphite);
+}
+html[data-mode] .portfolio-root .exhibit-copy .button {
+  font-size: 13px;
+}
+html[data-mode] .portfolio-root .classification-note {
+  font-size: 12px;
+}
+html[data-mode] .portfolio-root .exhibit-art .mini-anim {
+  height: 100%;
+  max-height: 340px;
+  object-fit: contain;
+}
+
+/* ---------- contact band and light-only fixes ---------- */
+html[data-mode] .portfolio-root .contact-section {
+  background: #ecebe2;
+  color: var(--m-ink);
+  border-top: var(--m-edge);
+  border-bottom: var(--m-edge);
+}
+html[data-mode="creative"] .portfolio-root .contact-section {
+  background: var(--m-sky);
+}
+html[data-mode] .portfolio-root .contact-section .section-label,
+html[data-mode] .portfolio-root .contact-section .section-label > span,
+html[data-mode] .portfolio-root .contact-socials a,
+html[data-mode] .portfolio-root .copy-profile,
+html[data-mode] .portfolio-root .contact-link,
+html[data-mode] .portfolio-root .contact-link button,
+html[data-mode] .portfolio-root .contact-grid > div > p,
+html[data-mode] .portfolio-root .email-line > a,
+html[data-mode] .portfolio-root .email-line > span {
+  color: var(--m-ink);
+}
+html[data-mode] .portfolio-root .contact-section .section-label > span {
+  color: var(--m-cobalt);
+}
+html[data-mode] .portfolio-root .contact-section .contact-grid > div > h2 {
+  color: var(--m-ink);
+  font-size: clamp(44px, 5.4vw, 80px);
+}
+html[data-mode] .portfolio-root .contact-grid > div > h2 > em {
+  color: var(--m-cobalt);
+}
+html[data-mode] .portfolio-root .contact-star {
+  color: var(--m-tan);
+}
+html[data-mode] .portfolio-root .contact-socials a,
+html[data-mode] .portfolio-root .copy-profile {
+  border: var(--m-edge);
+  background: var(--m-card);
+  border-radius: 4px;
+  box-shadow: 3px 3px 0 var(--m-ink);
+}
+html[data-mode] .portfolio-root .email-line .icon-button {
+  box-shadow: 3px 3px 0 var(--m-ink);
+}
+html[data-mode] .portfolio-root .contact-form {
+  background: var(--m-card);
+  color: var(--m-ink);
+  border-radius: 4px;
+}
+html[data-mode] .portfolio-root .contact-form label {
+  color: var(--m-ink);
+  font-weight: 600;
+}
+html[data-mode] .portfolio-root .form-status,
+html[data-mode] .portfolio-root .form-submit p {
+  color: var(--m-graphite);
+  font-size: 13px;
+}
+html[data-mode] .portfolio-root .button-dark {
+  background: var(--m-ink);
+  color: #fff;
+}
+html[data-mode="creative"] .portfolio-root .button-dark {
+  background: var(--m-lime);
+  color: var(--m-ink);
+}
+html[data-mode] .portfolio-root .lab-section {
+  background: var(--m-lime);
+  color: var(--m-ink);
+  border-block: var(--m-edge);
+}
+html[data-mode="pro"] .portfolio-root .lab-section {
+  background: #eef3c4;
+}
+html[data-mode] .portfolio-root .lab-section p {
+  color: #2d3238;
+}
+html[data-mode] .portfolio-root .site-footer {
+  background: var(--m-ink);
+}
+html[data-mode] .portfolio-root .site-footer .footer-top {
+  padding-block: 35px;
+}
+
+/* ---------- minimum readable sizes ---------- */
+html[data-mode]
+  .portfolio-root
+  :is(
+    .about-facts span,
+    .about-facts p,
+    .interest-tags span,
+    .chapter-card p,
+    .chapter-type,
+    .chapter-tags span,
+    .skill-inspector p,
+    .skill-inspector span,
+    .component-inspector p,
+    .architecture-toolbar,
+    .diagram-badge,
+    .diagram-caption,
+    .engine-project-meta,
+    .engine-selector label,
+    .engine-layout p,
+    .toolkit-layout p,
+    .contact-form label,
+    .form-row span,
+    .world-breadcrumb,
+    .world-header-meta,
+    .demo-console p,
+    .demo-console li,
+    .demo-console span,
+    .world-section-heading span,
+    .source-ledger a span,
+    .source-commit,
+    .unavailable
+  ) {
+  font-size: max(13px, 1em);
+}
+html[data-mode] .portfolio-root .skill-cluster button {
+  font-size: 13px;
+}
+html[data-mode] .portfolio-root .diagram-node text {
+  font-size: 15px;
+}
+html[data-mode] .portfolio-root .diagram-node .diagram-node-number {
+  font-size: 10px;
+}
+
+/* ---------- skills marquee ---------- */
+.skills-marquee {
+  overflow: hidden;
+  border-block: 1.5px solid #17171d;
+  background: #17171d;
+  color: #f7f6f0;
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: m-marquee 36s linear infinite;
+}
+.skills-marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+.skills-marquee ul {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.skills-marquee li {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  padding: 15px 0;
+  font-family: var(--font-mono-set, monospace);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.skills-marquee li::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin: 0 28px;
+  background: #ff6538;
+  transform: rotate(45deg);
+}
+@keyframes m-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+html[data-mode="creative"] .skills-marquee {
+  background: #c8f13b;
+  color: #17171d;
+  transform: rotate(-1.2deg) scale(1.02);
+  margin-block: 14px;
+  box-shadow: 0 4px 0 #17171d;
+}
+html[data-mode="creative"] .skills-marquee li {
+  font-family: var(--font-instrument), Georgia, serif;
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  font-style: italic;
+}
+html[data-mode="creative"] .skills-marquee li::after {
+  background: #2f4bff;
+  border-radius: 50%;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+    width: auto;
+  }
+  .skills-marquee ul {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .skills-marquee ul[aria-hidden="true"] {
+    display: none;
+  }
+  html[data-mode="creative"] .skills-marquee {
+    transform: none;
+  }
+}
+
+/* ---------- creative-only decorations ---------- */
+.creative-only {
+  display: none;
+}
+html[data-mode="creative"] .creative-only {
+  display: inline-flex;
+}
+.hero-sticker {
+  align-items: center;
+  gap: 6px;
+  margin: 0 12px 12px 0;
+  padding: 7px 12px;
+  background: #ff8fc0;
+  color: #17171d;
+  border: 2px solid #17171d;
+  border-radius: 999px;
+  box-shadow: 3px 3px 0 #17171d;
+  font: 700 12px var(--font-mono-set, monospace);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transform: rotate(-4deg);
+  animation: m-wobble 4s ease-in-out infinite;
+}
+.hero-sticker i {
+  font-style: normal;
+}
+@keyframes m-wobble {
+  50% {
+    transform: rotate(3deg) translateY(-3px);
+  }
+}
+.hero-note {
+  align-items: flex-end;
+  gap: 8px;
+  margin: 0 0 6px 4%;
+  font:
+    italic 26px/1 var(--font-instrument),
+    Georgia,
+    serif;
+  color: #2f4bff;
+  transform: rotate(-2deg);
+}
+.hero-note svg {
+  width: 64px;
+  height: 38px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-sticker {
+    animation: none;
+  }
+}
+
+/* ---------- project page loop ---------- */
+.world-loop {
+  margin: 28px 0 0;
+  max-width: 460px;
+}
+.world-loop .mini-anim {
+  border: 1.5px solid var(--m-ink, #17171d);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--world-accent, #8edbff) 12%, #fff);
+  box-shadow: var(--m-shadow, 4px 4px 0 #17171d);
+}
+html[data-mode="creative"] .world-loop .mini-anim {
+  border-width: 2px;
+  border-radius: 14px;
+}
+.world-loop figcaption {
+  margin-top: 12px;
+  font-size: 11px;
+  color: var(--m-graphite, #4b5262);
+}
+
+/* text inside dark pressed controls must stay readable */
+html[data-mode]
+  .portfolio-root
+  button[aria-pressed="true"]
+  :is(.mono, small, span, svg, i) {
+  color: inherit;
+}
+html[data-mode] .portfolio-root .skill-map-center > span {
+  font-size: 11px;
+  color: var(--m-graphite);
+}
+html[data-mode] .portfolio-root .skill-map-center {
+  opacity: 1;
+  color: var(--m-graphite);
+}
+html[data-mode="creative"] .portfolio-root .contact-section .section-label > span,
+html[data-mode] .portfolio-root .lab-section .section-label > span,
+html[data-mode="creative"] .portfolio-root .contact-section .eyebrow {
+  color: var(--m-ink);
+}

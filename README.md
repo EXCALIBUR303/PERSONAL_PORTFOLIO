@@ -46,6 +46,28 @@ The owner classified Burnout, its separate backend, UCO Recovery Station, PBL6 G
 
 Each demo explicitly distinguishes **original application**, **interactive simulation**, **run locally**, or **unavailable**. Passing core tests does not imply a complete application works without its database, simulator, model artifacts or configuration. See [execution audit](docs/research/v3-execution-audit.md), [source audit](docs/research/repository-audit.md), and [Mazera verification](docs/research/mazera-demo-verification.md).
 
+## Two modes, one site
+
+The header's **Professional / Creative** switch (also Alt+M) changes only the presentation. Routes, project data and behaviour are shared.
+
+- The choice is stored in `localStorage` (`portfolio-mode`). A tiny script in `<head>` (`modeBootScript` in `src/components/mode.tsx`) sets `data-mode` on `<html>` before first paint, so there is no flash and no hydration mismatch. First-time visitors get Professional.
+- All visual differences live in `src/app/modes.css`, keyed on `html[data-mode="pro" | "creative"]`. Tokens are the `--m-*` variables at the top of that file.
+- `src/components/mini-anim.tsx` draws the small looping canvas sketches on project cards, the quick-view dialog and project pages. They illustrate the documented idea and are labelled as concept sketches. They pause off-screen and in reduced motion.
+- The Creative-mode cursor (`Cursor` in `app-frame.tsx`) moves its dot directly from the pointer event, so it cannot trail the mouse. It is not rendered on touch or with reduced motion.
+- Project pages have an architecture walkthrough (play, pause, scrub) that steps through the documented components in order.
+- VERIFICATION.md and the Lighthouse files describe the earlier V3 baseline and were not regenerated for the modes.
+
+## Two modes, one site
+
+The header's **Professional / Creative** switch (also Alt+M) changes only the presentation. Routes, project data and behaviour are shared.
+
+- The choice is stored in `localStorage` (`portfolio-mode`). A tiny script in `<head>` (`modeBootScript` in `src/components/mode.tsx`) sets `data-mode` on `<html>` before first paint, so there is no flash and no hydration mismatch. First-time visitors get Professional.
+- All visual differences live in `src/app/modes.css`, keyed on `html[data-mode="pro" | "creative"]`. Tokens are the `--m-*` variables at the top of that file.
+- `src/components/mini-anim.tsx` draws the small looping canvas sketches on project cards, the quick-view dialog and project pages. They illustrate the documented idea and are labelled as concept sketches. They pause off-screen and with reduced motion.
+- The Creative-mode cursor (`Cursor` in `app-frame.tsx`) moves its dot directly from the pointer event, so it cannot trail the mouse. It is not rendered on touch or with reduced motion.
+- Project pages have an architecture walkthrough (play, pause, scrub) that steps through the documented components in order.
+- VERIFICATION.md and the Lighthouse files describe the earlier V3 baseline and were not regenerated for the modes.
+
 ## Edit the portfolio
 
 | File                                                      | Purpose                                                                                                                                                            |

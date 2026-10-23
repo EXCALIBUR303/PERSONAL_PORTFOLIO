@@ -13,6 +13,7 @@ import {
 import type { Project } from "@/data/projects";
 import DemoConsole from "@/components/demo-console";
 import ArchitectureExplorer from "@/components/architecture-explorer";
+import MiniAnim, { animForSlug } from "@/components/mini-anim";
 import { Reveal, SectionLabel } from "@/components/ui";
 import { usePortfolioState } from "@/components/app-frame";
 function Loading() {
@@ -95,6 +96,15 @@ export default function ProjectWorld({
               {project.title}
             </h1>
             <p className="world-tagline">{project.tagline}</p>
+            <figure className="world-loop">
+              <MiniAnim
+                kind={animForSlug[project.slug] ?? "pulse"}
+                label={`Animated concept sketch of ${project.title}`}
+              />
+              <figcaption className="mono">
+                Concept sketch of the idea, not a recording of the project.
+              </figcaption>
+            </figure>
           </div>
           <div className="world-header-meta">
             <span className="world-status">

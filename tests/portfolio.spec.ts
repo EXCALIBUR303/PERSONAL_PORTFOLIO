@@ -24,7 +24,9 @@ test("home renders all chapters with valid anchors and no runtime errors", async
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
-  await expect(page.locator("h1")).toContainText("I build things.");
+  await expect(page.locator("h1")).toHaveText(
+    "Hi, I'm Sidharth. I build intelligent systems, and make them explorable.",
+  );
   for (const id of [
     "projects",
     "skills",
@@ -91,11 +93,12 @@ test("search, categories, featured filtering, and empty-state reset work", async
   await expect(page.locator(".project-card")).toHaveCount(projects.length);
 });
 
-test("primary cards enter routes and Back preserves gallery state and theme", async ({
+test("primary cards enter routes and Back preserves gallery state and mode", async ({
   page,
 }) => {
   await page.goto("/#projects");
-  await page.getByRole("button", { name: "Switch to light theme" }).click();
+  await page.getByRole("button", { name: "Creative" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-mode", "creative");
   await page
     .getByRole("searchbox", { name: "Search project worlds" })
     .fill("mazera");
@@ -107,10 +110,7 @@ test("primary cards enter routes and Back preserves gallery state and theme", as
   await expect(page).toHaveURL(/\/projects\/mazera-ai-maze-solver\/?$/);
   await expect(page.locator("h1")).toContainText("Mazera");
   await expect(page.locator("h1")).toBeFocused();
-  await expect(page.locator(".portfolio-root")).toHaveAttribute(
-    "data-theme",
-    "light",
-  );
+  await expect(page.locator("html")).toHaveAttribute("data-mode", "creative");
   await page
     .getByRole("link", { name: "Back to Multiverse", exact: true })
     .first()
@@ -119,10 +119,7 @@ test("primary cards enter routes and Back preserves gallery state and theme", as
     page.getByRole("searchbox", { name: "Search project worlds" }),
   ).toHaveValue("mazera");
   await expect(page.locator(".project-card")).toHaveCount(1);
-  await expect(page.locator(".portfolio-root")).toHaveAttribute(
-    "data-theme",
-    "light",
-  );
+  await expect(page.locator("html")).toHaveAttribute("data-mode", "creative");
 });
 
 test("quick overview retains accessible native dialog behavior", async ({
@@ -430,7 +427,7 @@ for (const route of [
     expect(clipped).toEqual([]);
   });
 
-test("home and representative worlds pass automated accessibility in both themes", async ({
+test("home and representative worlds pass automated accessibility in both modes", async ({
   page,
 }) => {
   test.setTimeout(180000);
@@ -450,15 +447,14 @@ test("home and representative worlds pass automated accessibility in both themes
     await page.goto(route);
     if (route !== "/" && !route.includes("last-mile-daa"))
       await expect(page.locator(".interactive-module")).toBeVisible();
-    for (const theme of ["light", "dark"]) {
+    for (const mode of ["pro", "creative"]) {
       await page
-        .getByRole("button", { name: `Switch to ${theme} theme` })
+        .getByRole("button", {
+          name: mode === "pro" ? "Professional" : "Creative",
+        })
         .click();
-      await expect(page.locator(".portfolio-root")).toHaveAttribute(
-        "data-theme",
-        theme,
-      );
-      // Audit the completed theme paint after the lazy world has mounted.
+      await expect(page.locator("html")).toHaveAttribute("data-mode", mode);
+      // Audit the completed paint after the lazy world has mounted.
       await page.evaluate(
         () =>
           new Promise<void>((resolve) =>
@@ -471,7 +467,7 @@ test("home and representative worlds pass automated accessibility in both themes
       expect(
         result.violations.map((v) => ({
           route,
-          theme,
+          mode,
           id: v.id,
           nodes: v.nodes.map((n) => ({
             target: n.target,
@@ -494,13 +490,17 @@ test("desktop sculpture and project spatial view use WebGL with working controls
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
-  await expect(page.locator("canvas")).toBeVisible({ timeout: 20000 });
+  await expect(page.locator("canvas:not(.mini-anim)")).toBeVisible({
+    timeout: 20000,
+  });
   await page.getByRole("button", { name: "Pause sculpture" }).click();
   await expect(
     page.getByRole("button", { name: "Play sculpture" }),
   ).toBeVisible();
   await page.goto("/projects/mazera-ai-maze-solver/");
-  await expect(page.locator("canvas")).toBeVisible({ timeout: 20000 });
+  await expect(page.locator("canvas:not(.mini-anim)")).toBeVisible({
+    timeout: 20000,
+  });
   await expect(page.locator(".spatial-fallback")).toHaveCount(0);
   await page.getByRole("button", { name: "Top view", exact: true }).click();
   await expect(
@@ -511,7 +511,7 @@ test("desktop sculpture and project spatial view use WebGL with working controls
     page.getByRole("button", { name: "Isometric", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: "2D", exact: true }).click();
-  await expect(page.locator("canvas")).toHaveCount(0);
+  await expect(page.locator("canvas:not(.mini-anim)")).toHaveCount(0);
   await expect(page.locator(".maze-grid-svg")).toBeVisible();
   expect(errors).toEqual([]);
   await context.close();
@@ -529,12 +529,16 @@ test("touch devices opt into 3D while no-WebGL pages retain full 2D interaction"
   const page = await context.newPage();
   await page.goto("/");
   await expect(page.getByRole("button", { name: "Try in 3D" })).toBeVisible();
-  await expect(page.locator("canvas")).toHaveCount(0);
+  await expect(page.locator("canvas:not(.mini-anim)")).toHaveCount(0);
   await page.getByRole("button", { name: "Try in 3D" }).click();
-  await expect(page.locator("canvas")).toBeVisible({ timeout: 20000 });
+  await expect(page.locator("canvas:not(.mini-anim)")).toBeVisible({
+    timeout: 20000,
+  });
   await page.goto("/projects/smart-parking-dbms/");
-  await expect(page.locator("canvas")).toHaveCount(0);
+  await expect(page.locator("canvas:not(.mini-anim)")).toHaveCount(0);
   await page.getByRole("button", { name: "Enable 3D view" }).click();
-  await expect(page.locator("canvas")).toBeVisible({ timeout: 20000 });
+  await expect(page.locator("canvas:not(.mini-anim)")).toBeVisible({
+    timeout: 20000,
+  });
   await context.close();
 });

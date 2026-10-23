@@ -1,6 +1,6 @@
 "use client";
-import { useId, useState } from "react";
-import { ArrowUpRight, Network } from "lucide-react";
+import { useEffect, useId, useState } from "react";
+import { ArrowUpRight, Network, Pause, Play } from "lucide-react";
 import type { Project } from "@/data/projects";
 export default function ArchitectureExplorer({
   project,
@@ -13,6 +13,7 @@ export default function ArchitectureExplorer({
   const [selected, setSelected] = useState(
     project.architecture.nodes[0]?.id || "",
   );
+  const [playing, setPlaying] = useState(false);
   const nodes = project.architecture.nodes,
     current = nodes.find((node) => node.id === selected) || nodes[0];
   const connected = new Set(
@@ -20,6 +21,25 @@ export default function ArchitectureExplorer({
       from === selected ? [to] : to === selected ? [from] : [],
     ),
   );
+  const index = Math.max(
+    0,
+    nodes.findIndex((node) => node.id === selected),
+  );
+  useEffect(() => {
+    if (!playing) return;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = window.setInterval(() => {
+      setSelected((id) => {
+        const at = nodes.findIndex((node) => node.id === id);
+        if (at >= nodes.length - 1) {
+          setPlaying(false);
+          return id;
+        }
+        return nodes[at + 1].id;
+      });
+    }, 1400);
+    return () => window.clearInterval(timer);
+  }, [playing, nodes]);
   const cols = 3,
     rows = Math.ceil(nodes.length / cols),
     width = 780,
@@ -106,6 +126,41 @@ export default function ArchitectureExplorer({
           );
         })}
       </svg>
+      {nodes.length > 1 && (
+        <div
+          className="arch-player"
+          role="group"
+          aria-label="Walk through the components in order"
+        >
+          <button
+            type="button"
+            aria-label={playing ? "Pause walkthrough" : "Play walkthrough"}
+            onClick={() => {
+              if (!playing && index >= nodes.length - 1)
+                setSelected(nodes[0].id);
+              setPlaying(!playing);
+            }}
+          >
+            {playing ? <Pause size={16} /> : <Play size={16} />}
+          </button>
+          <input
+            type="range"
+            min={0}
+            max={nodes.length - 1}
+            step={1}
+            value={index}
+            aria-label="Scrub through components"
+            aria-valuetext={`${index + 1} of ${nodes.length}: ${current.label}`}
+            onChange={(event) => {
+              setPlaying(false);
+              setSelected(nodes[Number(event.target.value)].id);
+            }}
+          />
+          <output>
+            {index + 1} / {nodes.length}
+          </output>
+        </div>
+      )}
       <div
         className="architecture-node-buttons"
         role="group"

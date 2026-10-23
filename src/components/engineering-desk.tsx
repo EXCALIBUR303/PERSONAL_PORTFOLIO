@@ -65,15 +65,17 @@ export default function EngineeringDesk() {
         <div className="desk-introduction">
           <div>
             <p className="eyebrow">
-              HELLO, WORLD. I’M {profile.name.toUpperCase()}.
+              {profile.name.toUpperCase()} / B.TECH CSE / FIELD NOTES
             </p>
             <h1 id="hero-title" tabIndex={-1}>
-              <span>I build</span> things<span className="hero-period">.</span>
-              <br />
-              <em>And ask why.</em>
+              Hi, I&apos;m Sidharth. I build <em>intelligent systems</em>, and
+              make them <em className="hero-underlined">explorable</em>.
             </h1>
           </div>
           <div className="desk-intro-aside">
+            <span className="creative-only hero-sticker" aria-hidden="true">
+              <i>★</i> open source
+            </span>
             <span className="degree-chip">
               B.TECH / COMPUTER SCIENCE & ENGINEERING
             </span>
@@ -88,6 +90,20 @@ export default function EngineeringDesk() {
             </div>
           </div>
         </div>
+        <p className="creative-only hero-note" aria-hidden="true">
+          pick a lens, spin the model
+          <svg
+            viewBox="0 0 120 70"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M6 8 C 30 6, 80 14, 104 54" />
+            <path d="M92 48 L105 57 L108 41" />
+          </svg>
+        </p>
         <div className="engineering-desk">
           <div className="desk-rail">
             <span className="mono">CHOOSE A LENS</span>

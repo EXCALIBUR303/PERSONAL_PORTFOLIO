@@ -2,6 +2,7 @@
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import { profile } from "@/data/profile";
 import EngineeringDesk from "./engineering-desk";
+import SkillsMarquee from "./skills-marquee";
 import ProjectGallery from "./project-gallery";
 import GrowingToolkit from "./growing-toolkit";
 import DimensionEngine from "./dimension-engine";
@@ -14,6 +15,7 @@ export default function Portfolio() {
   return (
     <main id="main" tabIndex={-1}>
       <EngineeringDesk />
+      <SkillsMarquee />
       <ProjectGallery />
       <GrowingToolkit />
       <DimensionEngine />

@@ -4,7 +4,7 @@ import { m } from "motion/react";
 import Link from "next/link";
 import { Github, X, ArrowUpRight } from "lucide-react";
 import type { Project } from "@/data/projects";
-import ProjectPreview from "./project-preview";
+import MiniAnim, { animForSlug } from "./mini-anim";
 export default function ProjectDialog({
   project,
   close,
@@ -48,11 +48,12 @@ export default function ProjectDialog({
         >
           <X size={22} />
         </button>
-        <ProjectPreview
-          type={project.kind}
-          title={project.title}
-          accent={project.accent}
-        />
+        <div className="dialog-preview">
+          <MiniAnim
+            kind={animForSlug[project.slug] ?? "pulse"}
+            label={`Animated concept sketch of ${project.title}`}
+          />
+        </div>
         <div className="dialog-copy">
           <span className="eyebrow">
             {project.categories.join(" / ")} ·{" "}

@@ -4,7 +4,7 @@ import { m, useMotionValue, useSpring, useReducedMotion } from "motion/react";
 import { ArrowUpRight, Info } from "lucide-react";
 import type { Project } from "@/data/projects";
 import { motionTokens } from "./motion-config";
-import ProjectPreview from "./project-preview";
+import MiniAnim, { animForSlug } from "./mini-anim";
 import { usePortfolioState } from "./app-frame";
 export function ProjectCard({
   project,
@@ -45,10 +45,9 @@ export function ProjectCard({
           rotateY.set(0);
         }}
       >
-        <ProjectPreview
-          type={project.kind}
-          title={project.title}
-          accent={project.accent}
+        <MiniAnim
+          kind={animForSlug[project.slug] ?? "pulse"}
+          label={`Animated concept sketch of ${project.title}`}
         />
         <span className="project-demo mono" aria-hidden="true">
           {project.sourceVisibility === "public"
@@ -61,6 +60,7 @@ export function ProjectCard({
           prefetch={false}
           onClick={() => beginPortal(project.accent)}
           aria-label={`Enter ${project.title} world`}
+          data-cursor="OPEN"
         >
           <span className="project-open" aria-hidden="true">
             <ArrowUpRight size={22} />

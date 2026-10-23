@@ -17,7 +17,7 @@ import {
 import { projects, categories, type Project } from "@/data/projects";
 import { usePortfolioState } from "./app-frame";
 import { ProjectCard } from "./project-components";
-import ProjectPreview from "./project-preview";
+import MiniAnim, { animForSlug } from "./mini-anim";
 import { SectionLabel } from "./ui";
 const ProjectDialog = dynamic(() => import("./project-dialog"), { ssr: false });
 export default function ProjectGallery() {
@@ -230,10 +230,9 @@ export default function ProjectGallery() {
                 }
               >
                 <div className="exhibit-art">
-                  <ProjectPreview
-                    type={spotlight.kind}
-                    title={spotlight.title}
-                    accent={spotlight.accent}
+                  <MiniAnim
+                    kind={animForSlug[spotlight.slug] ?? "pulse"}
+                    label={`Animated concept sketch of ${spotlight.title}`}
                   />
                   <span className="exhibit-coordinate mono">
                     EXHIBIT{" "}
