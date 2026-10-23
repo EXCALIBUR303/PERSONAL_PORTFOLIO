@@ -27,6 +27,5 @@ export const site = {
   title: "Sidharth Sood — Devfolio V3 / Form & Function",
   description:
     "Explore the Interactive Engineering Universe: source-backed engineering projects, interactive worlds, and experiments by Sidharth Sood, a B.Tech CSE student.",
-  url: "https://form-function-creative-lab.starry-hare-3759.chatgpt.site" as
-    string | null,
+  url: "https://sidharth-portfolio-ten.vercel.app" as string | null,
 };
