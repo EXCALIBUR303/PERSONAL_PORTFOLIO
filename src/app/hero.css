@@ -1,6 +1,6 @@
 /*
- * Hero: the framed 3D stage (shared by both modes) and the Professional hero
- * composition. The Creative hero lives in creative.css and reuses the stage.
+ * Professional hero composition and the lens picker. The visualisations
+ * themselves live in lens.css; the Creative home lives in creative.css.
  */
 html[data-mode] .portfolio-root {
   /* ---------- Professional composition ---------- */
@@ -94,154 +94,15 @@ html[data-mode] .portfolio-root {
     gap: 6px;
   }
 
-  /* ---------- 3D stage (both modes) ---------- */
+  /* ---------- lens visual ---------- */
   .hx-visual {
     min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 14px;
   }
-  .hx-stage {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    background: var(--m-card);
-    border: var(--m-edge);
-    border-radius: 4px;
-    box-shadow: var(--m-shadow);
-  }
-  .hx-canvas-wrap {
-    position: relative;
-    aspect-ratio: 6 / 5;
-    width: min(100%, 86vh);
-    margin-inline: auto;
-    overflow: hidden;
-    border-radius: inherit;
-    background-image:
-      linear-gradient(#17171d0d 1px, transparent 1px),
-      linear-gradient(90deg, #17171d0d 1px, transparent 1px);
-    background-size: 36px 36px;
-    background-position: center;
-    touch-action: pan-y;
-  }
-  .hx-canvas-wrap:focus-visible {
-    outline: 3px solid var(--m-cobalt);
-    outline-offset: -3px;
-  }
-  .hx-poster {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    color: var(--m-ink);
-    transition: opacity 0.45s ease;
-    --hx-base: #ece8dd;
-    --hx-bar: #d8dce0;
-  }
-  .hx-poster-art {
-    width: min(86%, 560px);
-    height: auto;
-  }
-  .hx-canvas {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    transition: opacity 0.45s ease;
-  }
-  .hx-canvas canvas {
-    display: block;
-    /* Vertical swipes keep scrolling the page; horizontal drags rotate. The
-       important flag beats the inline value OrbitControls writes. */
-    touch-action: pan-y !important;
-  }
-  .hx-stage[data-state="live"] .hx-canvas {
-    opacity: 1;
-  }
-  .hx-stage[data-state="live"] .hx-poster {
-    opacity: 0;
-  }
-  .hx-badge {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 5px 10px;
-    background: var(--m-card);
-    border: 1.5px solid var(--m-ink);
-    border-radius: 999px;
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    color: var(--m-ink);
-    pointer-events: none;
-  }
-  .hx-badge i {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #9aa0aa;
-  }
-  .hx-stage[data-state="live"] .hx-badge i {
-    background: #1f9d55;
-  }
-  .hx-toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px 14px;
-    padding: 9px 12px;
-    border-top: 1.5px solid var(--m-ink);
-  }
-  .hx-hint {
-    flex: 1 1 220px;
-    font-size: 11px;
-    color: var(--m-graphite);
-  }
-  .hx-tools {
-    display: flex;
-    gap: 6px;
-    margin-left: auto;
-  }
-  .hx-tools button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    min-width: 34px;
-    height: 34px;
-    padding: 0 9px;
-    background: var(--m-card);
-    border: 1.5px solid var(--m-ink);
-    border-radius: 4px;
-    color: var(--m-ink);
-    font-family: var(--font-mono-set);
-    font-size: 11px;
-    cursor: pointer;
-    transition:
-      transform 0.15s ease,
-      background-color 0.15s ease;
-  }
-  .hx-tools button:hover {
-    background: var(--m-lime);
-  }
-  .hx-tools button:active {
-    transform: translateY(1px);
-  }
-  @media (pointer: coarse) {
-    .hx-tools button {
-      min-width: 44px;
-      height: 44px;
-    }
-  }
 
   /* ---------- lens panel ---------- */
-  .hx-panel {
-    background: var(--m-card);
-    border: var(--m-edge);
-    border-radius: 4px;
-  }
   .hx-lenses {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -284,54 +145,6 @@ html[data-mode] .portfolio-root {
       flex-direction: column;
       gap: 4px;
       font-size: 11px;
-    }
-  }
-  .hx-panel .hx-inspector {
-    text-align: left;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px 24px;
-    padding: 16px 18px 18px;
-    border: 0;
-    background: transparent;
-  }
-  .hx-panel .hx-inspector > div {
-    flex: 1 1 260px;
-  }
-  .hx-panel .hx-inspector h2 {
-    margin: 0;
-    font-size: clamp(22px, 2.1vw, 28px);
-    line-height: 1.12;
-  }
-  .hx-panel .hx-inspector p {
-    margin: 6px 0 0;
-    font-size: 14.5px;
-    color: var(--m-graphite);
-  }
-  .hx-panel .hx-inspector > a {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 0;
-    border: 0;
-    border-bottom: 2px solid var(--lens-accent, var(--m-ink));
-    font-family: var(--font-mono-set);
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--m-ink);
-    transition: gap 0.15s ease;
-  }
-  .hx-panel .hx-inspector > a:hover {
-    gap: 12px;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  html[data-mode] .portfolio-root {
-    .hx-poster,
-    .hx-canvas {
-      transition: none;
     }
   }
 }

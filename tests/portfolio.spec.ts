@@ -112,7 +112,7 @@ test("primary cards enter routes and Back preserves gallery state and mode", asy
   await expect(page.locator("h1")).toBeFocused();
   await expect(page.locator("html")).toHaveAttribute("data-mode", "creative");
   await page
-    .getByRole("link", { name: "Back to the board", exact: true })
+    .getByRole("link", { name: "Back to the map", exact: true })
     .first()
     .click();
   await expect(
@@ -193,7 +193,7 @@ for (const project of projects)
     const response = await page.goto(`/projects/${project.slug}/`);
     expect(response?.status()).toBe(200);
     await expect(page.locator("h1")).toHaveText(project.title);
-    await expect(page.locator("#world-evidence")).toBeVisible();
+    await expect(page.locator("#limits")).toBeVisible();
     await page.reload();
     await expect(page.locator("h1")).toHaveText(project.title);
     expect(errors).toEqual([]);
@@ -317,22 +317,128 @@ test("independent penalty demo scores shots and discloses private-source limits"
   await expect(page.locator(".penalty-result")).toContainText("Wide!");
   await page.getByRole("button", { name: "Reset penalty game" }).click();
   await expect(page.locator(".penalty-score strong").first()).toHaveText("0");
-  await expect(page.locator(".source-ledger")).toContainText("private");
+  await page.locator("#decisions summary").click();
+  await expect(page.locator(".ps-sources")).toContainText("private");
 });
 
-test("source walkthroughs navigate components without pretending to execute backends", async ({
+test("architecture walkthroughs navigate components without pretending to execute backends", async ({
   page,
 }) => {
   await page.goto("/projects/resume-screener/");
-  const stage = page.locator(".workflow-stage-content");
-  const before = await stage.textContent();
+  const inspector = page.locator("#try .component-inspector");
+  const before = await inspector.textContent();
+  await page.locator("#try .architecture-node-buttons button").nth(2).click();
+  await expect(inspector).not.toHaveText(before || "");
+  await expect(page.locator("#try .diagram-caption")).toContainText(
+    "not live network traffic",
+  );
+  await expect(page.locator(".ps-demonote")).toContainText(
+    "Architecture walkthrough",
+  );
+  await expect(page.locator("#how .ps-scope li").first()).toBeVisible();
+});
+
+test("every project says what kind of demonstration it offers", async ({
+  page,
+}) => {
+  const expected: Record<string, string> = {
+    "mazera-ai-maze-solver": "Working demo",
+    "smart-parking-dbms": "Sample-data walkthrough",
+    "last-mile-daa": "Sample-data walkthrough",
+    "parkscan-swarm": "Simulation",
+    "predictive-maintenance": "Sample-data walkthrough",
+    aeris: "Architecture walkthrough",
+  };
+  for (const [slug, label] of Object.entries(expected)) {
+    await page.goto(`/projects/${slug}/`);
+    await expect(page.locator(".pr-badges li[data-kind]")).toHaveText(label);
+    await expect(page.locator(".ps-demo-badge")).toHaveText(label);
+  }
+});
+
+test("Last Mile walkthrough: greedy can lose to the knapsack, and routes can be compared with the exact one", async ({
+  page,
+}) => {
+  await page.goto("/projects/last-mile-daa/");
+  await expect(page.locator(".lm-compare").first()).toContainText("22");
+  await expect(page.locator(".lm-compare").first()).toContainText("23");
+  await expect(page.locator(".lm-controls .lz-note").first()).toContainText(
+    "Greedy loses 1",
+  );
+  await page.getByRole("button", { name: "Knapsack · best fit" }).click();
+  await page.getByRole("button", { name: "Exact (Held-Karp)" }).click();
+  await expect(page.locator(".lm-compare").nth(1)).toContainText(
+    "Extra distance0",
+  );
+  await page.getByRole("button", { name: "Nearest neighbour" }).click();
+  await page.getByRole("checkbox").check();
+  await expect(page.locator(".lm-tree").first()).toBeVisible();
+});
+
+test("ParkScan simulation: zones finish with no repeated work and the badge says SIMULATED", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/projects/parkscan-swarm/");
+  await expect(page.locator(".ps-badge")).toHaveText("SIMULATED");
+  await page.getByRole("button", { name: "Step simulation" }).click();
+  await expect(page.locator(".ps-module .lz-stats")).toContainText("Tick1");
+  await page.getByRole("slider", { name: "Speed" }).fill("8");
+  await page.getByRole("button", { name: "Play simulation" }).click();
+  await expect(page.locator(".ps-module .lz-note")).toContainText(
+    "Finished in",
+    { timeout: 20000 },
+  );
+  await expect(page.locator(".ps-module .lz-stats")).toContainText(
+    "Repeated work0",
+  );
   await page
-    .getByRole("button", { name: "Next component", exact: true })
+    .getByRole("button", { name: "Robots that do not share a map" })
     .click();
-  await expect(stage).not.toHaveText(before || "");
+  await page.getByRole("button", { name: "Play simulation" }).click();
+  await expect(page.locator(".ps-module .lz-note")).toContainText(
+    "Finished in",
+    { timeout: 30000 },
+  );
+  await expect(page.locator(".ps-module .lz-stats")).not.toContainText(
+    "Repeated work0",
+  );
+});
+
+test("Mazera challenge reveals real results for all six algorithms", async ({
+  page,
+}) => {
+  await page.goto("/projects/mazera-ai-maze-solver/");
+  await page.getByRole("button", { name: "Run all six" }).isDisabled();
+  await page.getByRole("combobox", { name: "Grid" }).selectOption("open");
+  await page
+    .locator(".maze-guesses")
+    .getByRole("button", { name: "A*", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Run all six" }).click();
+  await expect(page.locator(".maze-results tbody tr")).toHaveCount(6);
+  await expect(page.locator(".maze-results tr[data-best]")).toHaveCount(1);
+  await expect(page.locator(".maze-results")).toContainText("Greedy");
+});
+
+test("Mazera is a College project everywhere it is shown", async ({ page }) => {
+  await page.goto("/projects/mazera-ai-maze-solver/");
+  await expect(page.locator(".pr-badges")).toContainText("College project");
+  await expect(page.locator(".pr-badges")).not.toContainText(
+    "Personal project",
+  );
+  expect(
+    projects.find((p) => p.slug === "mazera-ai-maze-solver")?.collection,
+  ).toBe("College");
+  await page.goto("/#projects");
+  await page.getByRole("button", { name: /College Projects/ }).click();
   await expect(
-    page.locator(".workflow-module .module-disclaimer"),
-  ).toContainText("do not execute");
+    page.locator(".project-card h3").filter({ hasText: "Mazera" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /Personal Projects/ }).click();
+  await expect(
+    page.locator(".project-card h3").filter({ hasText: "Mazera" }),
+  ).toHaveCount(0);
 });
 
 test("Color Field controls and reduced-motion CSS are preserved", async ({
@@ -444,9 +550,11 @@ test("home and representative worlds pass automated accessibility in both modes"
     "/projects/swarmmind/",
     "/projects/pathable/",
   ]) {
-    await page.goto(route);
+    await page.goto(route === "/" ? route : `${route}#try`);
     if (route !== "/" && !route.includes("last-mile-daa"))
-      await expect(page.locator(".interactive-module")).toBeVisible();
+      await expect(
+        page.locator(".interactive-module, .architecture-explorer").first(),
+      ).toBeVisible();
     for (const mode of ["pro", "creative"]) {
       await page
         .getByRole("button", {
@@ -479,7 +587,44 @@ test("home and representative worlds pass automated accessibility in both modes"
   }
 });
 
-test("desktop sculpture and project spatial view use WebGL with working controls", async ({
+test("Creative mission tabs pass automated accessibility on every mission", async ({
+  page,
+}) => {
+  test.setTimeout(120000);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.addInitScript(() =>
+    localStorage.setItem("portfolio-mode", "creative"),
+  );
+  for (const route of [
+    "/projects/mazera-ai-maze-solver/",
+    "/projects/parkscan-swarm/",
+    "/projects/aeris/",
+  ]) {
+    for (const mission of ["problem", "try", "how", "decisions"]) {
+      await page.goto(`${route}#${mission}`);
+      await expect(page.getByRole("tabpanel")).toBeVisible();
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+          ),
+      );
+      const result = await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+        .analyze();
+      expect(
+        result.violations.map((v) => ({
+          route,
+          mission,
+          id: v.id,
+          targets: v.nodes.map((n) => n.target),
+        })),
+      ).toEqual([]);
+    }
+  }
+});
+
+test("project spatial view uses WebGL with working controls", async ({
   browser,
 }) => {
   test.setTimeout(60000);
@@ -490,13 +635,7 @@ test("desktop sculpture and project spatial view use WebGL with working controls
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
-  await expect(page.locator("canvas:not(.mini-anim)")).toBeVisible({
-    timeout: 20000,
-  });
-  await page.getByRole("button", { name: "Pause sculpture" }).click();
-  await expect(
-    page.getByRole("button", { name: "Play sculpture" }),
-  ).toBeVisible();
+  await expect(page.locator("canvas:not(.mini-anim)")).toHaveCount(0);
   await page.goto("/projects/mazera-ai-maze-solver/");
   await expect(page.locator("canvas:not(.mini-anim)")).toBeVisible({
     timeout: 20000,
@@ -517,7 +656,7 @@ test("desktop sculpture and project spatial view use WebGL with working controls
   await context.close();
 });
 
-test("touch devices opt into 3D while no-WebGL pages retain full 2D interaction", async ({
+test("touch devices opt into 3D on project pages while 2D stays fully usable", async ({
   browser,
 }) => {
   test.setTimeout(60000);
@@ -528,12 +667,7 @@ test("touch devices opt into 3D while no-WebGL pages retain full 2D interaction"
   });
   const page = await context.newPage();
   await page.goto("/");
-  await expect(page.getByRole("button", { name: "Try in 3D" })).toBeVisible();
   await expect(page.locator("canvas:not(.mini-anim)")).toHaveCount(0);
-  await page.getByRole("button", { name: "Try in 3D" }).click();
-  await expect(page.locator("canvas:not(.mini-anim)")).toBeVisible({
-    timeout: 20000,
-  });
   await page.goto("/projects/smart-parking-dbms/");
   await expect(page.locator("canvas:not(.mini-anim)")).toHaveCount(0);
   await page.getByRole("button", { name: "Enable 3D view" }).click();

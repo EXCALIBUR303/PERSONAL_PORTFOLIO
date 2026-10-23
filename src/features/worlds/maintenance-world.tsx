@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Activity, Database, Layers3, Cpu } from "lucide-react";
 import SpatialView from "./spatial-view";
+import LensIntelligence from "@/components/lens/lens-intelligence";
 const models = {
   XGBoost:
     "Summary features from the shared 30-cycle context form a tabular baseline.",
@@ -43,6 +44,12 @@ export default function MaintenanceWorld() {
   const value = Math.round(valueAt(cycle));
   return (
     <div className="interactive-module maintenance-module">
+      <section className="mm-split" aria-labelledby="mm-split-title">
+        <h3 id="mm-split-title">
+          The protocol that matters most: split by engine
+        </h3>
+        <LensIntelligence />
+      </section>
       <div className="module-toolbar">
         <div>
           <span className="eyebrow">

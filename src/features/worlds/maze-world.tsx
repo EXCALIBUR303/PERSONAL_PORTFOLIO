@@ -2,7 +2,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { Pause, Play, RotateCcw, Shuffle, SkipForward } from "lucide-react";
-import { makeMaze, solveMaze, type SearchAlgorithm } from "@/lib/maze";
+import {
+  ALGORITHMS,
+  algorithmInfo,
+  makeMaze,
+  solveMaze,
+  type MazePattern,
+  type SearchAlgorithm,
+} from "@/lib/maze";
 import SpatialView from "./spatial-view";
 export default function MazeWorld() {
   const [seed, setSeed] = useState(17),
@@ -10,11 +17,28 @@ export default function MazeWorld() {
     [cursor, setCursor] = useState(0),
     [running, setRunning] = useState(false),
     [speed, setSpeed] = useState(90),
-    [inspect, setInspect] = useState(0);
-  const { maze, trace } = useMemo(() => {
-    const maze = makeMaze(seed);
-    return { maze, trace: solveMaze(maze, algorithm) };
-  }, [seed, algorithm]);
+    [inspect, setInspect] = useState(0),
+    [pattern, setPattern] = useState<MazePattern>("random"),
+    [guess, setGuess] = useState<SearchAlgorithm | "">(""),
+    [revealed, setRevealed] = useState(false);
+  const { maze, trace, all } = useMemo(() => {
+    const maze = makeMaze(seed, 21, 13, pattern);
+    const all = Object.fromEntries(
+      ALGORITHMS.map((name) => [name, solveMaze(maze, name)]),
+    ) as Record<SearchAlgorithm, ReturnType<typeof solveMaze>>;
+    return { maze, trace: all[algorithm], all };
+  }, [seed, algorithm, pattern]);
+  const fewest = ALGORITHMS.reduce((best, name) =>
+    all[name].visited.length < all[best].visited.length ? name : best,
+  );
+  const bestCount = all[fewest].visited.length;
+  const guessCount = guess ? all[guess].visited.length : 0;
+  const verdict =
+    guess && guessCount === bestCount
+      ? guess === fewest
+        ? `Right: ${fewest} explored the fewest cells (${bestCount}).`
+        : `Right: ${guess} ties for the fewest, at ${bestCount} cells.`
+      : `Not quite: ${fewest} explored the fewest cells (${bestCount}); ${guess} needed ${guessCount}.`;
   const reduced = useReducedMotion();
   const finished = cursor >= trace.visited.length,
     visited = new Set(trace.visited.slice(0, cursor)),
@@ -56,9 +80,26 @@ export default function MazeWorld() {
               reset();
             }}
           >
-            {(["BFS", "DFS", "Dijkstra", "A*"] as const).map((name) => (
-              <option key={name}>{name}</option>
+            {ALGORITHMS.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
             ))}
+          </select>
+        </label>
+        <label>
+          Grid
+          <select
+            value={pattern}
+            onChange={(event) => {
+              setPattern(event.target.value as MazePattern);
+              reset();
+              setInspect(0);
+              setRevealed(false);
+            }}
+          >
+            <option value="random">Generated maze</option>
+            <option value="open">Open field</option>
           </select>
         </label>
         <label>
@@ -106,6 +147,7 @@ export default function MazeWorld() {
               setSeed(seed + 1);
               reset();
               setInspect(0);
+              setRevealed(false);
             }}
           >
             <Shuffle size={15} />
@@ -224,11 +266,79 @@ export default function MazeWorld() {
         <span>S / Start</span>
         <span>G / Goal</span>
       </div>
+      <p className="maze-explain" aria-live="polite">
+        <b>{algorithmInfo[algorithm].label}.</b>{" "}
+        {algorithmInfo[algorithm].blurb}
+      </p>
+      <section
+        className="maze-challenge"
+        aria-labelledby="maze-challenge-title"
+      >
+        <h3 id="maze-challenge-title">Challenge: predict, then run</h3>
+        <p>
+          On this {pattern === "open" ? "open field" : "maze"}, which algorithm
+          explores the fewest cells before it reaches the goal? On a generated
+          maze there is often only one route, so switch the grid to Open field
+          to see the algorithms diverge.
+        </p>
+        <div className="maze-guesses" role="group" aria-label="Your prediction">
+          {ALGORITHMS.map((name) => (
+            <button
+              key={name}
+              type="button"
+              aria-pressed={guess === name}
+              onClick={() => {
+                setGuess(name);
+                setRevealed(false);
+              }}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          className="button button-lime"
+          disabled={!guess}
+          onClick={() => setRevealed(true)}
+        >
+          Run all six
+        </button>
+        {revealed && (
+          <div role="status" className="maze-results">
+            <p>{verdict}</p>
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Algorithm</th>
+                  <th scope="col">Cells explored</th>
+                  <th scope="col">Path (steps)</th>
+                  <th scope="col">Shortest path?</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ALGORITHMS.map((name) => (
+                  <tr key={name} data-best={name === fewest || undefined}>
+                    <th scope="row">{name}</th>
+                    <td>{all[name].visited.length}</td>
+                    <td>{all[name].path.length - 1}</td>
+                    <td>
+                      {all[name].path.length === all.BFS.path.length
+                        ? "Yes"
+                        : "No"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
       <p className="module-disclaimer">
         Local TypeScript demonstration of source-verified algorithms. The search
         computes a trace first; Start, Pause, and speed control its
-        visualization. Four-connected, unweighted grid. DFS does not guarantee a
-        shortest path.
+        visualization. Four-connected, unweighted grid. DFS and Greedy do not
+        guarantee a shortest path.
       </p>
     </div>
   );

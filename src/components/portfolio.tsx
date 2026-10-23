@@ -25,13 +25,10 @@ export default function Portfolio() {
     return (
       <main id="main" tabIndex={-1} className="c-home">
         <CreativeHero />
-        <SkillsMarquee />
         <CreativeGallery />
         <CreativeToolkit />
-        <DimensionEngine />
         <CreativeAbout />
-        <Chapters />
-        <ColorLab />
+        <Chapters number="04" />
         <CreativeContact />
       </main>
     );

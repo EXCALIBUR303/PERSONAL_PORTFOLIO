@@ -31,3 +31,38 @@ export const toneFor = (slug: string): Tone => toneForAnim[animKindFor(slug)];
 
 /** Deterministic small tilt so the pinboard looks placed by hand, but never reshuffles. */
 export const tiltFor = (index: number) => ((index * 37) % 5) - 2;
+
+export type District = "systems" | "algorithms" | "intelligence";
+
+/** The three districts of the Creative studio map. Derived from the project's own categories. */
+export const districts: {
+  id: District;
+  label: string;
+  blurb: string;
+  lens: "systems" | "algorithms" | "computation";
+}[] = [
+  {
+    id: "systems",
+    label: "Systems",
+    blurb: "Apps and databases where the pieces have to agree.",
+    lens: "systems",
+  },
+  {
+    id: "algorithms",
+    label: "Algorithms",
+    blurb: "Paths, plans and search you can watch.",
+    lens: "algorithms",
+  },
+  {
+    id: "intelligence",
+    label: "Intelligence",
+    blurb: "Data, models and agents, with their limits.",
+    lens: "computation",
+  },
+];
+
+export function districtFor(categories: string[]): District {
+  if (categories.includes("AI/ML")) return "intelligence";
+  if (categories.includes("Algorithms")) return "algorithms";
+  return "systems";
+}

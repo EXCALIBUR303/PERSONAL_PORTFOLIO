@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { CarFront, RotateCcw } from "lucide-react";
 import SpatialView from "./spatial-view";
+import LensSystems from "@/components/lens/lens-systems";
 const initial = Array.from({ length: 24 }, (_, i) =>
   i % 7 === 0 ? "Reserved" : i % 3 === 0 ? "Occupied" : "Free",
 );
@@ -9,6 +10,23 @@ export default function ParkingWorld() {
   const [slots, setSlots] = useState(initial),
     [selected, setSelected] = useState(1);
   const current = slots[selected];
+  const [gate, setGate] = useState("");
+  function arriveAtGate() {
+    const free = slots.findIndex((status) => status === "Free");
+    if (free < 0) {
+      setGate(
+        "Lot full: the gate allocates nothing and the car is turned away.",
+      );
+      return;
+    }
+    setSlots((items) =>
+      items.map((item, i) => (i === free ? "Occupied" : item)),
+    );
+    setSelected(free);
+    setGate(
+      `Car allocated to bay A${String(free + 1).padStart(2, "0")}, the first free bay. Free bays fell by one.`,
+    );
+  }
   function change(status: "Free" | "Occupied" | "Reserved") {
     setSlots((items) =>
       items.map((item, i) => (i === selected ? status : item)),
@@ -26,6 +44,7 @@ export default function ParkingWorld() {
           onClick={() => {
             setSlots(initial);
             setSelected(1);
+            setGate("");
           }}
         >
           <RotateCcw size={15} />
@@ -104,6 +123,10 @@ export default function ParkingWorld() {
               Release demo bay
             </button>
           </div>
+          <button className="button button-outline" onClick={arriveAtGate}>
+            Car arrives at the gate
+          </button>
+          <p role="status">{gate}</p>
           <p role="status">
             {slots.filter((status) => status === "Free").length} free ·{" "}
             {slots.filter((status) => status === "Occupied").length} occupied ·{" "}
@@ -111,11 +134,18 @@ export default function ParkingWorld() {
           </p>
         </div>
       </div>
+      <section
+        className="pk-concurrency"
+        aria-labelledby="pk-concurrency-title"
+      >
+        <h3 id="pk-concurrency-title">When two cars arrive together</h3>
+        <LensSystems />
+      </section>
       <p className="module-disclaimer">
         Synthetic occupancy and local state only. The source supports an
         additional out-of-service state. Allocation row locks, billing, and
-        permissions belong to the real database implementation, not this browser
-        simulation.
+        permissions belong to the real database implementation, and billing
+        comes from tariffs held in that database. None of it is simulated here.
       </p>
     </div>
   );

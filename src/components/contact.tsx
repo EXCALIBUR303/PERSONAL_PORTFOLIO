@@ -3,6 +3,27 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowUpRight, Asterisk, CheckCheck, Copy, Send } from "lucide-react";
 import { profile } from "@/data/profile";
 import { SectionLabel, Reveal } from "./ui";
+/** The one place a draft email is composed. Both modes' contact experiences use it. */
+export function composeDraft(input: {
+  name: string;
+  email: string;
+  message: string;
+  topic?: string;
+}) {
+  const subject =
+    `${input.topic ? `${input.topic}: ` : ""}Portfolio inquiry from ${input.name}`.replace(
+      /[\r\n]/g,
+      " ",
+    );
+  const body = `${input.message}\n\nFrom: ${input.name}\nReply to: ${input.email}`;
+  const url = profile.email
+    ? `mailto:${profile.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    : null;
+  return { subject, body, url };
+}
+export const isEmail = (value: string) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value.length <= 254;
+
 export function useContactDraft() {
   const githubUrl = profile.socials.find(
     (social) => social.name === "GitHub",
@@ -58,13 +79,10 @@ export function useContactDraft() {
       setPreparing(false);
       return;
     }
-    const subject = `Portfolio inquiry from ${name}`.replace(/[\r\n]/g, " ");
-    const body = `${message}\n\nFrom: ${name}\nReply to: ${email}`;
+    const { subject, body, url } = composeDraft({ name, email, message });
     try {
-      if (profile.email) {
-        setDraftUrl(
-          `mailto:${profile.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`,
-        );
+      if (url) {
+        setDraftUrl(url);
         setStatus(
           "Draft ready. Open it in your email app, review and send; nothing was sent by this site.",
         );

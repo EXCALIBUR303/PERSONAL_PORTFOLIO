@@ -32,6 +32,13 @@ const navigation = [
   { id: "about", name: "About" },
   { id: "contact", name: "Contact" },
 ];
+const creativeNavigation = [
+  { id: "map", name: "Map" },
+  { id: "projects", name: "Board" },
+  { id: "skills", name: "Loadout" },
+  { id: "about", name: "About" },
+  { id: "contact", name: "Contact" },
+];
 type GalleryState = {
   query: string;
   category: string;
@@ -197,7 +204,7 @@ export default function AppFrame({ children }: { children: ReactNode }) {
         }),
       { rootMargin: "-20% 0px -55% 0px" },
     );
-    navigation.forEach((link) => {
+    (creative ? creativeNavigation : navigation).forEach((link) => {
       const element = document.getElementById(link.id);
       if (element) observer.observe(element);
     });
@@ -257,7 +264,7 @@ export default function AppFrame({ children }: { children: ReactNode }) {
             )}
             {creative ? (
               <CreativeHeader
-                navigation={navigation}
+                navigation={creativeNavigation}
                 pathname={pathname}
                 active={active}
                 menu={menu}

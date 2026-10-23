@@ -228,10 +228,10 @@ export const projects: Project[] = [
   },
   {
     id: "mazera-ai-maze-solver",
-    collection: "Personal",
+    collection: "College",
     discipline: "Software",
     classificationNote:
-      "Collection confirmed by the project owner. Physical hardware completion has not been verified.",
+      "College project, as confirmed by the owner. Software only; no physical hardware is involved.",
     demo: {
       type: "embedded",
       url: "/demos/mazera/",
@@ -1060,9 +1060,9 @@ export const projects: Project[] = [
     sourceCommit: "85ae0c58509590a1743d45e0c0c841b3087cc47f",
     eyebrow: "Mobility / booking systems",
     problem:
-      "Understanding a technical project requires following its actual boundaries and implementation, rather than inferring a system from its title.",
+      "Seats on a campus shuttle are limited, and two people booking at the same moment must not both get the last one. The savings from taking a shuttle or shared bike also need a stated method, not a guess.",
     solution:
-      "Campus EV-shuttle and shared-bike booking with atomic seat-capacity checks and estimated carbon savings.",
+      "A server-rendered browse, confirm and book flow where one atomic database update only succeeds while seats remain, with carbon savings estimated from distance and simplified emission factors.",
   },
   {
     id: "aeris",
@@ -1206,9 +1206,9 @@ export const projects: Project[] = [
     sourceCommit: "b55ca2fb161b4b5d6f1be01bce70dcd8ea1539db",
     eyebrow: "Simulation / autonomy research",
     problem:
-      "Understanding a technical project requires following its actual boundaries and implementation, rather than inferring a system from its title.",
+      "Mapping, planning, missions and learned policies for a drone need a place to be built and tested together. This project does that in simulation, above an external PX4 flight controller, and states that physical flight is out of scope.",
     solution:
-      "A simulated drone-autonomy research platform with mapping, planning, mission and learning modules above external PX4 flight control.",
+      "Separate modules for mapping, localization, navigation, missions and evaluation, an 8-connected A* planner, and a PPO learning stage, all run against documented simulation boundaries.",
   },
   {
     id: "rupeerise",
@@ -1380,9 +1380,9 @@ export const projects: Project[] = [
     sourceCommit: "5ec8f7cada7bb187863aaeadc1182e8c1ea19361",
     eyebrow: "Financial literacy / RupeeRise",
     problem:
-      "Understanding a technical project requires following its actual boundaries and implementation, rather than inferring a system from its title.",
+      "Students can only practise budgeting, saving, investing and financial safety if the exercises are safe and the numbers can be trusted. The project uses fictional money and does not let a language model decide any number.",
     solution:
-      "A student financial-literacy platform using deterministic, fictional-money simulations and explainable learning progression.",
+      "Deterministic Python calculations drive every simulation, an adaptive mastery model tracks progress, educators get class views, and an optional tutor falls back to deterministic answers.",
   },
   {
     id: "resume-screener",
@@ -1558,9 +1558,9 @@ export const projects: Project[] = [
     sourceCommit: "3d7e8f0e2ab71cca28e614c6d8c2a55af213f3fd",
     eyebrow: "Document intelligence / retrieval",
     problem:
-      "Understanding a technical project requires following its actual boundaries and implementation, rather than inferring a system from its title.",
+      "A resume is an untrusted file, and a model that scores it should not be able to make up evidence about a person.",
     solution:
-      "A resume research system that separates untrusted-document parsing/redaction from retrieval and evidence-constrained scoring.",
+      "Validate and redact documents before anything is embedded or sent to a model, queue the work in PostgreSQL, retrieve with pgvector, and cap the model's contribution to a score behind evidence checks.",
   },
   {
     id: "last-mile-daa",
@@ -1773,9 +1773,9 @@ export const projects: Project[] = [
     sourceVisibility: "public",
     interactionLabel: "Source-backed component guide",
     problem:
-      "Serve the burnout research model through an account-aware API with persistent feedback and prediction history.",
+      "The burnout research model needs a service that people can use with an account, with their history and feedback kept between visits.",
     solution:
-      "A separate FastAPI deployment of the burnout research API, with model inference, SQLite account and prediction history, feedback, and optional wellness chat.",
+      "A separate FastAPI service with prediction, account, history and feedback routes, SQLite storage, and a wellness chat that has an offline fallback when no key is set.",
     features: [
       "FastAPI prediction, account, history, and feedback routes.",
       "Prioritizes committed v5, then v3 and legacy artifacts; inference not rerun in this audit.",
@@ -1892,9 +1892,9 @@ export const projects: Project[] = [
     sourceVisibility: "public",
     interactionLabel: "Proposed design walkthrough",
     problem:
-      "Explore how local detection-rule generation could remain constrained to a supplied telemetry schema.",
+      "Detection rules written by a model are only useful if they stay inside the fields a real telemetry schema provides. This project asks how local rule generation could stay constrained to a supplied schema.",
     solution:
-      "A technical blueprint for offline, schema-conditioned Sigma detection-rule synthesis. Implementation has not started.",
+      "A completed technical blueprint with a locked task and evaluation contract, and a planned execution-based evaluation of generated rules. Implementation has not started.",
     features: [
       "Completed technical blueprint",
       "Locked task and evaluation contract",
@@ -2033,9 +2033,9 @@ export const projects: Project[] = [
     sourceVisibility: "public",
     interactionLabel: "Source-backed component guide",
     problem:
-      "A 2D robot-swarm search-and-rescue simulator comparing IPPO and MAPPO policies with random and frontier baselines.",
+      "In a search-and-rescue task, robots that only see part of the map still have to cover it. The project compares learned IPPO and MAPPO policies with random and frontier-based exploration.",
     solution:
-      "A 2D robot-swarm search-and-rescue simulator comparing IPPO and MAPPO policies with random and frontier baselines.",
+      "A partially observed 2D multi-robot environment with IPPO and MAPPO training, committed trained actors and recorded replays, plus interactive simulation, comparison and behaviour analysis.",
     features: [
       "Partially observed multi-robot environment",
       "IPPO and MAPPO training implementations",
@@ -2220,9 +2220,9 @@ export const projects: Project[] = [
     sourceVisibility: "public",
     interactionLabel: "Source-backed component guide",
     problem:
-      "A campus navigation application with accessibility-constrained graph routing, community reports, review and durable rerouting updates.",
+      "A campus route has to respect accessibility constraints, and it has to change when a path turns out to be blocked.",
     solution:
-      "A campus navigation application with accessibility-constrained graph routing, community reports, review and durable rerouting updates.",
+      "Dijkstra and A* search with explicit accessibility constraints, bounded alternative routes, and private reports that go through review before live rerouting.",
     features: [
       "Dijkstra and A* with explicit accessibility constraints",
       "Bounded alternative routes and geometry instructions",

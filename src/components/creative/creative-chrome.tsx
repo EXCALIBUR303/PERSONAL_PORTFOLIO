@@ -29,7 +29,7 @@ export function CreativeHeader({
 }) {
   const current = (id: string) =>
     pathname.startsWith("/projects/")
-      ? id === "projects"
+      ? id === "map"
         ? "page"
         : undefined
       : active === id

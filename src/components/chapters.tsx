@@ -4,11 +4,11 @@ import { education } from "@/data/education";
 import { experience } from "@/data/experience";
 import { milestones } from "@/data/milestones";
 import { Reveal, SectionLabel } from "./ui";
-export default function Chapters() {
+export default function Chapters({ number = "05" }: { number?: string }) {
   return (
     <section id="chapters" className="chapters-section section-pad">
       <div className="container">
-        <SectionLabel number="05">
+        <SectionLabel number={number}>
           THE CHAPTERS / LEARNING OUT LOUD
         </SectionLabel>
         <Reveal className="section-heading">

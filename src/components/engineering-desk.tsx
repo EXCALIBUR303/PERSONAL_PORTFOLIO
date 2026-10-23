@@ -1,15 +1,14 @@
 "use client";
 import { useState } from "react";
-import Link from "next/link";
 import { ArrowDown, ArrowUpRight, Github } from "lucide-react";
 import { profile } from "@/data/profile";
 import { projects } from "@/data/projects";
-import HeroStage from "./hero-stage";
+import LensExplorer from "./lens/lens-explorer";
 import { stations, type DeskMode } from "./desk-data";
 
 export type { DeskMode };
 
-/** Professional hero: copy on the left, one framed 3D stage with its lens panel on the right. */
+/** Professional hero: copy on the left, the project visualisation (three lenses) on the right. */
 export default function EngineeringDesk() {
   const [mode, setMode] = useState<DeskMode>("systems");
   const station = stations.find((item) => item.id === mode)!;
@@ -61,38 +60,7 @@ export default function EngineeringDesk() {
           </dl>
         </div>
         <div className="hx-visual">
-          <HeroStage mode={mode} variant="pro" />
-          <div className="hx-panel">
-            <div
-              className="hx-lenses"
-              role="group"
-              aria-label="Engineering desk discipline"
-            >
-              {stations.map((item) => (
-                <button
-                  key={item.id}
-                  aria-pressed={mode === item.id}
-                  onClick={() => setMode(item.id)}
-                  style={
-                    { "--lens-accent": item.accent } as React.CSSProperties
-                  }
-                >
-                  <item.icon size={17} aria-hidden="true" />
-                  {item.label}
-                </button>
-              ))}
-            </div>
-            <div className="hx-inspector" aria-live="polite">
-              <div>
-                <h2>{station.title}</h2>
-                <p>{station.description}</p>
-              </div>
-              <Link href={`/projects/${station.slug}/`} prefetch={false}>
-                Enter {station.project}
-                <ArrowUpRight size={18} />
-              </Link>
-            </div>
-          </div>
+          <LensExplorer mode={mode} onModeChange={setMode} />
         </div>
       </div>
     </section>

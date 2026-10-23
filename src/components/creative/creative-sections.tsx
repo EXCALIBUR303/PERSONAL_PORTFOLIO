@@ -1,17 +1,10 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import {
-  ArrowUpRight,
-  Asterisk,
-  CheckCheck,
-  Copy,
-  Send,
-  Sparkles,
-} from "lucide-react";
+import { ArrowUpRight, Asterisk, Sparkles } from "lucide-react";
 import { skills } from "@/data/skills";
 import { profile } from "@/data/profile";
-import { useContactDraft } from "../contact";
+import { CreativeContact } from "./creative-contact";
 
 const statusKey = (status: string) =>
   status === "Used in a project"
@@ -126,7 +119,7 @@ export function CreativeAbout() {
         </div>
         <div className="c-about-copy">
           <p className="c-kicker mono">
-            <span className="c-pill c-pill-lime">04</span> The person behind the
+            <span className="c-pill c-pill-lime">03</span> The person behind the
             code
           </p>
           <h2>
@@ -161,147 +154,4 @@ export function CreativeAbout() {
   );
 }
 
-/** Contact: a postcard. Uses the same draft logic as the Professional form; nothing is sent by this site. */
-export function CreativeContact() {
-  const {
-    githubUrl,
-    copied,
-    copy,
-    profileCopied,
-    copyProfile,
-    status,
-    draftUrl,
-    preparing,
-    submit,
-    onFormChange,
-  } = useContactDraft();
-  return (
-    <section id="contact" className="c-section c-contact">
-      <div className="container c-contact-grid">
-        <div className="c-contact-copy">
-          <p className="c-kicker mono">
-            <span className="c-pill c-pill-orange">07</span> Good things start
-            with a hello
-          </p>
-          <h2>
-            Have something in <em>mind?</em>
-          </h2>
-          <p className="c-section-lede">
-            An idea, an opportunity, or just a good conversation. Let’s see what
-            we can make happen.
-          </p>
-          <div className="c-mailrow">
-            {profile.email ? (
-              <a className="c-btn c-btn-lime" href={`mailto:${profile.email}`}>
-                {profile.email}
-                <ArrowUpRight size={17} aria-hidden="true" />
-              </a>
-            ) : (
-              <span className="c-btn c-btn-paper">Email not shared</span>
-            )}
-            <button
-              type="button"
-              className="c-icon-btn c-icon-btn-lg"
-              onClick={copy}
-              disabled={!profile.email}
-              aria-label={copied ? "Email copied" : "Copy email address"}
-            >
-              {copied ? <CheckCheck size={19} /> : <Copy size={19} />}
-            </button>
-          </div>
-          <div className="c-contact-links">
-            <button
-              className="c-chip c-chip-paper"
-              type="button"
-              onClick={copyProfile}
-              disabled={!githubUrl}
-            >
-              {profileCopied ? <CheckCheck size={13} /> : <Copy size={13} />}
-              {profileCopied ? "Profile copied" : "Copy GitHub profile"}
-            </button>
-            {profile.socials.map((s) =>
-              s.url ? (
-                <a
-                  key={s.name}
-                  className="c-chip c-chip-sky"
-                  href={s.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {s.name}
-                  <ArrowUpRight size={14} aria-hidden="true" />
-                </a>
-              ) : (
-                <span key={s.name} className="c-chip c-chip-paper">
-                  {s.name} / ADD LINK
-                </span>
-              ),
-            )}
-          </div>
-        </div>
-        <form className="c-postcard" onSubmit={submit} onChange={onFormChange}>
-          <span className="c-stamp" aria-hidden="true">
-            <Asterisk size={26} strokeWidth={2.4} />
-          </span>
-          <h3>A local message pad.</h3>
-          <div className="c-postcard-row">
-            <label>
-              Your name
-              <input
-                name="name"
-                autoComplete="name"
-                placeholder="What should I call you?"
-                maxLength={100}
-                required
-              />
-            </label>
-            <label>
-              Your email
-              <input
-                type="email"
-                name="email"
-                autoComplete="email"
-                placeholder="hello@yourworld.com"
-                maxLength={254}
-                required
-              />
-            </label>
-          </div>
-          <label>
-            What’s on your mind?
-            <textarea
-              name="message"
-              placeholder="Tell me a little about your idea…"
-              rows={4}
-              maxLength={5000}
-              required
-            />
-          </label>
-          <div className="c-postcard-foot">
-            <span className="mono">
-              {profile.email
-                ? "Prepares a draft. You open and send it."
-                : "Saved on your device. Nothing is submitted."}
-            </span>
-            <button
-              className="c-btn c-btn-ink"
-              type="submit"
-              disabled={preparing}
-            >
-              {preparing ? "Preparing…" : "Prepare email draft"}
-              <Send size={16} aria-hidden="true" />
-            </button>
-          </div>
-          <p className="c-form-status" role="status" aria-live="polite">
-            {status || (copied ? "Email address copied." : "")}
-          </p>
-          {draftUrl && (
-            <a className="c-btn c-btn-lime" href={draftUrl}>
-              Open email draft <ArrowUpRight size={16} aria-hidden="true" />
-            </a>
-          )}
-        </form>
-      </div>
-    </section>
-  );
-}
+export { CreativeContact };

@@ -1,7 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
 import {
-  ArrowUpRight,
   Check,
   Copy,
   ExternalLink,
@@ -34,26 +33,14 @@ export default function DemoConsole({ project }: { project: Project }) {
     }
   }
   return (
-    <section
-      id="world-demo"
-      className="demo-console"
-      aria-labelledby="demo-title"
-    >
-      <div className="demo-console-heading">
-        <div>
-          <span className="eyebrow">
-            EXECUTION BAY / {project.demo.verifiedOn}
-          </span>
-          <h2 id="demo-title">
-            Experience the <em>project.</em>
-          </h2>
-        </div>
-        <span className={`demo-type demo-type-${project.demo.type}`}>
-          {demoLabel(project)}
-        </span>
-      </div>
-      <p className="demo-summary">{project.demo.summary}</p>
+    <div id="world-demo" className="demo-console demo-compact">
       <div className="demo-actions">
+        <span
+          className={`demo-type demo-type-${project.demo.type}`}
+          title="What the original project offers"
+        >
+          Original project: {demoLabel(project)}
+        </span>
         {project.demo.type === "embedded" && project.demo.url && (
           <>
             <a
@@ -72,16 +59,6 @@ export default function DemoConsole({ project }: { project: Project }) {
               {embedded ? "Close embedded app" : "Load original app here"}
             </button>
           </>
-        )}
-        {project.demo.type === "simulation" && (
-          <a className="button button-lime" href="#world-playground">
-            Try interactive explorer <ArrowUpRight size={16} />
-          </a>
-        )}
-        {project.architecture.nodes.length > 0 && (
-          <a href="#world-architecture" className="button button-outline">
-            Inspect architecture <ArrowUpRight size={16} />
-          </a>
         )}
         {project.githubUrl && (
           <a
@@ -133,20 +110,21 @@ export default function DemoConsole({ project }: { project: Project }) {
           </p>
         </div>
       )}
-      <div className="execution-status">
-        <div>
-          <span className="mono">RUNTIME CHECK</span>
-          <p>{project.demo.runtimeStatus}</p>
-        </div>
-        <div>
-          <span className="mono">TEST CHECK</span>
-          <p>{project.demo.testStatus}</p>
-        </div>
-      </div>
       <details ref={details} className="local-guide">
         <summary>
-          <Terminal size={17} /> Local setup & verification notes
+          <Terminal size={17} /> Run it yourself, and what was verified
         </summary>
+        <div className="execution-status">
+          <div>
+            <span className="mono">RUNTIME CHECK</span>
+            <p>{project.demo.runtimeStatus}</p>
+          </div>
+          <div>
+            <span className="mono">TEST CHECK</span>
+            <p>{project.demo.testStatus}</p>
+          </div>
+        </div>
+
         {project.demo.commands.length > 0 ? (
           <div className="command-block">
             <div>
@@ -198,6 +176,6 @@ export default function DemoConsole({ project }: { project: Project }) {
           </ul>
         )}
       </details>
-    </section>
+    </div>
   );
 }

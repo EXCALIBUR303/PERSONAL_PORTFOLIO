@@ -1,21 +1,28 @@
 "use client";
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  ArrowRight,
-  ArrowUpRight,
-  ExternalLink,
-  Github,
-  ShieldCheck,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, ShieldCheck } from "lucide-react";
 import type { Project } from "@/data/projects";
-import DemoConsole from "@/components/demo-console";
-import ArchitectureExplorer from "@/components/architecture-explorer";
-import WorldPlayground from "./world-playground";
-import MiniAnim, { animForSlug } from "@/components/mini-anim";
-import { Reveal, SectionLabel } from "@/components/ui";
+import { demoClassFor } from "@/data/demo-class";
 import { usePortfolioState } from "@/components/app-frame";
+import { useExploration } from "@/lib/exploration";
+import {
+  HowBody,
+  LimitsList,
+  ProjectLinks,
+  ScopeList,
+  SourceLinks,
+  StackList,
+  TryBody,
+} from "./project-sections";
+import { hasDedicatedDemo } from "./world-playground";
+
+/**
+ * Professional project page, organised as a story: the problem and the
+ * approach, then the demonstration, then how it works, the technical decisions
+ * and the honest limits. Deeper detail sits in disclosures so the page stays
+ * short until the reader asks for more.
+ */
 export default function ProjectWorld({
   project,
   index,
@@ -28,217 +35,158 @@ export default function ProjectWorld({
   nextProject: { slug: string; title: string };
 }) {
   const { beginPortal } = usePortfolioState();
+  const { markProject } = useExploration();
   const heading = useRef<HTMLHeadingElement>(null);
+  const demo = demoClassFor(project);
+  const dedicated = hasDedicatedDemo(project);
   useEffect(() => {
     const frame = requestAnimationFrame(() =>
       heading.current?.focus({ preventScroll: true }),
     );
     return () => cancelAnimationFrame(frame);
   }, [project.slug]);
+  useEffect(() => markProject(project.slug), [markProject, project.slug]);
+  useEffect(() => {
+    // Mission links point at sections (#try, #how, ...). Scroll once the demo
+    // modules have taken their place so the target is not pushed away.
+    const id = decodeURIComponent(location.hash.slice(1));
+    if (!id) return;
+    const timer = window.setTimeout(
+      () => document.getElementById(id)?.scrollIntoView({ block: "start" }),
+      400,
+    );
+    return () => window.clearTimeout(timer);
+  }, [project.slug]);
   return (
     <main
       id="main"
-      className={`project-world world-${project.kind}`}
+      className={`project-world pr world-${project.kind}`}
       style={{ "--world-accent": project.accent } as React.CSSProperties}
       tabIndex={-1}
     >
-      <div className="world-color-wash" aria-hidden="true" />
       <div className="container">
         <div className="world-breadcrumb">
           <Link href="/#projects">
             <ArrowLeft size={16} />
-            Back to Multiverse
+            Back to all projects
           </Link>
           <span className="mono">
-            WORLD {String(index + 1).padStart(2, "0")} /{" "}
+            PROJECT {String(index + 1).padStart(2, "0")} /{" "}
             {String(count).padStart(2, "0")}
           </span>
         </div>
-        <header className="world-header">
+
+        <header className="pr-head">
+          <span className="eyebrow">{project.eyebrow}</span>
+          <h1 ref={heading} tabIndex={-1}>
+            {project.title}
+          </h1>
+          <p className="pr-tagline">{project.tagline}</p>
+          <p className="pr-desc">{project.description}</p>
+          <ul className="pr-badges" aria-label="Project facts">
+            <li>
+              <ShieldCheck size={14} aria-hidden="true" />
+              {project.status}
+            </li>
+            <li>
+              {project.collection} project · {project.discipline}
+            </li>
+            <li data-kind={demo.kind}>{demo.label}</li>
+          </ul>
+          <ProjectLinks
+            project={project}
+            buttonClass="button button-outline"
+            liveClass="button button-lime"
+            noneClass="unavailable"
+          />
+        </header>
+
+        <nav className="pr-nav" aria-label="Project sections">
+          <a href="#problem">Problem</a>
+          <a href="#try">Try it</a>
+          <a href="#how">How it works</a>
+          <a href="#decisions">Decisions</a>
+          <a href="#limits">Limits &amp; status</a>
+        </nav>
+
+        <section id="problem" className="pr-section pr-story">
           <div>
-            <span className="world-eyebrow eyebrow">{project.eyebrow}</span>
-            <h1 ref={heading} tabIndex={-1}>
-              {project.title}
-            </h1>
-            <p className="world-tagline">{project.tagline}</p>
-            <figure className="world-loop">
-              <MiniAnim
-                kind={animForSlug[project.slug] ?? "pulse"}
-                label={`Animated concept sketch of ${project.title}`}
-              />
-              <figcaption className="mono">
-                Concept sketch of the idea, not a recording of the project.
-              </figcaption>
-            </figure>
+            <span className="eyebrow">THE PROBLEM</span>
+            <p>{project.problem}</p>
           </div>
-          <div className="world-header-meta">
+          <div>
+            <span className="eyebrow">THE APPROACH</span>
+            <p>{project.solution}</p>
+          </div>
+        </section>
+
+        <section id="try" className="pr-section">
+          <div className="pr-section-head">
+            <h2>
+              Try <em>it.</em>
+            </h2>
+            <span className="world-mode-label">{project.interactionLabel}</span>
+          </div>
+          <TryBody project={project} />
+        </section>
+
+        <section id="how" className="pr-section">
+          <div className="pr-section-head">
+            <h2>
+              How it <em>works.</em>
+            </h2>
+            <span className="world-mode-label">
+              {dedicated ? project.architecture.kind : "What the repository documents"}
+            </span>
+          </div>
+          <HowBody project={project} />
+          {dedicated && project.features.length > 0 && (
+            <details className="pr-more">
+              <summary>Everything the repository documents</summary>
+              <ScopeList project={project} />
+            </details>
+          )}
+        </section>
+
+        <section id="decisions" className="pr-section">
+          <div className="pr-section-head">
+            <h2>
+              Technical <em>decisions.</em>
+            </h2>
+          </div>
+          <p className="pr-lead">
+            {project.sourceVisibility === "public"
+              ? "What it is built with, and where the choices are written down. Reasons are shown only where the repository documents them."
+              : "The stack of this portfolio demonstration."}
+          </p>
+          <StackList project={project} />
+          <details className="pr-more">
+            <summary>
+              {project.sourceVisibility === "public"
+                ? "Source evidence in the repository"
+                : "About the source"}
+            </summary>
+            <SourceLinks project={project} />
+          </details>
+        </section>
+
+        <section id="limits" className="pr-section pr-limits">
+          <div className="pr-section-head">
+            <h2>
+              Limits &amp; <em>status.</em>
+            </h2>
             <span className="world-status">
               <ShieldCheck size={15} />
               {project.status}
             </span>
-            <p>{project.description}</p>
-            <div className="project-tags">
-              {project.stack.map((tool) => (
-                <span key={tool}>{tool}</span>
-              ))}
-            </div>
-            <span className="world-stack-note mono">
-              {project.sourceVisibility === "public"
-                ? "REPOSITORY STACK"
-                : "PUBLIC DEMO STACK"}
-            </span>
           </div>
-        </header>
-        <div className="world-collection-label mono">
-          {project.collection.toUpperCase()} PROJECTS /{" "}
-          {project.discipline.toUpperCase()}
-        </div>
-        <nav className="world-section-nav" aria-label="Project sections">
-          <a href="#world-demo">Demo & local setup</a>
-          <a href="#world-playground">Explore</a>
-          {project.architecture.nodes.length > 0 && (
-            <a href="#world-architecture">Architecture</a>
-          )}
-          <a href="#world-overview">The story</a>
-          <a href="#world-evidence">Evidence & limits</a>
-        </nav>
-        <DemoConsole project={project} />
-        <section id="world-playground" className="world-playground">
-          <div className="world-section-heading">
-            <div>
-              <span className="eyebrow">INSIDE THE WORLD</span>
-              <h2>
-                Try the <em>idea.</em>
-              </h2>
-            </div>
-            <span className="world-mode-label">{project.interactionLabel}</span>
-          </div>
-          <WorldPlayground project={project} />
+          <LimitsList project={project} />
         </section>
-        {project.architecture.nodes.length > 0 && (
-          <section id="world-architecture" className="world-architecture">
-            <SectionLabel number="A">
-              DIMENSION ENGINE / SYSTEM MAP
-            </SectionLabel>
-            <h2>
-              Trace the <em>connections.</em>
-            </h2>
-            <ArchitectureExplorer project={project} />
-          </section>
-        )}
-        <section id="world-overview" className="world-story">
-          <SectionLabel number="B">THE QUESTION / THE BUILD</SectionLabel>
-          <div className="world-story-grid">
-            <Reveal>
-              <span className="eyebrow">THE PROBLEM</span>
-              <h2>
-                A question
-                <br />
-                worth <em>asking.</em>
-              </h2>
-              <p>{project.problem}</p>
-            </Reveal>
-            <div>
-              <span className="eyebrow">THE APPROACH</span>
-              <h3>{project.tagline}</h3>
-              <p>{project.solution}</p>
-              <h4>Documented scope</h4>
-              <ul>
-                {project.features.map((feature) => (
-                  <li key={feature}>{feature}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </section>
-        <section id="world-evidence" className="world-evidence">
-          <SectionLabel number="C">EVIDENCE / HONEST BOUNDARIES</SectionLabel>
-          <div className="evidence-grid">
-            <div>
-              <h2>
-                Know the
-                <br />
-                <em>limits.</em>
-              </h2>
-              <ul>
-                {project.limitations.map((limit) => (
-                  <li key={limit}>{limit}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="source-ledger">
-              <span className="eyebrow">IMPLEMENTATION EVIDENCE</span>
-              <h3>
-                {project.sourceVisibility === "public"
-                  ? "Follow it to the source."
-                  : project.kind === "unavailable"
-                    ? "Private implementation."
-                    : "An independent study."}
-              </h3>
-              {project.sourceCommit && (
-                <p className="source-commit mono">
-                  AUDITED COMMIT / {project.sourceCommit.slice(0, 10)}
-                </p>
-              )}
-              {project.sources.map((source) => (
-                <a
-                  key={source.url}
-                  href={source.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <div>
-                    <b>{source.label}</b>
-                    <span>{source.path}</span>
-                  </div>
-                  <ArrowUpRight size={16} />
-                </a>
-              ))}
-              {!project.sources.length && (
-                <p>
-                  {project.kind === "unavailable"
-                    ? "Only the name and college classification provided by the owner are displayed. Private source and internal project details are withheld."
-                    : "The supplied football repository is private. Its code was not read or reproduced. All controls and visuals here belong to this original portfolio demonstration."}
-                </p>
-              )}
-              <div className="world-source-actions">
-                {project.githubUrl && (
-                  <a
-                    className="button button-outline"
-                    href={project.githubUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Github size={16} />
-                    Open repository
-                    <ArrowUpRight size={15} />
-                  </a>
-                )}
-                {project.liveUrl ? (
-                  <a
-                    className="button button-lime"
-                    href={project.liveUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <ExternalLink size={15} />
-                    Verified live demo
-                  </a>
-                ) : (
-                  <span className="unavailable">
-                    {project.sourceVisibility === "public"
-                      ? "No verified external live demo"
-                      : "Private source not shared"}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
+
         <div className="world-next">
           <Link href="/#projects">
             <ArrowLeft size={17} />
-            Back to Multiverse
+            Back to all projects
           </Link>
           <Link
             href={`/projects/${nextProject.slug}`}
@@ -246,7 +194,7 @@ export default function ProjectWorld({
             onClick={() => beginPortal(project.accent)}
           >
             <div>
-              <span className="mono">NEXT DIMENSION</span>
+              <span className="mono">NEXT PROJECT</span>
               <strong>{nextProject.title}</strong>
             </div>
             <ArrowRight size={24} />

@@ -160,7 +160,9 @@ test("Creative renders its own component tree on the home page", async ({
   await expect(page.locator(".c-hero")).toBeVisible();
   await expect(page.locator(".c-dock")).toBeVisible();
   await expect(page.locator(".c-board")).toBeVisible();
-  await expect(page.locator(".c-postcard")).toHaveCount(1);
+  await expect(page.locator(".c-term")).toHaveCount(1);
+  await expect(page.locator(".c-map")).toBeVisible();
+  await expect(page.locator(".engine-section")).toHaveCount(0);
   await expect(page.locator(".c-sheet-board")).toHaveCount(1);
   await expect(page.locator(".c-notebook")).toHaveCount(1);
   await expect(page.locator(".engineering-hero")).toHaveCount(0);
@@ -204,7 +206,7 @@ test("Creative gallery shares every filter and keeps the empty states", async ({
   ).toHaveAttribute("aria-pressed", "true");
 });
 
-test("Creative project page has its own layout over the same project data", async ({
+test("Creative project page is a mission board over the same project data", async ({
   page,
 }) => {
   await page.addInitScript(() =>
@@ -212,60 +214,84 @@ test("Creative project page has its own layout over the same project data", asyn
   );
   await page.goto("/projects/last-mile-daa/");
   await expect(page.locator(".c-poster")).toBeVisible();
-  await expect(page.locator(".c-tabs")).toBeVisible();
-  await expect(page.locator(".world-header")).toHaveCount(0);
+  await expect(page.getByRole("tab")).toHaveCount(4);
+  await expect(page.locator(".pr-head")).toHaveCount(0);
   await expect(page.locator("h1")).toHaveText("Last Mile DAA");
-  await expect(page.locator("#world-demo")).toBeVisible();
-  await expect(page.locator("#world-architecture")).toBeVisible();
-  const features = await page.locator(".c-timeline li").count();
-  expect(features).toBeGreaterThan(0);
+  await expect(
+    page.getByRole("tab", { name: /Discover the problem/ }),
+  ).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator(".c-sticky")).toContainText("small fleet");
+  await page.getByRole("tab", { name: /Try the demonstration/ }).click();
+  await expect(page).toHaveURL(/#try$/);
+  await expect(page.locator(".ps-demonote")).toContainText(
+    "Sample-data walkthrough",
+  );
+  await page.getByRole("tab", { name: /Explore how it works/ }).click();
+  await expect(page.locator(".architecture-explorer")).toBeVisible();
+  await page
+    .getByRole("tab", { name: /Inspect the technical decisions/ })
+    .click();
   await expect(page.locator(".c-caution li").first()).toBeVisible();
   await expect(page.locator(".c-poster canvas.mini-anim")).toBeVisible();
   await page.getByRole("button", { name: "Professional" }).click();
-  await expect(page.locator(".world-header")).toBeVisible();
+  await expect(page.locator(".pr-head")).toBeVisible();
   await expect(page.locator(".c-poster")).toHaveCount(0);
-  await expect(page).toHaveURL(/\/projects\/last-mile-daa\/?$/);
+  await expect(page).toHaveURL(/\/projects\/last-mile-daa\/#decisions$/);
 });
 
-test("both heroes switch lens and keep their explanation in sync", async ({
-  page,
-}) => {
-  for (const mode of ["pro", "creative"]) {
-    await page.addInitScript(
-      (m) => localStorage.setItem("portfolio-mode", m),
-      mode,
-    );
-    await page.goto("/");
-    await page
-      .getByRole("button", { name: "02 / Algorithms", exact: true })
-      .click();
-    await expect(page.locator(".hx-inspector")).toContainText(
-      "Give the question a path.",
-    );
-    await expect(page.locator(".hx-inspector a")).toHaveAttribute(
-      "href",
-      "/projects/mazera-ai-maze-solver/",
-    );
-    await expect(
-      page.getByRole("button", { name: "02 / Algorithms", exact: true }),
-    ).toHaveAttribute("aria-pressed", "true");
-  }
-});
-
-test("without WebGL the stage explains itself and keeps the lens controls", async ({
-  page,
-}) => {
-  await page.goto("/");
-  const stage = page.locator(".hx-stage");
-  await expect(stage).toHaveAttribute("data-state", "unavailable", {
-    timeout: 10000,
-  });
-  await expect(stage).toContainText("isn’t available");
-  await expect(stage.locator("canvas")).toHaveCount(0);
-  await page
-    .getByRole("button", { name: "03 / Intelligence", exact: true })
-    .click();
-  await expect(page.locator(".hx-inspector")).toContainText(
-    "Look beneath the prediction.",
+test("mission tabs follow the keyboard and the URL hash", async ({ page }) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("portfolio-mode", "creative"),
   );
+  await page.goto("/projects/mazera-ai-maze-solver/#how");
+  await expect(
+    page.getByRole("tab", { name: /Explore how it works/ }),
+  ).toHaveAttribute("aria-selected", "true");
+  await page.getByRole("tab", { name: /Explore how it works/ }).focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(
+    page.getByRole("tab", { name: /technical decisions/ }),
+  ).toHaveAttribute("aria-selected", "true");
+  await page.keyboard.press("Home");
+  await expect(
+    page.getByRole("tab", { name: /Discover the problem/ }),
+  ).toHaveAttribute("aria-selected", "true");
+});
+
+test("Creative contact is a guided terminal that only prepares a draft", async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("portfolio-mode", "creative"),
+  );
+  await page.goto("/#contact");
+  await expect(
+    page.getByRole("link", { name: /sidharthsood303@gmail\.com/ }).first(),
+  ).toHaveAttribute("href", "mailto:sidharthsood303@gmail.com");
+  await page.getByRole("button", { name: "A project idea" }).click();
+  const input = page.locator("#term-input");
+  await input.fill("");
+  await page.getByRole("button", { name: /^Enter/ }).click();
+  await expect(page.locator(".c-term-error")).toContainText("name");
+  await input.fill("Alex");
+  await page.keyboard.press("Enter");
+  await input.fill("not-an-email");
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".c-term-error")).toContainText("email");
+  await input.fill("alex@example.com");
+  await page.keyboard.press("Enter");
+  await page
+    .locator("#term-input")
+    .fill("I would like to talk about a project.");
+  await page.getByRole("button", { name: /^Enter/ }).click();
+  const draft = page.getByRole("link", { name: /Open in my email app/ });
+  await expect(draft).toBeVisible();
+  const href = (await draft.getAttribute("href"))!;
+  expect(href).toContain("mailto:sidharthsood303@gmail.com?subject=");
+  expect(decodeURIComponent(href)).toContain("Reply to: alex@example.com");
+  await expect(page.locator(".c-term-log")).toContainText(
+    "Nothing has been sent",
+  );
+  await page.getByRole("button", { name: "Start over" }).click();
+  await expect(page.locator(".c-term-choices button")).toHaveCount(4);
 });

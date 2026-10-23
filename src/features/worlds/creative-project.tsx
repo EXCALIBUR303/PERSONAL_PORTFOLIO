@@ -1,27 +1,63 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
   ArrowRight,
-  ArrowUpRight,
-  ExternalLink,
-  Github,
+  Check,
   ShieldCheck,
   TriangleAlert,
 } from "lucide-react";
 import type { Project } from "@/data/projects";
-import DemoConsole, { demoLabel } from "@/components/demo-console";
-import ArchitectureExplorer from "@/components/architecture-explorer";
+import { demoClassFor } from "@/data/demo-class";
 import MiniAnim from "@/components/mini-anim";
 import { usePortfolioState } from "@/components/app-frame";
 import { animKindFor, toneFor } from "@/components/creative/identity";
-import WorldPlayground from "./world-playground";
+import {
+  missionSteps,
+  useExploration,
+  type MissionStep,
+} from "@/lib/exploration";
+import { hasDedicatedDemo } from "./world-playground";
+import {
+  HowBody,
+  LimitsList,
+  ProjectLinks,
+  ScopeList,
+  SourceLinks,
+  StackList,
+  TryBody,
+} from "./project-sections";
+
+const ids = missionSteps.map((step) => step.id);
+const fromHash = (hash: string): MissionStep | null => {
+  const id = decodeURIComponent(hash.replace(/^#/, ""));
+  if (id === "limits") return "decisions";
+  return (ids as string[]).includes(id) ? (id as MissionStep) : null;
+};
+
+/** The URL hash is the single source of truth for the open mission. */
+const hashListeners = new Set<() => void>();
+const subscribeHash = (listener: () => void) => {
+  hashListeners.add(listener);
+  window.addEventListener("hashchange", listener);
+  return () => {
+    hashListeners.delete(listener);
+    window.removeEventListener("hashchange", listener);
+  };
+};
+const readHash = () => location.hash;
+function writeHash(next: MissionStep) {
+  history.replaceState(null, "", `#${next}`);
+  hashListeners.forEach((listener) => listener());
+}
 
 /**
- * Creative project page. Same project record, same demo console, same
- * playground and architecture explorer as the Professional page, arranged as a
- * poster, folder tabs, a numbered scope timeline and a receipt of evidence.
+ * Creative project page: a mission board. The poster introduces the project,
+ * then four missions (problem, try it, how it works, decisions) open one at a
+ * time, so a visitor is never faced with the whole page at once. Same project
+ * record and same content blocks as the Professional page; every mission is a
+ * normal tab and a normal URL hash, so nothing is locked.
  */
 export default function CreativeProjectWorld({
   project,
@@ -35,13 +71,58 @@ export default function CreativeProjectWorld({
   nextProject: { slug: string; title: string };
 }) {
   const { beginPortal } = usePortfolioState();
+  const { stepsFor, markStep, markProject } = useExploration();
+  const hash = useSyncExternalStore(subscribeHash, readHash, () => "");
+  const step = fromHash(hash) ?? "problem";
   const heading = useRef<HTMLHeadingElement>(null);
+  const tabs = useRef<(HTMLButtonElement | null)[]>([]);
+  const demo = demoClassFor(project);
+  const dedicated = hasDedicatedDemo(project);
+  const done = stepsFor(project.slug);
+
+  const open = useCallback((next: MissionStep, focus = false) => {
+    writeHash(next);
+    if (focus) tabs.current[ids.indexOf(next)]?.focus();
+  }, []);
+
   useEffect(() => {
     const frame = requestAnimationFrame(() =>
       heading.current?.focus({ preventScroll: true }),
     );
     return () => cancelAnimationFrame(frame);
   }, [project.slug]);
+
+  useEffect(() => markProject(project.slug), [markProject, project.slug]);
+  useEffect(() => markStep(project.slug, step), [markStep, project.slug, step]);
+  useEffect(() => {
+    if (!fromHash(location.hash)) return;
+    const timer = window.setTimeout(
+      () =>
+        document
+          .getElementById("c-missions")
+          ?.scrollIntoView({ block: "start" }),
+      350,
+    );
+    return () => window.clearTimeout(timer);
+  }, [project.slug]);
+
+  const position = ids.indexOf(step);
+  const onKey = (event: React.KeyboardEvent) => {
+    const move =
+      event.key === "ArrowRight"
+        ? 1
+        : event.key === "ArrowLeft"
+          ? -1
+          : event.key === "Home"
+            ? -position
+            : event.key === "End"
+              ? ids.length - 1 - position
+              : 0;
+    if (!move) return;
+    event.preventDefault();
+    open(ids[(position + move + ids.length) % ids.length], true);
+  };
+
   return (
     <main
       id="main"
@@ -52,12 +133,12 @@ export default function CreativeProjectWorld({
     >
       <div className="container">
         <div className="c-crumbs">
-          <Link href="/#projects" className="c-chip c-chip-paper">
+          <Link href="/#map" className="c-chip c-chip-paper">
             <ArrowLeft size={15} aria-hidden="true" />
-            Back to the board
+            Back to the map
           </Link>
           <span className="mono">
-            NO. {String(index + 1).padStart(2, "0")} /{" "}
+            STATION {String(index + 1).padStart(2, "0")} /{" "}
             {String(count).padStart(2, "0")}
           </span>
         </div>
@@ -69,48 +150,22 @@ export default function CreativeProjectWorld({
               {project.title}
             </h1>
             <p className="c-poster-tagline">{project.tagline}</p>
-            <dl className="c-meta">
-              <div>
-                <dt>Collection</dt>
-                <dd>{project.collection}</dd>
-              </div>
-              <div>
-                <dt>Type</dt>
-                <dd>{project.discipline}</dd>
-              </div>
-              <div>
-                <dt>Status</dt>
-                <dd>
-                  <ShieldCheck size={14} aria-hidden="true" />
-                  {project.status}
-                </dd>
-              </div>
-              <div>
-                <dt>Source</dt>
-                <dd>
-                  {project.sourceVisibility === "public"
-                    ? "Public repository"
-                    : "Not published"}
-                </dd>
-              </div>
-              <div>
-                <dt>Demo</dt>
-                <dd>{demoLabel(project)}</dd>
-              </div>
-            </dl>
             <p className="c-poster-desc">{project.description}</p>
-            <ul
-              className="c-tags"
-              aria-label={
-                project.sourceVisibility === "public"
-                  ? "Repository stack"
-                  : "Public demo stack"
-              }
-            >
-              {project.stack.map((tool) => (
-                <li key={tool}>{tool}</li>
-              ))}
+            <ul className="c-brief-badges" aria-label="Project facts">
+              <li>
+                <ShieldCheck size={13} aria-hidden="true" /> {project.status}
+              </li>
+              <li>
+                {project.collection} project · {project.discipline}
+              </li>
+              <li data-kind={demo.kind}>{demo.label}</li>
             </ul>
+            <ProjectLinks
+              project={project}
+              buttonClass="c-btn c-btn-paper"
+              liveClass="c-btn c-btn-lime"
+              noneClass="c-none"
+            />
           </div>
           <figure className="c-poster-art">
             <span className="c-tape c-tape-a" aria-hidden="true" />
@@ -122,175 +177,141 @@ export default function CreativeProjectWorld({
             <figcaption className="mono">
               Concept sketch of the idea, not a recording of the project.
             </figcaption>
-            <span className="c-anno c-anno-a" aria-hidden="true">
-              the idea, sketched
-            </span>
-            {project.stack[0] && (
-              <span className="c-anno c-anno-b" aria-hidden="true">
-                built with {project.stack[0]}
-              </span>
-            )}
           </figure>
         </header>
 
-        <nav className="c-tabs" aria-label="Project sections">
-          <a href="#world-demo">Demo &amp; local setup</a>
-          <a href="#world-playground">Explore</a>
-          {project.architecture.nodes.length > 0 && (
-            <a href="#world-architecture">Architecture</a>
-          )}
-          <a href="#world-overview">The story</a>
-          <a href="#world-evidence">Evidence &amp; limits</a>
-        </nav>
-
-        <DemoConsole project={project} />
-
-        <section id="world-playground" className="c-panel">
-          <header className="c-panel-head">
+        <section
+          id="c-missions"
+          className="c-missions-board"
+          aria-label="Missions"
+        >
+          <div className="c-mission-head">
             <h2>
-              Try the <em>idea.</em>
+              Four <em>missions.</em>
             </h2>
-            <span className="c-pill c-pill-lime mono">
-              {project.interactionLabel}
-            </span>
-          </header>
-          <WorldPlayground project={project} />
-        </section>
-
-        {project.architecture.nodes.length > 0 && (
-          <section id="world-architecture" className="c-panel">
-            <header className="c-panel-head">
-              <h2>
-                Trace the <em>connections.</em>
-              </h2>
-              <span className="c-pill c-pill-sky mono">
-                {project.architecture.kind}
-              </span>
-            </header>
-            <ArchitectureExplorer project={project} />
-          </section>
-        )}
-
-        <section id="world-overview" className="c-panel c-story">
-          <header className="c-panel-head">
-            <h2>
-              A question worth <em>asking.</em>
-            </h2>
-          </header>
-          <div className="c-story-grid">
-            <div className="c-sticky c-sticky-butter">
-              <span className="mono">THE PROBLEM</span>
-              <p>{project.problem}</p>
-            </div>
-            <div className="c-approach">
-              <span className="mono">THE APPROACH</span>
-              <h3>{project.tagline}</h3>
-              <p>{project.solution}</p>
-            </div>
+            <p className="mono" role="status">
+              {done.length} of {missionSteps.length} opened in this tab
+            </p>
           </div>
-          <h3 className="c-timeline-title mono">DOCUMENTED SCOPE</h3>
-          <ol className="c-timeline">
-            {project.features.map((feature, i) => (
-              <li key={feature}>
-                <span className="c-stop mono" aria-hidden="true">
-                  {String(i + 1).padStart(2, "0")}
+          <div
+            className="c-tabs c-tabs-missions"
+            role="tablist"
+            aria-label="Project missions"
+            onKeyDown={onKey}
+          >
+            {missionSteps.map((item, i) => (
+              <button
+                key={item.id}
+                ref={(node) => {
+                  tabs.current[i] = node;
+                }}
+                type="button"
+                role="tab"
+                id={`tab-${item.id}`}
+                aria-selected={step === item.id}
+                aria-controls={`panel-${item.id}`}
+                tabIndex={step === item.id ? 0 : -1}
+                data-done={done.includes(item.id) || undefined}
+                onClick={() => open(item.id)}
+              >
+                <span className="c-mission-no mono" aria-hidden="true">
+                  {done.includes(item.id) && step !== item.id ? (
+                    <Check size={13} />
+                  ) : (
+                    i + 1
+                  )}
                 </span>
-                <p>{feature}</p>
-              </li>
+                {item.label}
+              </button>
             ))}
-          </ol>
-        </section>
+          </div>
 
-        <section id="world-evidence" className="c-panel c-evidence">
-          <header className="c-panel-head">
-            <h2>
-              Know the <em>limits.</em>
-            </h2>
-          </header>
-          <div className="c-evidence-grid">
-            <div className="c-caution">
-              <h3 className="mono">
-                <TriangleAlert size={15} aria-hidden="true" /> HONEST BOUNDARIES
-              </h3>
-              <ul>
-                {project.limitations.map((limit) => (
-                  <li key={limit}>{limit}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="c-receipt">
-              <h3 className="mono">
-                {project.sourceVisibility === "public"
-                  ? "IMPLEMENTATION EVIDENCE"
-                  : project.kind === "unavailable"
-                    ? "PRIVATE IMPLEMENTATION"
-                    : "AN INDEPENDENT STUDY"}
-              </h3>
-              {project.sourceCommit && (
-                <p className="c-commit mono">
-                  AUDITED COMMIT / {project.sourceCommit.slice(0, 10)}
-                </p>
-              )}
-              {project.sources.map((source) => (
-                <a
-                  key={source.url}
-                  href={source.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <span>
-                    <b>{source.label}</b>
-                    <small>{source.path}</small>
-                  </span>
-                  <ArrowUpRight size={15} aria-hidden="true" />
-                </a>
-              ))}
-              {!project.sources.length && (
-                <p>
-                  {project.kind === "unavailable"
-                    ? "Only the name and college classification provided by the owner are displayed. Private source and internal project details are withheld."
-                    : "The supplied football repository is private. Its code was not read or reproduced. All controls and visuals here belong to this original portfolio demonstration."}
-                </p>
-              )}
-              <div className="c-receipt-actions">
-                {project.githubUrl && (
-                  <a
-                    className="c-btn c-btn-paper"
-                    href={project.githubUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Github size={16} aria-hidden="true" />
-                    Open repository
-                    <ArrowUpRight size={15} aria-hidden="true" />
-                  </a>
-                )}
-                {project.liveUrl ? (
-                  <a
-                    className="c-btn c-btn-lime"
-                    href={project.liveUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <ExternalLink size={15} aria-hidden="true" />
-                    Verified live demo
-                  </a>
-                ) : (
-                  <span className="c-none">
-                    {project.sourceVisibility === "public"
-                      ? "No verified external live demo"
-                      : "Private source not shared"}
-                  </span>
-                )}
+          <div
+            role="tabpanel"
+            id={`panel-${step}`}
+            aria-labelledby={`tab-${step}`}
+            className="c-mission-panel"
+            tabIndex={0}
+          >
+            {step === "problem" && (
+              <div className="c-story-grid">
+                <div className="c-sticky c-sticky-butter">
+                  <span className="mono">THE PROBLEM</span>
+                  <p>{project.problem}</p>
+                </div>
+                <div className="c-approach">
+                  <span className="mono">THE APPROACH</span>
+                  <h3>{project.tagline}</h3>
+                  <p>{project.solution}</p>
+                </div>
               </div>
-            </div>
+            )}
+            {step === "try" && <TryBody project={project} />}
+            {step === "how" && (
+              <>
+                <HowBody project={project} />
+                {dedicated && (
+                  <details className="c-more">
+                    <summary>Everything the repository documents</summary>
+                    <ScopeList project={project} />
+                  </details>
+                )}
+              </>
+            )}
+            {step === "decisions" && (
+              <div className="c-decisions">
+                <div>
+                  <h3 className="mono">BUILT WITH</h3>
+                  <StackList project={project} />
+                  <p className="c-fine">
+                    Reasons are shown only where the repository documents them.
+                  </p>
+                </div>
+                <div className="c-caution">
+                  <h3 className="mono">
+                    <TriangleAlert size={15} aria-hidden="true" /> LIMITS &amp;
+                    STATUS · {project.status.toUpperCase()}
+                  </h3>
+                  <LimitsList project={project} />
+                </div>
+                <div className="c-receipt">
+                  <h3 className="mono">
+                    {project.sourceVisibility === "public"
+                      ? "WHERE THE DECISIONS ARE WRITTEN DOWN"
+                      : project.kind === "unavailable"
+                        ? "PRIVATE IMPLEMENTATION"
+                        : "AN INDEPENDENT STUDY"}
+                  </h3>
+                  <SourceLinks project={project} />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="c-mission-nav">
+            <button
+              type="button"
+              className="c-btn c-btn-paper"
+              disabled={position === 0}
+              onClick={() => open(ids[position - 1], true)}
+            >
+              <ArrowLeft size={15} aria-hidden="true" /> Previous mission
+            </button>
+            <button
+              type="button"
+              className="c-btn c-btn-ink"
+              disabled={position === ids.length - 1}
+              onClick={() => open(ids[position + 1], true)}
+            >
+              Next mission <ArrowRight size={15} aria-hidden="true" />
+            </button>
           </div>
         </section>
 
         <div className="c-next">
-          <Link href="/#projects" className="c-chip c-chip-paper">
+          <Link href="/#map" className="c-chip c-chip-paper">
             <ArrowLeft size={15} aria-hidden="true" />
-            Back to the board
+            Back to the map
           </Link>
           <Link
             href={`/projects/${nextProject.slug}`}
@@ -299,7 +320,7 @@ export default function CreativeProjectWorld({
             onClick={() => beginPortal(project.accent)}
           >
             <span>
-              <small className="mono">NEXT ON THE BOARD</small>
+              <small className="mono">NEXT STATION</small>
               <strong>{nextProject.title}</strong>
             </span>
             <ArrowRight size={26} aria-hidden="true" />

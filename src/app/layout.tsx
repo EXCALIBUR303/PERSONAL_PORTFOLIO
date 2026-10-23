@@ -12,6 +12,8 @@ import "./multiverse.css";
 import "./universe.css";
 import "./modes.css";
 import "./hero.css";
+import "./lens.css";
+import "./project.css";
 import "./creative.css";
 import AppFrame from "@/components/app-frame";
 import { modeBootScript } from "@/components/mode";

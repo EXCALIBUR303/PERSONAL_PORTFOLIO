@@ -16,24 +16,22 @@ test.beforeEach(async ({ page }) => {
     } as typeof original;
   });
 });
-test("desk lenses change the exhibit and its meaningful destination", async ({
+test("desk lenses change the visualisation and its meaningful destination", async ({
   page,
 }) => {
   await page.goto("/");
   await page
     .getByRole("button", { name: "02 / Algorithms", exact: true })
     .click();
-  await expect(page.locator(".hx-inspector")).toContainText(
-    "Give the question a path.",
-  );
-  await expect(page.locator(".hx-inspector a")).toHaveAttribute(
+  await expect(page.locator(".lz-head h2")).toHaveText("Watch a search think.");
+  await expect(page.locator(".lz-caption a")).toHaveAttribute(
     "href",
     "/projects/mazera-ai-maze-solver/",
   );
   await page
     .getByRole("button", { name: "03 / Intelligence", exact: true })
     .click();
-  await expect(page.locator(".hx-inspector a")).toHaveAttribute(
+  await expect(page.locator(".lz-caption a")).toHaveAttribute(
     "href",
     "/projects/predictive-maintenance/",
   );
@@ -43,15 +41,10 @@ test("collections, type filters, and hardware empty states reflect owner classif
 }) => {
   await page.goto("/#projects");
   await page.getByRole("button", { name: /College Projects/ }).click();
-  await expect(
-    page.locator(".project-card h3").filter({ hasText: "SmartPark" }),
-  ).toBeVisible();
-  await expect(
-    page.locator(".project-card h3").filter({ hasText: "Last Mile DAA" }),
-  ).toBeVisible();
-  await expect(
-    page.locator(".project-card h3").filter({ hasText: "Mazera" }),
-  ).toHaveCount(0);
+  for (const title of ["SmartPark", "Last Mile DAA", "Mazera"])
+    await expect(
+      page.locator(".project-card h3").filter({ hasText: title }),
+    ).toBeVisible();
   await page.getByRole("button", { name: "Hardware", exact: true }).click();
   await expect(page.locator(".gallery-empty")).toContainText(
     "No verified physical hardware project",
@@ -61,16 +54,16 @@ test("collections, type filters, and hardware empty states reflect owner classif
   await page.getByRole("button", { name: "Software", exact: true }).click();
   await expect(
     page.locator(".project-card h3").filter({ hasText: "Mazera" }),
-  ).toBeVisible();
-  await expect(
-    page.locator(".project-card h3").filter({ hasText: "SmartPark" }),
   ).toHaveCount(0);
+  await expect(
+    page.locator(".project-card h3").filter({ hasText: "AERIS" }),
+  ).toBeVisible();
 });
 test("index and exhibit controls work, and browser navigation retains collection state", async ({
   page,
 }) => {
   await page.goto("/#projects");
-  await page.getByRole("button", { name: /Personal Projects/ }).click();
+  await page.getByRole("button", { name: /College Projects/ }).click();
   await page.getByRole("button", { name: "Index view" }).click();
   await expect(page.locator(".project-exhibit")).toHaveCount(0);
   await page
@@ -86,7 +79,7 @@ test("index and exhibit controls work, and browser navigation retains collection
   await expect(page).toHaveURL(/mazera-ai-maze-solver/);
   await page.goBack();
   await expect(
-    page.getByRole("button", { name: /Personal Projects/ }),
+    page.getByRole("button", { name: /College Projects/ }),
   ).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator(".project-exhibit h3")).toHaveText(
     "Mazera AI Maze Solver",
@@ -99,9 +92,14 @@ test("Last Mile DAA is a public college entry with source-backed architecture an
 }) => {
   await page.goto("/projects/last-mile-daa/");
   await expect(page.locator("h1")).toHaveText("Last Mile DAA");
-  await expect(page.locator(".demo-type")).toHaveText("Run locally");
+  await expect(page.locator(".demo-type")).toHaveText(
+    "Original project: Run locally",
+  );
   await expect(page.locator(".private-project-note")).toHaveCount(0);
-  await expect(page.locator("#world-architecture")).toBeVisible();
+  await expect(page.locator("#how .architecture-explorer")).toBeVisible();
+  await expect(page.locator(".ps-demonote")).toContainText(
+    "not outputs of its Python solver",
+  );
   await expect(
     page.getByRole("link", { name: "Open repository" }).first(),
   ).toBeVisible();
