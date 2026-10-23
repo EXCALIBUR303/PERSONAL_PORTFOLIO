@@ -23,17 +23,17 @@ test("desk lenses change the exhibit and its meaningful destination", async ({
   await page
     .getByRole("button", { name: "02 / Algorithms", exact: true })
     .click();
-  await expect(page.locator(".desk-inspector")).toContainText(
+  await expect(page.locator(".hx-inspector")).toContainText(
     "Give the question a path.",
   );
-  await expect(page.locator(".desk-inspector a")).toHaveAttribute(
+  await expect(page.locator(".hx-inspector a")).toHaveAttribute(
     "href",
     "/projects/mazera-ai-maze-solver/",
   );
   await page
     .getByRole("button", { name: "03 / Intelligence", exact: true })
     .click();
-  await expect(page.locator(".desk-inspector a")).toHaveAttribute(
+  await expect(page.locator(".hx-inspector a")).toHaveAttribute(
     "href",
     "/projects/predictive-maintenance/",
   );

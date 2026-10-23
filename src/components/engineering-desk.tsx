@@ -1,114 +1,70 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import {
-  ArrowDown,
-  ArrowUpRight,
-  Cpu,
-  Network,
-  Orbit,
-  Github,
-  Crosshair,
-} from "lucide-react";
+import { ArrowDown, ArrowUpRight, Github } from "lucide-react";
 import { profile } from "@/data/profile";
-import HeroArt from "./hero-art";
-export type DeskMode = "systems" | "algorithms" | "computation";
-const stations = [
-  {
-    id: "systems" as const,
-    label: "01 / Systems",
-    title: "Make the pieces work together.",
-    description: "Interfaces, databases, and the rules that connect them.",
-    slug: "smart-parking-dbms",
-    project: "Smart Parking DBMS",
-    icon: Network,
-    accent: "#f2a35e",
-  },
-  {
-    id: "algorithms" as const,
-    label: "02 / Algorithms",
-    title: "Give the question a path.",
-    description: "Step inside graph search. Follow every decision.",
-    slug: "mazera-ai-maze-solver",
-    project: "Mazera AI Maze Solver",
-    icon: Orbit,
-    accent: "#71d8e5",
-  },
-  {
-    id: "computation" as const,
-    label: "03 / Intelligence",
-    title: "Look beneath the prediction.",
-    description: "Data, models, and the boundaries of what they tell us.",
-    slug: "predictive-maintenance",
-    project: "Predictive Maintenance",
-    icon: Cpu,
-    accent: "#b29af0",
-  },
-];
+import { projects } from "@/data/projects";
+import HeroStage from "./hero-stage";
+import { stations, type DeskMode } from "./desk-data";
+
+export type { DeskMode };
+
+/** Professional hero: copy on the left, one framed 3D stage with its lens panel on the right. */
 export default function EngineeringDesk() {
   const [mode, setMode] = useState<DeskMode>("systems");
   const station = stations.find((item) => item.id === mode)!;
+  const github = profile.socials.find((s) => s.name === "GitHub")?.url;
   return (
     <section
-      className="engineering-hero"
+      className="hx hx-pro engineering-hero"
       aria-labelledby="hero-title"
       style={{ "--station-accent": station.accent } as React.CSSProperties}
     >
-      <div className="container">
-        <div className="desk-topline mono">
-          <span>
-            <i className="status-dot" /> SIDHARTH SOOD / INDEPENDENT EXPLORATION
-            + ACADEMIC WORK
-          </span>
-          <span>FIELD NOTES — VOL. 03</span>
-        </div>
-        <div className="desk-introduction">
-          <div>
-            <p className="eyebrow">
-              {profile.name.toUpperCase()} / B.TECH CSE / FIELD NOTES
-            </p>
-            <h1 id="hero-title" tabIndex={-1}>
-              Hi, I&apos;m Sidharth. I build <em>intelligent systems</em>, and
-              make them <em className="hero-underlined">explorable</em>.
-            </h1>
+      <div className="container hx-grid">
+        <div className="hx-copy">
+          <p className="hx-topline mono">
+            <i className="status-dot" /> {profile.name.toUpperCase()} / B.TECH
+            CSE / FIELD NOTES
+          </p>
+          <h1 id="hero-title" tabIndex={-1}>
+            Hi, I&apos;m Sidharth. I build <em>intelligent systems</em>, and
+            make them <em className="hero-underlined">explorable</em>.
+          </h1>
+          <p className="hx-lede">{profile.introduction}</p>
+          <div className="hx-actions">
+            <a href="#projects" className="button button-lime">
+              Explore my work <ArrowDown size={17} />
+            </a>
+            <a href="#about" className="hero-contact">
+              About me <ArrowUpRight size={16} />
+            </a>
           </div>
-          <div className="desk-intro-aside">
-            <span className="creative-only hero-sticker" aria-hidden="true">
-              <i>★</i> open source
-            </span>
-            <span className="degree-chip">
-              B.TECH / COMPUTER SCIENCE & ENGINEERING
-            </span>
-            <p>{profile.introduction}</p>
-            <div className="hero-buttons">
-              <a href="#projects" className="button button-lime">
-                Explore my work <ArrowDown size={17} />
-              </a>
-              <a href="#about" className="hero-contact">
-                About me <ArrowUpRight size={16} />
-              </a>
+          <dl className="hx-facts mono">
+            <div>
+              <dt>Project worlds</dt>
+              <dd>{String(projects.length).padStart(2, "0")}</dd>
             </div>
-          </div>
+            <div>
+              <dt>Degree</dt>
+              <dd>B.Tech CSE</dd>
+            </div>
+            {github && (
+              <div>
+                <dt>Source</dt>
+                <dd>
+                  <a href={github} target="_blank" rel="noopener noreferrer">
+                    <Github size={13} /> EXCALIBUR303
+                  </a>
+                </dd>
+              </div>
+            )}
+          </dl>
         </div>
-        <p className="creative-only hero-note" aria-hidden="true">
-          pick a lens, spin the model
-          <svg
-            viewBox="0 0 120 70"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M6 8 C 30 6, 80 14, 104 54" />
-            <path d="M92 48 L105 57 L108 41" />
-          </svg>
-        </p>
-        <div className="engineering-desk">
-          <div className="desk-rail">
-            <span className="mono">CHOOSE A LENS</span>
+        <div className="hx-visual">
+          <HeroStage mode={mode} variant="pro" />
+          <div className="hx-panel">
             <div
-              className="desk-mode-controls"
+              className="hx-lenses"
               role="group"
               aria-label="Engineering desk discipline"
             >
@@ -117,59 +73,26 @@ export default function EngineeringDesk() {
                   key={item.id}
                   aria-pressed={mode === item.id}
                   onClick={() => setMode(item.id)}
+                  style={
+                    { "--lens-accent": item.accent } as React.CSSProperties
+                  }
                 >
-                  <item.icon size={19} />
-                  <span>{item.label}</span>
-                  <ArrowUpRight size={14} />
+                  <item.icon size={17} aria-hidden="true" />
+                  {item.label}
                 </button>
               ))}
             </div>
-            <div className="desk-rail-note">
-              <Crosshair size={25} />
-              <p>
-                Ideas become clearer
-                <br />
-                when you can explore them.
-              </p>
+            <div className="hx-inspector" aria-live="polite">
+              <div>
+                <h2>{station.title}</h2>
+                <p>{station.description}</p>
+              </div>
+              <Link href={`/projects/${station.slug}/`} prefetch={false}>
+                Enter {station.project}
+                <ArrowUpRight size={18} />
+              </Link>
             </div>
           </div>
-          <div className="desk-scene">
-            <HeroArt mode={mode} />
-            <span className="desk-axis mono" aria-hidden="true">
-              X / BUILD &nbsp; Y / TEST &nbsp; Z / UNDERSTAND
-            </span>
-          </div>
-          <div className="desk-inspector" aria-live="polite">
-            <span className="eyebrow">ON THE WORKBENCH</span>
-            <span className="desk-inspector-index mono">
-              {stations.indexOf(station) + 1} / 3
-            </span>
-            <h2>{station.title}</h2>
-            <p>{station.description}</p>
-            <Link href={`/projects/${station.slug}/`} prefetch={false}>
-              Enter {station.project}
-              <ArrowUpRight size={19} />
-            </Link>
-            <span className="desk-metaphor mono">
-              SPATIAL STUDY / SELECT A LENS TO EXPLORE
-            </span>
-          </div>
-        </div>
-        <div className="desk-footer mono">
-          <span>
-            SCROLL TO THE PROJECT COLLECTIONS <ArrowDown size={12} />
-          </span>
-          <a
-            href={
-              profile.socials.find((s) => s.name === "GitHub")?.url ||
-              "#projects"
-            }
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Github size={14} /> EXCALIBUR303 <ArrowUpRight size={12} />
-          </a>
-          <span>SOFTWARE, SYSTEMS & A LITTLE CURIOSITY.</span>
         </div>
       </div>
     </section>

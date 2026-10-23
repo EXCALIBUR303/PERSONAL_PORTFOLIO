@@ -1,0 +1,337 @@
+/*
+ * Hero: the framed 3D stage (shared by both modes) and the Professional hero
+ * composition. The Creative hero lives in creative.css and reuses the stage.
+ */
+html[data-mode] .portfolio-root {
+  /* ---------- Professional composition ---------- */
+  .hx {
+    position: relative;
+    padding: clamp(24px, 3.4vw, 48px) 0 clamp(36px, 5vw, 68px);
+    border-bottom: var(--m-edge);
+  }
+  .hx-grid {
+    display: grid;
+    gap: clamp(28px, 4vw, 64px);
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+  }
+  @media (min-width: 1000px) {
+    .hx-grid {
+      grid-template-columns: minmax(0, 1.04fr) minmax(0, 0.96fr);
+    }
+  }
+  .hx-topline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 clamp(16px, 2vw, 26px);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--m-graphite);
+  }
+  .hx-topline .status-dot {
+    flex: none;
+    background: var(--m-tan);
+    box-shadow: 0 0 0 3px #ff653833;
+  }
+  .hx-pro h1 {
+    margin: 0;
+    max-width: 15ch;
+    font-size: clamp(2.5rem, 4.5vw, 4.6rem);
+    line-height: 1.04;
+    letter-spacing: -0.025em;
+    font-weight: 700;
+  }
+  .hx-pro h1 em {
+    color: var(--m-cobalt);
+    letter-spacing: -0.02em;
+  }
+  .hx-pro h1 .hero-underlined {
+    color: var(--m-ink);
+    background-image: linear-gradient(var(--m-tan), var(--m-tan));
+    background-repeat: no-repeat;
+    background-size: 100% 0.11em;
+    background-position: 0 94%;
+    animation: m-underline 0.9s 0.5s cubic-bezier(0.2, 0.9, 0.2, 1) backwards;
+  }
+  .hx-lede {
+    max-width: 46ch;
+    margin: clamp(18px, 2.4vw, 28px) 0 0;
+    font-size: clamp(15px, 1.2vw, 17px);
+    color: var(--m-graphite);
+  }
+  .hx-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px 26px;
+    margin-top: clamp(20px, 2.6vw, 30px);
+  }
+  .hx-facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px clamp(20px, 3vw, 40px);
+    margin: clamp(24px, 3.4vw, 44px) 0 0;
+    padding-top: 18px;
+    border-top: 1.5px solid #17171d30;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+  }
+  .hx-facts dt {
+    color: var(--m-graphite);
+    text-transform: uppercase;
+    font-size: 10px;
+  }
+  .hx-facts dd {
+    margin: 4px 0 0;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--m-ink);
+  }
+  .hx-facts a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ---------- 3D stage (both modes) ---------- */
+  .hx-visual {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .hx-stage {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: var(--m-card);
+    border: var(--m-edge);
+    border-radius: 4px;
+    box-shadow: var(--m-shadow);
+  }
+  .hx-canvas-wrap {
+    position: relative;
+    aspect-ratio: 6 / 5;
+    width: min(100%, 86vh);
+    margin-inline: auto;
+    overflow: hidden;
+    border-radius: inherit;
+    background-image:
+      linear-gradient(#17171d0d 1px, transparent 1px),
+      linear-gradient(90deg, #17171d0d 1px, transparent 1px);
+    background-size: 36px 36px;
+    background-position: center;
+    touch-action: pan-y;
+  }
+  .hx-canvas-wrap:focus-visible {
+    outline: 3px solid var(--m-cobalt);
+    outline-offset: -3px;
+  }
+  .hx-poster {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: var(--m-ink);
+    transition: opacity 0.45s ease;
+    --hx-base: #ece8dd;
+    --hx-bar: #d8dce0;
+  }
+  .hx-poster-art {
+    width: min(86%, 560px);
+    height: auto;
+  }
+  .hx-canvas {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.45s ease;
+  }
+  .hx-canvas canvas {
+    display: block;
+    /* Vertical swipes keep scrolling the page; horizontal drags rotate. The
+       important flag beats the inline value OrbitControls writes. */
+    touch-action: pan-y !important;
+  }
+  .hx-stage[data-state="live"] .hx-canvas {
+    opacity: 1;
+  }
+  .hx-stage[data-state="live"] .hx-poster {
+    opacity: 0;
+  }
+  .hx-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 10px;
+    background: var(--m-card);
+    border: 1.5px solid var(--m-ink);
+    border-radius: 999px;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--m-ink);
+    pointer-events: none;
+  }
+  .hx-badge i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #9aa0aa;
+  }
+  .hx-stage[data-state="live"] .hx-badge i {
+    background: #1f9d55;
+  }
+  .hx-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 14px;
+    padding: 9px 12px;
+    border-top: 1.5px solid var(--m-ink);
+  }
+  .hx-hint {
+    flex: 1 1 220px;
+    font-size: 11px;
+    color: var(--m-graphite);
+  }
+  .hx-tools {
+    display: flex;
+    gap: 6px;
+    margin-left: auto;
+  }
+  .hx-tools button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 9px;
+    background: var(--m-card);
+    border: 1.5px solid var(--m-ink);
+    border-radius: 4px;
+    color: var(--m-ink);
+    font-family: var(--font-mono-set);
+    font-size: 11px;
+    cursor: pointer;
+    transition:
+      transform 0.15s ease,
+      background-color 0.15s ease;
+  }
+  .hx-tools button:hover {
+    background: var(--m-lime);
+  }
+  .hx-tools button:active {
+    transform: translateY(1px);
+  }
+  @media (pointer: coarse) {
+    .hx-tools button {
+      min-width: 44px;
+      height: 44px;
+    }
+  }
+
+  /* ---------- lens panel ---------- */
+  .hx-panel {
+    background: var(--m-card);
+    border: var(--m-edge);
+    border-radius: 4px;
+  }
+  .hx-lenses {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-bottom: 1.5px solid var(--m-ink);
+  }
+  .hx-lenses button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 8px 6px;
+    background: transparent;
+    border: 0;
+    border-right: 1.5px solid var(--m-ink);
+    color: var(--m-ink);
+    font-family: var(--font-mono-set);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+  .hx-lenses button:last-child {
+    border-right: 0;
+  }
+  .hx-lenses button:hover {
+    background: #17171d0f;
+  }
+  .hx-lenses button[aria-pressed="true"] {
+    background: var(--m-ink);
+    color: #fff;
+    box-shadow: inset 0 -4px 0 var(--lens-accent);
+  }
+  .hx-lenses button:focus-visible {
+    outline: 3px solid var(--m-cobalt);
+    outline-offset: -3px;
+  }
+  @media (max-width: 520px) {
+    .hx-lenses button {
+      flex-direction: column;
+      gap: 4px;
+      font-size: 11px;
+    }
+  }
+  .hx-panel .hx-inspector {
+    text-align: left;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 24px;
+    padding: 16px 18px 18px;
+    border: 0;
+    background: transparent;
+  }
+  .hx-panel .hx-inspector > div {
+    flex: 1 1 260px;
+  }
+  .hx-panel .hx-inspector h2 {
+    margin: 0;
+    font-size: clamp(22px, 2.1vw, 28px);
+    line-height: 1.12;
+  }
+  .hx-panel .hx-inspector p {
+    margin: 6px 0 0;
+    font-size: 14.5px;
+    color: var(--m-graphite);
+  }
+  .hx-panel .hx-inspector > a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0;
+    border: 0;
+    border-bottom: 2px solid var(--lens-accent, var(--m-ink));
+    font-family: var(--font-mono-set);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--m-ink);
+    transition: gap 0.15s ease;
+  }
+  .hx-panel .hx-inspector > a:hover {
+    gap: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-mode] .portfolio-root {
+    .hx-poster,
+    .hx-canvas {
+      transition: none;
+    }
+  }
+}

@@ -100,7 +100,7 @@ test("search and filters keep working after switching modes", async ({
   await page
     .getByRole("searchbox", { name: "Search project worlds" })
     .fill("mazera");
-  await expect(page.locator(".project-card")).toHaveCount(1);
+  await expect(page.locator(".c-card")).toHaveCount(1);
   await page.getByRole("button", { name: "Professional" }).click();
   await expect(page.locator(".project-card")).toHaveCount(1);
   await expect(
@@ -147,4 +147,125 @@ test("project cards show a playing canvas sketch and the hero sentence is exact"
   const canvases = page.locator(".project-card canvas.mini-anim");
   await expect(canvases.first()).toBeVisible();
   expect(await canvases.count()).toBeGreaterThan(5);
+});
+
+test("Creative renders its own component tree on the home page", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator(".engineering-hero")).toBeVisible();
+  await expect(page.locator(".c-hero")).toHaveCount(0);
+  await expect(page.locator(".project-card").first()).toBeVisible();
+  await page.getByRole("button", { name: "Creative" }).click();
+  await expect(page.locator(".c-hero")).toBeVisible();
+  await expect(page.locator(".c-dock")).toBeVisible();
+  await expect(page.locator(".c-board")).toBeVisible();
+  await expect(page.locator(".c-postcard")).toHaveCount(1);
+  await expect(page.locator(".c-sheet-board")).toHaveCount(1);
+  await expect(page.locator(".c-notebook")).toHaveCount(1);
+  await expect(page.locator(".engineering-hero")).toHaveCount(0);
+  await expect(page.locator(".project-card")).toHaveCount(0);
+  await expect(page.locator(".site-footer")).toHaveCount(0);
+  await expect(page.locator(".c-footer")).toBeVisible();
+  await expect(page.locator("h1")).toHaveText(
+    "Hi, I'm Sidharth. I build intelligent systems, and make them explorable.",
+  );
+  const canvases = page.locator(".c-card canvas.mini-anim");
+  await expect(canvases.first()).toBeVisible();
+  expect(await canvases.count()).toBeGreaterThan(5);
+});
+
+test("Creative gallery shares every filter and keeps the empty states", async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("portfolio-mode", "creative"),
+  );
+  await page.goto("/#projects");
+  await expect(page.locator(".c-card")).toHaveCount(20);
+  await page.getByRole("button", { name: /College Projects/ }).click();
+  const college = await page.locator(".c-card").count();
+  expect(college).toBeGreaterThan(0);
+  expect(college).toBeLessThan(20);
+  await page.getByRole("button", { name: "Hardware", exact: true }).click();
+  await expect(page.locator(".c-card")).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { name: /Physical builds/ }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /Reset filters/ }).click();
+  await expect(page.locator(".c-card")).toHaveCount(20);
+  await page.getByRole("button", { name: "Index view" }).click();
+  await expect(page.locator(".c-board-list")).toBeVisible();
+  await page.getByRole("button", { name: "Featured only" }).click();
+  expect(await page.locator(".c-card").count()).toBeLessThan(20);
+  await page.getByRole("button", { name: "Professional" }).click();
+  await expect(
+    page.locator(".gallery-view-toggle button").nth(1),
+  ).toHaveAttribute("aria-pressed", "true");
+});
+
+test("Creative project page has its own layout over the same project data", async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("portfolio-mode", "creative"),
+  );
+  await page.goto("/projects/last-mile-daa/");
+  await expect(page.locator(".c-poster")).toBeVisible();
+  await expect(page.locator(".c-tabs")).toBeVisible();
+  await expect(page.locator(".world-header")).toHaveCount(0);
+  await expect(page.locator("h1")).toHaveText("Last Mile DAA");
+  await expect(page.locator("#world-demo")).toBeVisible();
+  await expect(page.locator("#world-architecture")).toBeVisible();
+  const features = await page.locator(".c-timeline li").count();
+  expect(features).toBeGreaterThan(0);
+  await expect(page.locator(".c-caution li").first()).toBeVisible();
+  await expect(page.locator(".c-poster canvas.mini-anim")).toBeVisible();
+  await page.getByRole("button", { name: "Professional" }).click();
+  await expect(page.locator(".world-header")).toBeVisible();
+  await expect(page.locator(".c-poster")).toHaveCount(0);
+  await expect(page).toHaveURL(/\/projects\/last-mile-daa\/?$/);
+});
+
+test("both heroes switch lens and keep their explanation in sync", async ({
+  page,
+}) => {
+  for (const mode of ["pro", "creative"]) {
+    await page.addInitScript(
+      (m) => localStorage.setItem("portfolio-mode", m),
+      mode,
+    );
+    await page.goto("/");
+    await page
+      .getByRole("button", { name: "02 / Algorithms", exact: true })
+      .click();
+    await expect(page.locator(".hx-inspector")).toContainText(
+      "Give the question a path.",
+    );
+    await expect(page.locator(".hx-inspector a")).toHaveAttribute(
+      "href",
+      "/projects/mazera-ai-maze-solver/",
+    );
+    await expect(
+      page.getByRole("button", { name: "02 / Algorithms", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+  }
+});
+
+test("without WebGL the stage explains itself and keeps the lens controls", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const stage = page.locator(".hx-stage");
+  await expect(stage).toHaveAttribute("data-state", "unavailable", {
+    timeout: 10000,
+  });
+  await expect(stage).toContainText("isn’t available");
+  await expect(stage.locator("canvas")).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "03 / Intelligence", exact: true })
+    .click();
+  await expect(page.locator(".hx-inspector")).toContainText(
+    "Look beneath the prediction.",
+  );
 });

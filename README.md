@@ -48,24 +48,15 @@ Each demo explicitly distinguishes **original application**, **interactive simul
 
 ## Two modes, one site
 
-The header's **Professional / Creative** switch (also Alt+M) changes only the presentation. Routes, project data and behaviour are shared.
+The header's **Professional / Creative** switch (also Alt+M) swaps the presentation. Routes, URLs, project data and behaviour are shared; the two modes are **separate component trees**, not one page re-coloured.
 
-- The choice is stored in `localStorage` (`portfolio-mode`). A tiny script in `<head>` (`modeBootScript` in `src/components/mode.tsx`) sets `data-mode` on `<html>` before first paint, so there is no flash and no hydration mismatch. First-time visitors get Professional.
-- All visual differences live in `src/app/modes.css`, keyed on `html[data-mode="pro" | "creative"]`. Tokens are the `--m-*` variables at the top of that file.
-- `src/components/mini-anim.tsx` draws the small looping canvas sketches on project cards, the quick-view dialog and project pages. They illustrate the documented idea and are labelled as concept sketches. They pause off-screen and in reduced motion.
-- The Creative-mode cursor (`Cursor` in `app-frame.tsx`) moves its dot directly from the pointer event, so it cannot trail the mouse. It is not rendered on touch or with reduced motion.
-- Project pages have an architecture walkthrough (play, pause, scrub) that steps through the documented components in order.
-- VERIFICATION.md and the Lighthouse files describe the earlier V3 baseline and were not regenerated for the modes.
-
-## Two modes, one site
-
-The header's **Professional / Creative** switch (also Alt+M) changes only the presentation. Routes, project data and behaviour are shared.
-
-- The choice is stored in `localStorage` (`portfolio-mode`). A tiny script in `<head>` (`modeBootScript` in `src/components/mode.tsx`) sets `data-mode` on `<html>` before first paint, so there is no flash and no hydration mismatch. First-time visitors get Professional.
-- All visual differences live in `src/app/modes.css`, keyed on `html[data-mode="pro" | "creative"]`. Tokens are the `--m-*` variables at the top of that file.
-- `src/components/mini-anim.tsx` draws the small looping canvas sketches on project cards, the quick-view dialog and project pages. They illustrate the documented idea and are labelled as concept sketches. They pause off-screen and with reduced motion.
-- The Creative-mode cursor (`Cursor` in `app-frame.tsx`) moves its dot directly from the pointer event, so it cannot trail the mouse. It is not rendered on touch or with reduced motion.
-- Project pages have an architecture walkthrough (play, pause, scrub) that steps through the documented components in order.
+- **Mode state.** The choice is stored in `localStorage` (`portfolio-mode`). A tiny script in `<head>` (`modeBootScript` in `src/components/mode.tsx`) sets `data-mode` on `<html>` before first paint. React reads it with `useMode()` (`useSyncExternalStore`, server snapshot `pro`), so there is no hydration mismatch. First-time visitors get Professional. Creative visitors see the page fade in once React has swapped its tree (`data-ready`).
+- **One source of truth.** Content comes from `src/data/*`. Filtering lives in `useGalleryFilter()` (`use-gallery-filter.ts`), the contact draft logic in `useContactDraft()` (`contact.tsx`), the project playground in `features/worlds/world-playground.tsx`. Both modes call these, and the gallery state sits in `AppFrame`, so search and filters survive a mode switch.
+- **Professional** (`engineering-desk.tsx`, `project-gallery.tsx`, `growing-toolkit.tsx`, `contact.tsx`, `project-world.tsx`, `modes.css`, `hero.css`): editorial, structured, recruiter friendly.
+- **Creative** (`src/components/creative/*`, `features/worlds/creative-project.tsx`, `creative.css`): a floating sticker dock, an asymmetric desk hero, a pinboard gallery with varied cards, a sticker-sheet toolkit, a notebook About page, a postcard contact form, a colophon footer, and a poster-style project page with folder tabs, a numbered scope timeline and a receipt of evidence. Each project keeps one colour identity (`creative/identity.ts`).
+- **3D hero.** `hero-stage.tsx` (container, controls, keyboard, fallback) and `sculpture.tsx` (React Three Fiber scene) are shared. The camera distance is solved from the container's real aspect ratio so the model is never clipped. The wheel is left to the page; zoom uses the buttons or `+`/`-`; arrow keys rotate; `0` resets. Touch devices opt in, and vertical swipes keep scrolling the page. Without WebGL, or if the scene does not start within 15 s, a static poster and a plain explanation are shown.
+- `src/components/mini-anim.tsx` draws the small looping canvas sketches on cards and project pages. They illustrate the documented idea and are labelled as concept sketches. They pause off-screen and in reduced motion.
+- The Creative cursor (`Cursor` in `app-frame.tsx`) moves its dot directly from the pointer event. It is not rendered on touch or with reduced motion.
 - VERIFICATION.md and the Lighthouse files describe the earlier V3 baseline and were not regenerated for the modes.
 
 ## Edit the portfolio
@@ -76,8 +67,8 @@ The header's **Professional / Creative** switch (also Alt+M) changes only the pr
 | `src/data/projects.ts`                                    | Typed project/demo registry: collections, discipline, source commits, evidence, architecture, commands, environment variable names and actual verification limits. |
 | `src/data/skills.ts`                                      | Skills and their project evidence.                                                                                                                                 |
 | `src/data/education.ts`, `experience.ts`, `milestones.ts` | Academic and experience chapters; populate only verified personal facts.                                                                                           |
-| `src/components/engineering-desk.tsx`                     | Hero scenes, introduction and destinations.                                                                                                                        |
-| `src/components/sculpture.tsx`                            | Material-lit hero geometry and camera controls.                                                                                                                    |
+| `src/components/engineering-desk.tsx`, `creative/creative-hero.tsx` | Professional and Creative hero compositions.                                                                                                      |
+| `src/components/hero-stage.tsx`, `sculpture.tsx`          | Shared 3D stage: framing, controls, fallback, and the lit geometry.                                                                                               |
 | `src/components/project-gallery.tsx`                      | Collection filters, exhibit preview and index.                                                                                                                     |
 | `src/components/demo-console.tsx`                         | Original app launch, lazy iframe and local setup.                                                                                                                  |
 | `src/features/worlds/`                                    | Project interactions, fallback diagrams and optional 3D.                                                                                                           |

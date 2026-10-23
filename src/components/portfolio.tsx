@@ -11,7 +11,31 @@ import ColorLab from "./color-lab";
 import Contact from "./contact";
 import { Reveal, SectionLabel } from "./ui";
 import type { CSSProperties } from "react";
+import { useMode } from "./mode";
+import CreativeHero from "./creative/creative-hero";
+import CreativeGallery from "./creative/creative-gallery";
+import {
+  CreativeAbout,
+  CreativeContact,
+  CreativeToolkit,
+} from "./creative/creative-sections";
 export default function Portfolio() {
+  const [mode] = useMode();
+  if (mode === "creative") {
+    return (
+      <main id="main" tabIndex={-1} className="c-home">
+        <CreativeHero />
+        <SkillsMarquee />
+        <CreativeGallery />
+        <CreativeToolkit />
+        <DimensionEngine />
+        <CreativeAbout />
+        <Chapters />
+        <ColorLab />
+        <CreativeContact />
+      </main>
+    );
+  }
   return (
     <main id="main" tabIndex={-1}>
       <EngineeringDesk />

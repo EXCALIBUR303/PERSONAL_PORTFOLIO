@@ -615,14 +615,23 @@ export default function MiniAnim({
     const cv = ref.current;
     if (!cv) return;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-    cv.width = W * dpr;
-    cv.height = H * dpr;
     const ctx = cv.getContext("2d");
     if (!ctx) return;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // Backing store follows the displayed width, so large posters stay crisp.
+    let scale = 0;
+    const fit = () => {
+      const next = Math.max(1, (cv.clientWidth || W) * dpr) / W;
+      if (Math.abs(next - scale) < 0.01) return;
+      scale = next;
+      cv.width = Math.round(W * scale);
+      cv.height = Math.round(H * scale);
+      ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    };
+    fit();
     const draw = DRAW[kind];
     let pal = palette();
     const paint = (t: number) => {
+      fit();
       ctx.clearRect(0, 0, W, H);
       ctx.save();
       draw(ctx, t, pal);

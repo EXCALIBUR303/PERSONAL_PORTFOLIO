@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowUpRight, Asterisk, CheckCheck, Copy, Send } from "lucide-react";
 import { profile } from "@/data/profile";
 import { SectionLabel, Reveal } from "./ui";
-export default function Contact() {
+export function useContactDraft() {
   const githubUrl = profile.socials.find(
     (social) => social.name === "GitHub",
   )?.url;
@@ -93,6 +93,37 @@ export default function Contact() {
       setPreparing(false);
     }
   }
+  const onFormChange = () => {
+    setDraftUrl(null);
+    setStatus("");
+  };
+  return {
+    githubUrl,
+    copied,
+    copy,
+    profileCopied,
+    copyProfile,
+    status,
+    draftUrl,
+    preparing,
+    submit,
+    onFormChange,
+  };
+}
+
+export default function Contact() {
+  const {
+    githubUrl,
+    copied,
+    copy,
+    profileCopied,
+    copyProfile,
+    status,
+    draftUrl,
+    preparing,
+    submit,
+    onFormChange,
+  } = useContactDraft();
   return (
     <section id="contact" className="contact-section section-pad">
       <div className="container">
@@ -163,10 +194,7 @@ export default function Contact() {
           <form
             className="contact-form"
             onSubmit={submit}
-            onChange={() => {
-              setDraftUrl(null);
-              setStatus("");
-            }}
+            onChange={onFormChange}
           >
             <h3>A local message pad.</h3>
             <div className="form-row">

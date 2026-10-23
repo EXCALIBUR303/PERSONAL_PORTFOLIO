@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { projects, getProject } from "@/data/projects";
 import { site, profile } from "@/data/profile";
-import ProjectWorld from "@/features/worlds/project-world";
+import ProjectView from "@/features/worlds/project-view";
 export const dynamicParams = false;
 export function generateStaticParams() {
   return projects.map((project) => ({ slug: project.slug }));
@@ -46,7 +46,7 @@ export default async function ProjectPage({
   const index = projects.findIndex((item) => item.slug === slug),
     next = projects[(index + 1) % projects.length];
   return (
-    <ProjectWorld
+    <ProjectView
       project={project}
       index={index}
       count={projects.length}

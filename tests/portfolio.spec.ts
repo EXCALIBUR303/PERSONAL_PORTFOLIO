@@ -103,7 +103,7 @@ test("primary cards enter routes and Back preserves gallery state and mode", asy
     .getByRole("searchbox", { name: "Search project worlds" })
     .fill("mazera");
   const entry = page.getByRole("link", {
-    name: "Enter Mazera AI Maze Solver world",
+    name: "Open Mazera AI Maze Solver",
   });
   await entry.focus();
   await page.keyboard.press("Enter");
@@ -112,13 +112,13 @@ test("primary cards enter routes and Back preserves gallery state and mode", asy
   await expect(page.locator("h1")).toBeFocused();
   await expect(page.locator("html")).toHaveAttribute("data-mode", "creative");
   await page
-    .getByRole("link", { name: "Back to Multiverse", exact: true })
+    .getByRole("link", { name: "Back to the board", exact: true })
     .first()
     .click();
   await expect(
     page.getByRole("searchbox", { name: "Search project worlds" }),
   ).toHaveValue("mazera");
-  await expect(page.locator(".project-card")).toHaveCount(1);
+  await expect(page.locator(".c-card")).toHaveCount(1);
   await expect(page.locator("html")).toHaveAttribute("data-mode", "creative");
 });
 

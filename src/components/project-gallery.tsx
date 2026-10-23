@@ -15,39 +15,15 @@ import {
   ScanLine,
 } from "lucide-react";
 import { projects, categories, type Project } from "@/data/projects";
-import { usePortfolioState } from "./app-frame";
+import { useGalleryFilter } from "./use-gallery-filter";
 import { ProjectCard } from "./project-components";
 import MiniAnim, { animForSlug } from "./mini-anim";
 import { SectionLabel } from "./ui";
 const ProjectDialog = dynamic(() => import("./project-dialog"), { ssr: false });
 export default function ProjectGallery() {
-  const { gallery, setGallery, beginPortal } = usePortfolioState();
+  const { gallery, setGallery, beginPortal, filtered, spotlight, reset } =
+    useGalleryFilter();
   const [selected, setSelected] = useState<Project | null>(null);
-  const filtered = projects.filter(
-    (project) =>
-      (gallery.collection === "All" ||
-        project.collection === gallery.collection) &&
-      (gallery.discipline === "All" ||
-        project.discipline === gallery.discipline) &&
-      (gallery.category === "All worlds" ||
-        project.categories.includes(gallery.category)) &&
-      (!gallery.featuredOnly || project.featured) &&
-      `${project.title} ${project.description} ${project.stack.join(" ")} ${project.categories.join(" ")}`
-        .toLowerCase()
-        .includes(gallery.query.toLowerCase().trim()),
-  );
-  const spotlight =
-    filtered.find((p) => p.slug === gallery.selectedSlug) || filtered[0];
-  function reset() {
-    setGallery({
-      ...gallery,
-      query: "",
-      category: "All worlds",
-      featuredOnly: false,
-      collection: "All",
-      discipline: "All",
-    });
-  }
   return (
     <section id="projects" className="projects-section section-pad">
       <div className="container">

@@ -170,15 +170,7 @@ html[data-mode] .portfolio-root .nav-contact:active {
   transform: translate(3px, 3px);
   box-shadow: 0 0 0 var(--m-ink);
 }
-html[data-mode="creative"] .portfolio-root .nav-contact,
-html[data-mode="creative"] .portfolio-root .desktop-nav a {
-  border-radius: 999px;
-}
-html[data-mode="creative"] .portfolio-root .nav-contact {
-  background: var(--m-lime);
-  color: var(--m-ink);
-  box-shadow: 3px 3px 0 var(--m-ink);
-}
+
 .mode-switcher {
   display: inline-flex;
   padding: 3px;
@@ -377,121 +369,6 @@ html[data-mode] .portfolio-root main > section {
   border-color: var(--m-ink);
 }
 
-/* ---------- hero ---------- */
-html[data-mode] .portfolio-root .engineering-hero {
-  background: transparent;
-  border-bottom: var(--m-edge);
-}
-html[data-mode] .portfolio-root .desk-topline {
-  font-size: 11px;
-  color: var(--m-graphite);
-  border-bottom: 1.5px solid #17171d30;
-}
-html[data-mode] .portfolio-root .status-dot {
-  background: var(--m-tan);
-  box-shadow: 0 0 0 3px #ff653833;
-}
-html[data-mode] .portfolio-root .desk-introduction {
-  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
-  gap: clamp(28px, 5vw, 64px);
-  padding: clamp(32px, 5vw, 56px) 0 clamp(28px, 4vw, 44px);
-}
-html[data-mode] .portfolio-root .desk-introduction .eyebrow {
-  font-size: 12px;
-  color: var(--m-cobalt);
-  font-weight: 700;
-}
-html[data-mode] .portfolio-root .desk-introduction h1 {
-  font-size: clamp(44px, 6.4vw, 92px);
-  line-height: 1.02;
-  letter-spacing: -0.035em;
-  font-weight: 700;
-  max-width: 14ch;
-}
-html[data-mode="creative"] .portfolio-root .desk-introduction h1 {
-  font-weight: 400;
-  letter-spacing: -0.03em;
-  font-size: clamp(48px, 6.8vw, 100px);
-  line-height: 0.98;
-  max-width: 15ch;
-}
-html[data-mode] .portfolio-root .desk-introduction h1 em {
-  font-size: 1em;
-  letter-spacing: -0.02em;
-  color: var(--m-cobalt);
-  font-weight: inherit;
-}
-html[data-mode] .portfolio-root .desk-introduction h1 .hero-underlined {
-  color: var(--m-ink);
-  background-image: linear-gradient(var(--m-tan), var(--m-tan));
-  background-repeat: no-repeat;
-  background-size: 100% 0.12em;
-  background-position: 0 92%;
-  animation: m-underline 0.9s 0.5s cubic-bezier(0.2, 0.9, 0.2, 1) backwards;
-}
-@keyframes m-underline {
-  from {
-    background-size: 0 0.12em;
-  }
-}
-html[data-mode] .portfolio-root .degree-chip {
-  font-family: var(--font-mono-set);
-  font-size: 11px;
-  background: var(--m-lime);
-  border: var(--m-edge);
-  border-radius: 999px;
-  font-weight: 700;
-  color: var(--m-ink);
-}
-html[data-mode] .portfolio-root .desk-intro-aside > p {
-  font-size: 16px;
-  color: var(--m-graphite);
-}
-html[data-mode] .portfolio-root .engineering-desk {
-  background: var(--m-card);
-  border: var(--m-edge);
-  border-radius: 4px;
-  box-shadow: var(--m-shadow);
-}
-html[data-mode="creative"] .portfolio-root .engineering-desk {
-  border-radius: 18px;
-}
-html[data-mode] .portfolio-root .desk-rail,
-html[data-mode] .portfolio-root .desk-inspector {
-  border-color: var(--m-ink);
-}
-html[data-mode] .portfolio-root .desk-rail > .mono,
-html[data-mode] .portfolio-root .desk-inspector .eyebrow,
-html[data-mode] .portfolio-root .desk-metaphor,
-html[data-mode] .portfolio-root .desk-axis {
-  font-size: 10px;
-  color: var(--m-graphite);
-}
-html[data-mode] .portfolio-root .desk-mode-controls button {
-  font-size: 12px;
-  font-family: var(--font-mono-set);
-  color: var(--m-ink);
-  border: 1.5px solid transparent;
-}
-html[data-mode] .portfolio-root .desk-mode-controls button:hover {
-  border-color: var(--m-ink);
-}
-html[data-mode]
-  .portfolio-root
-  .desk-mode-controls
-  button[aria-pressed="true"] {
-  background: var(--m-ink);
-  color: #fff;
-  border-color: var(--m-ink);
-}
-html[data-mode] .portfolio-root .desk-inspector h2 {
-  font-size: 30px;
-}
-html[data-mode] .portfolio-root .desk-footer {
-  color: var(--m-graphite);
-  font-size: 11px;
-}
-
 /* ---------- gallery ---------- */
 html[data-mode] .portfolio-root .projects-section {
   background: transparent;
@@ -555,9 +432,7 @@ html[data-mode] .portfolio-root .project-exhibit {
   border-radius: 4px;
   box-shadow: var(--m-shadow);
 }
-html[data-mode="creative"] .portfolio-root .project-exhibit {
-  border-radius: 18px;
-}
+
 html[data-mode] .portfolio-root .exhibit-art {
   background: color-mix(in srgb, var(--world-accent, var(--m-sky)) 14%, #fff);
   border-right: var(--m-edge);
@@ -587,46 +462,14 @@ html[data-mode] .portfolio-root .project-card:hover {
   transform: translate(-2px, -2px);
   box-shadow: var(--m-shadow-hover);
 }
-html[data-mode="creative"] .portfolio-root .project-card {
-  border-radius: 18px;
-  padding: 12px;
-}
-html[data-mode="creative"]
-  .portfolio-root
-  .project-index-entry:nth-child(3n + 1)
-  .project-card {
-  transform: rotate(-1deg);
-  background: color-mix(in srgb, var(--world-accent, var(--m-sky)) 14%, #fff);
-}
-html[data-mode="creative"]
-  .portfolio-root
-  .project-index-entry:nth-child(3n + 2)
-  .project-card {
-  transform: rotate(0.8deg);
-}
-html[data-mode="creative"]
-  .portfolio-root
-  .project-index-entry:nth-child(3n)
-  .project-card {
-  transform: rotate(-0.4deg);
-  background: color-mix(in srgb, var(--world-accent, var(--m-pink)) 12%, #fff);
-}
-html[data-mode="creative"]
-  .portfolio-root
-  .project-index-entry
-  .project-card:hover {
-  transform: translate(-3px, -6px) rotate(0deg);
-}
+
 html[data-mode] .portfolio-root .project-preview-frame {
   background: color-mix(in srgb, var(--world-accent, var(--m-sky)) 12%, #fff);
   border: 1.5px solid var(--m-ink);
   border-radius: 4px;
   overflow: hidden;
 }
-html[data-mode="creative"] .portfolio-root .project-preview-frame {
-  border-width: 2px;
-  border-radius: 10px;
-}
+
 .mini-anim {
   display: block;
   width: 100%;
@@ -810,9 +653,7 @@ html[data-mode] .portfolio-root .world-header h1 {
   letter-spacing: -0.03em;
   font-weight: 700;
 }
-html[data-mode="creative"] .portfolio-root .world-header h1 {
-  font-weight: 400;
-}
+
 html[data-mode] .portfolio-root .world-color-wash {
   display: none;
 }
@@ -1101,13 +942,7 @@ html[data-mode] .portfolio-root .project-index-entry .project-tags span {
   border: 1.5px solid var(--m-ink);
   background: var(--m-paper);
 }
-html[data-mode="creative"]
-  .portfolio-root
-  .project-index-entry
-  .project-tags
-  span {
-  background: var(--m-lime);
-}
+
 html[data-mode] .portfolio-root .project-index-entry .project-status {
   margin: 0;
   font-size: 11px;
@@ -1177,9 +1012,7 @@ html[data-mode] .portfolio-root .contact-section {
   border-top: var(--m-edge);
   border-bottom: var(--m-edge);
 }
-html[data-mode="creative"] .portfolio-root .contact-section {
-  background: var(--m-sky);
-}
+
 html[data-mode] .portfolio-root .contact-section .section-label,
 html[data-mode] .portfolio-root .contact-section .section-label > span,
 html[data-mode] .portfolio-root .contact-socials a,
@@ -1381,55 +1214,14 @@ html[data-mode="creative"] .skills-marquee li::after {
 }
 
 /* ---------- creative-only decorations ---------- */
-.creative-only {
-  display: none;
-}
-html[data-mode="creative"] .creative-only {
-  display: inline-flex;
-}
-.hero-sticker {
-  align-items: center;
-  gap: 6px;
-  margin: 0 12px 12px 0;
-  padding: 7px 12px;
-  background: #ff8fc0;
-  color: #17171d;
-  border: 2px solid #17171d;
-  border-radius: 999px;
-  box-shadow: 3px 3px 0 #17171d;
-  font: 700 12px var(--font-mono-set, monospace);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  transform: rotate(-4deg);
-  animation: m-wobble 4s ease-in-out infinite;
-}
-.hero-sticker i {
-  font-style: normal;
-}
+
 @keyframes m-wobble {
   50% {
     transform: rotate(3deg) translateY(-3px);
   }
 }
-.hero-note {
-  align-items: flex-end;
-  gap: 8px;
-  margin: 0 0 6px 4%;
-  font:
-    italic 26px/1 var(--font-instrument),
-    Georgia,
-    serif;
-  color: #2f4bff;
-  transform: rotate(-2deg);
-}
-.hero-note svg {
-  width: 64px;
-  height: 38px;
-}
+
 @media (prefers-reduced-motion: reduce) {
-  .hero-sticker {
-    animation: none;
-  }
 }
 
 /* ---------- project page loop ---------- */
@@ -1468,7 +1260,11 @@ html[data-mode] .portfolio-root .skill-map-center {
   opacity: 1;
   color: var(--m-graphite);
 }
-html[data-mode="creative"] .portfolio-root .contact-section .section-label > span,
+html[data-mode="creative"]
+  .portfolio-root
+  .contact-section
+  .section-label
+  > span,
 html[data-mode] .portfolio-root .lab-section .section-label > span,
 html[data-mode="creative"] .portfolio-root .contact-section .eyebrow {
   color: var(--m-ink);
