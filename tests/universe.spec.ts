@@ -94,23 +94,23 @@ test("index and exhibit controls work, and browser navigation retains collection
   await page.goForward();
   await expect(page.locator("h1")).toHaveText("Mazera AI Maze Solver");
 });
-test("private college entry publishes no speculative architecture or repository link", async ({
+test("Last Mile DAA is a public college entry with source-backed architecture and repository link", async ({
   page,
 }) => {
   await page.goto("/projects/last-mile-daa/");
   await expect(page.locator("h1")).toHaveText("Last Mile DAA");
-  await expect(page.locator(".demo-type")).toHaveText("Demo unavailable");
-  await expect(page.locator(".private-project-note")).toBeVisible();
-  await expect(page.locator("#world-architecture")).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Open repository" })).toHaveCount(
-    0,
-  );
+  await expect(page.locator(".demo-type")).toHaveText("Run locally");
+  await expect(page.locator(".private-project-note")).toHaveCount(0);
+  await expect(page.locator("#world-architecture")).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Open repository" }).first(),
+  ).toBeVisible();
 });
 test("demo registry is complete and distinguishes original applications from simulations", () => {
   for (const project of projects) {
     expect(project.demo.runtimeStatus).not.toMatch(/in progress/i);
     expect(project.demo.testStatus).not.toMatch(/in progress/i);
-    expect(project.demo.verifiedOn).toMatch(/^2026-10-2[12]$/);
+    expect(project.demo.verifiedOn).toMatch(/^2026-10-2\d$/);
     if (project.demo.type === "embedded")
       expect(project.demo.url).toMatch(/^\/demos\/[a-z0-9-]+\/$/);
     else expect(project.demo.url).toBeNull();

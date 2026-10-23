@@ -1565,61 +1565,145 @@ export const projects: Project[] = [
   {
     id: "last-mile-daa",
     slug: "last-mile-daa",
-    repository: "",
+    repository: "lastmile-daa",
     title: "Last Mile DAA",
-    tagline: "A college project. Details kept private.",
+    tagline: "Every algorithm, one delivery plan.",
     description:
-      "A college project identified by its owner. The implementation is private, so its technical details and original application are not included here.",
+      "A college Design and Analysis of Algorithms project that plans last-mile deliveries by chaining shortest paths, minimum spanning trees, knapsack selection and route sequencing, with a React dashboard and a reproducible benchmark.",
     collection: "College",
-    discipline: "Unverified",
+    discipline: "Software",
     classificationNote:
-      "College classification supplied by the owner. Technical and hardware/software scope has not been published.",
+      "College classification supplied by the owner. Software only; no physical hardware is involved.",
     demo: {
-      type: "unavailable",
+      type: "local",
       url: null,
       summary:
-        "The original project is private. No source, internal data, or speculative reconstruction is published.",
-      commands: [],
+        "Run the FastAPI solver and the React dashboard locally to step through each algorithm's trace.",
+      commands: [
+        "# From the repository root, in two terminals.",
+        "cd backend && ./.venv/bin/uvicorn app.main:app --reload --port 8000",
+        "cd frontend && npm run dev",
+        "# Tests, from the repository root:",
+        "cd backend && ./.venv/bin/python -m pytest -q",
+      ],
       environment: [],
-      runtimeStatus: "Not executed — private implementation withheld",
-      testStatus: "Not executed — private implementation withheld",
-      verifiedOn: "2026-10-22",
+      runtimeStatus:
+        "Not run in this portfolio audit. Commands come from the repository's RUN.md.",
+      testStatus:
+        "The repository contains backend tests per algorithm and benchmark checks; they were not run here.",
+      verifiedOn: "2026-10-23",
       notes: [
-        "The title and College collection are supplied by the owner. A public description or explicitly approved demonstration can be added later.",
+        "Source and documentation were read at the pinned commit; nothing was executed.",
+        "The backend needs a Python virtual environment created from backend/requirements.txt.",
       ],
     },
-    categories: [],
-    stack: [],
-    status: "Private project / details withheld",
-    kind: "unavailable",
-    accent: "#b7bec8",
+    categories: ["Algorithms", "Engineering", "Web Development"],
+    stack: ["Python", "FastAPI", "React", "TypeScript", "Vite"],
+    status: "Academic project",
+    kind: "architecture",
+    accent: "#e8b26a",
     featured: false,
-    githubUrl: null,
+    githubUrl: "https://github.com/EXCALIBUR303/lastmile-daa",
     liveUrl: null,
-    sourceVisibility: "private",
-    interactionLabel: "Private project / no demonstration published",
+    sourceVisibility: "public",
+    interactionLabel: "Source-backed pipeline explorer",
     overview:
-      "Owner-confirmed college project; implementation details are not public.",
+      "A delivery-planning pipeline that builds a road graph, computes distances, splits stops into per-vehicle zones, picks which orders fit, sequences each route and repairs any missed deadlines.",
     problem:
-      "The technical problem statement has not been supplied for public presentation.",
+      "A small fleet must serve pickup-and-delivery orders with capacities and deadlines, and a course project must show the algorithms working, not just the final answer.",
     solution:
-      "This entry records only the project name and college classification shared by its owner.",
+      "A seven-stage solver where each stage is a classic algorithm with a selectable variant, plus a trace of every step and a benchmark that compares the variants.",
     features: [
-      "Included in the College collection by the owner.",
-      "Original implementation and private details are withheld.",
+      "Distance stage selectable between targeted Dijkstra, Floyd-Warshall and Johnson (Bellman-Ford potentials plus Dijkstra).",
+      "Zoning by a minimum spanning tree built with Prim or Kruskal, cut into one zone per vehicle; the tree weight is reported as a lower bound.",
+      "Order selection with a knapsack over capacity and time, against greedy baselines, with an upper bound and gap reported.",
+      "Route sequencing with exact Held-Karp up to a size cap, otherwise cheapest insertion with 2-opt.",
+      "Deadline repair that drops the worst-value late order and re-simulates.",
+      "FastAPI endpoints to generate an instance, solve it and run benchmarks, plus a React dashboard with trace, matrix and results panels.",
     ],
     limitations: [
-      "No original source was inspected or published.",
-      "Technology, architecture, physical hardware, and runtime claims are intentionally unspecified.",
+      "Each stage is a heuristic or exact algorithm on a modelled approximation; the code states that the plan is not provably optimal.",
+      "The negative-cost-cycle check is informational and does not change routing.",
+      "Instances are generated, not real road data.",
+      "Not run in this portfolio audit; no hosted demo is linked.",
     ],
     architecture: {
-      kind: "Not publicly documented",
-      nodes: [],
-      edges: [],
+      kind: "Reconstructed from the solver pipeline source",
+      nodes: [
+        {
+          id: "graph",
+          label: "Build and validate",
+          description:
+            "Builds the graph, checks connectivity and travel times, and runs a Bellman-Ford screen on cost.",
+        },
+        {
+          id: "closure",
+          label: "Distance closure",
+          description:
+            "Stop-to-stop distances from Dijkstra, Floyd-Warshall or Johnson behind one interface.",
+        },
+        {
+          id: "zoning",
+          label: "MST zoning",
+          description:
+            "Prim or Kruskal tree over the stops, cut into one zone per vehicle.",
+        },
+        {
+          id: "selection",
+          label: "Knapsack selection",
+          description:
+            "Chooses which orders each vehicle takes under capacity and deadlines.",
+        },
+        {
+          id: "sequencing",
+          label: "Route sequencing",
+          description:
+            "Held-Karp when small enough, otherwise insertion with 2-opt.",
+        },
+        {
+          id: "repair",
+          label: "Simulate and repair",
+          description:
+            "Drives the routes with release and service times and drops late orders until feasible.",
+        },
+      ],
+      edges: [
+        ["graph", "closure"],
+        ["closure", "zoning"],
+        ["zoning", "selection"],
+        ["selection", "sequencing"],
+        ["sequencing", "repair"],
+      ],
     },
-    sources: [],
-    sourceCommit: null,
-    eyebrow: "College project / private",
+    sources: [
+      {
+        label: "How to run the backend and frontend",
+        path: "RUN.md",
+        url: "https://github.com/EXCALIBUR303/lastmile-daa/blob/6f5e8007fb3f025906146ef3ab29ec12bd9187db/RUN.md",
+      },
+      {
+        label: "Seven-stage solver orchestration",
+        path: "backend/app/core/pipeline.py",
+        url: "https://github.com/EXCALIBUR303/lastmile-daa/blob/6f5e8007fb3f025906146ef3ab29ec12bd9187db/backend/app/core/pipeline.py",
+      },
+      {
+        label: "Minimum spanning tree implementation",
+        path: "backend/app/core/mst.py",
+        url: "https://github.com/EXCALIBUR303/lastmile-daa/blob/6f5e8007fb3f025906146ef3ab29ec12bd9187db/backend/app/core/mst.py",
+      },
+      {
+        label: "Knapsack order selection",
+        path: "backend/app/core/knapsack.py",
+        url: "https://github.com/EXCALIBUR303/lastmile-daa/blob/6f5e8007fb3f025906146ef3ab29ec12bd9187db/backend/app/core/knapsack.py",
+      },
+      {
+        label: "Benchmark runner",
+        path: "backend/bench/run_bench.py",
+        url: "https://github.com/EXCALIBUR303/lastmile-daa/blob/6f5e8007fb3f025906146ef3ab29ec12bd9187db/backend/bench/run_bench.py",
+      },
+    ],
+    sourceCommit: "6f5e8007fb3f025906146ef3ab29ec12bd9187db",
+    eyebrow: "College / Algorithms",
   },
   {
     id: "burnout-backend",
@@ -2226,6 +2310,688 @@ export const projects: Project[] = [
     ],
     sourceCommit: "7d29bbae1cdacd04e7c089a30f4fa2ba1144ef3e",
     eyebrow: "Personal / Software system",
+  },
+  {
+    id: "parkscan-swarm",
+    slug: "parkscan-swarm",
+    repository: "parkscan-swarm",
+    title: "ParkScan Swarm",
+    tagline: "Three robots. One honest simulation.",
+    description:
+      "A simulation-first system where three coordinated robots inspect a parking lot and map potholes, with a FastAPI and PostGIS backend and a live React dashboard.",
+    collection: "Personal",
+    discipline: "Software",
+    classificationNote:
+      "Everything in this project is simulated; the repository states there is no hardware.",
+    demo: {
+      type: "local",
+      url: null,
+      summary:
+        "Run the deterministic simulator, database and dashboard locally with the repository's make targets.",
+      commands: [
+        "# From the repository root. Requires uv, Node 20+ and Docker.",
+        "make bootstrap",
+        "make up",
+        "make migrate",
+        "make dev",
+        "make demo",
+      ],
+      environment: [],
+      runtimeStatus:
+        "Not run in this portfolio audit. Commands come from the repository README.",
+      testStatus:
+        "The README reports 787 Python and 74 web tests; they were not re-run here.",
+      verifiedOn: "2026-10-23",
+      notes: [
+        "Source and documentation were read at the pinned commit; nothing was executed.",
+        "Needs Docker for PostGIS and the MQTT broker.",
+      ],
+    },
+    categories: ["Algorithms", "Engineering", "Web Development"],
+    stack: [
+      "Python",
+      "FastAPI",
+      "PostGIS",
+      "MQTT",
+      "React",
+      "TypeScript",
+      "ROS 2",
+      "Gazebo",
+    ],
+    status: "Simulation project",
+    kind: "architecture",
+    accent: "#8fd0c2",
+    featured: false,
+    githubUrl: "https://github.com/EXCALIBUR303/parkscan-swarm",
+    liveUrl: null,
+    sourceVisibility: "public",
+    interactionLabel: "Source-backed architecture explorer",
+    overview:
+      "Three centrally coordinated robots divide a 150 by 100 metre lot into zones, drive lane by lane, detect potholes from simulated camera geometry, place them on a map and return to charge when needed.",
+    problem:
+      "Inspecting a large parking lot is repetitive work, and building the robots first would hide whether the coordination and mapping ideas even work.",
+    solution:
+      "Develop the coordination, detection and mapping in simulation behind a narrow backend adapter, so a deterministic simulator and an optional ROS 2 and Gazebo backend can be swapped without changing the coordinator.",
+    features: [
+      "Central allocator that splits the lot into zones so robots do not duplicate work.",
+      "Two simulation backends behind one WorldBackend interface: a deterministic pure-Python default and an optional ROS 2 with headless Gazebo one.",
+      "Telemetry over MQTT into PostGIS, pushed live to a React dashboard.",
+      "Every record carries a data-source column that is required in the database, and the dashboard's SIMULATED badge is drawn from that value.",
+      "Charging-bay arbitration with leases, fencing tokens and a queue.",
+      "Benchmark of allocation strategies over many seeds and an evaluation of geolocation accuracy.",
+    ],
+    limitations: [
+      "Entirely simulated; there is no hardware.",
+      "The robots are centrally coordinated, not a decentralised swarm; the name is the project's own.",
+      "The README says the ROS 2 backend ran cleanly for 100 steps but a 600-step run failed on transport overhead, so it is a second implementation, not an equally trusted one.",
+      "Leases cover charging bays, not individual lane segments.",
+      "Not run in this portfolio audit.",
+    ],
+    architecture: {
+      kind: "Reconstructed from the repository README and decision records",
+      nodes: [
+        {
+          id: "coordinator",
+          label: "Coordinator",
+          description: "Allocates zones and arbitrates charging bays.",
+        },
+        {
+          id: "backend",
+          label: "WorldBackend adapter",
+          description:
+            "One interface over the deterministic simulator and the ROS 2 and Gazebo backend.",
+        },
+        {
+          id: "robots",
+          label: "Robot agents",
+          description:
+            "Three agents that drive lanes, avoid each other and return to charge.",
+        },
+        {
+          id: "mqtt",
+          label: "MQTT telemetry",
+          description: "Carries robot telemetry and detections to the API.",
+        },
+        {
+          id: "postgis",
+          label: "PostGIS store",
+          description:
+            "Stores telemetry and pothole detections with a required data-source label.",
+        },
+        {
+          id: "dashboard",
+          label: "React dashboard",
+          description:
+            "Shows the live map and a SIMULATED badge drawn from stored data.",
+        },
+      ],
+      edges: [
+        ["coordinator", "robots"],
+        ["robots", "backend"],
+        ["backend", "mqtt"],
+        ["mqtt", "postgis"],
+        ["postgis", "dashboard"],
+      ],
+    },
+    sources: [
+      {
+        label: "Scope, architecture and stated limitations",
+        path: "README.md",
+        url: "https://github.com/EXCALIBUR303/parkscan-swarm/blob/48f3176ddca6c2bea224da6b71b9d544d47f84a8/README.md",
+      },
+      {
+        label: "Why there are two simulation backends",
+        path: "docs/adr/0001-two-simulation-backends.md",
+        url: "https://github.com/EXCALIBUR303/parkscan-swarm/blob/48f3176ddca6c2bea224da6b71b9d544d47f84a8/docs/adr/0001-two-simulation-backends.md",
+      },
+      {
+        label: "Platform research log",
+        path: "docs/RESEARCH_LOG.md",
+        url: "https://github.com/EXCALIBUR303/parkscan-swarm/blob/48f3176ddca6c2bea224da6b71b9d544d47f84a8/docs/RESEARCH_LOG.md",
+      },
+    ],
+    sourceCommit: "48f3176ddca6c2bea224da6b71b9d544d47f84a8",
+    eyebrow: "Personal / Robotics simulation",
+  },
+  {
+    id: "quadruped-rl",
+    slug: "quadruped-rl",
+    repository: "quadruped-rl",
+    title: "Voice-Controlled Robot Dog",
+    tagline: "Say it. It walks.",
+    description:
+      "A 12-joint robot dog trained with reinforcement learning in physics simulation, then controlled by speech through a local language model.",
+    collection: "Personal",
+    discipline: "Software",
+    classificationNote:
+      "Simulation only; the repository states it needs no hardware, so it does not count as a physical build.",
+    demo: {
+      type: "local",
+      url: null,
+      summary:
+        "Train or load the pretrained policy, then talk to the robot in the MuJoCo viewer on a Mac.",
+      commands: [
+        "# From the repository root.",
+        "python3.11 -m venv .venv && source .venv/bin/activate",
+        "pip install -r requirements.txt",
+        "mkdir -p checkpoints_v2 && cp models/final/* checkpoints_v2/",
+        "python training/evaluate_v2.py",
+        "mjpython brain/talk_to_robot.py",
+      ],
+      environment: [],
+      runtimeStatus:
+        "Not run in this portfolio audit. Commands come from the repository README.",
+      testStatus: "The README reports 85 tests; they were not re-run here.",
+      verifiedOn: "2026-10-23",
+      notes: [
+        "Source and documentation were read at the pinned commit; nothing was executed.",
+        "Voice control needs Ollama with a local model and a Mac for the speech output.",
+      ],
+    },
+    categories: ["AI/ML", "Engineering", "Interactive Systems"],
+    stack: [
+      "Python",
+      "MuJoCo",
+      "Stable-Baselines3",
+      "PPO",
+      "Gymnasium",
+      "faster-whisper",
+      "Ollama",
+    ],
+    status: "Simulation project",
+    kind: "architecture",
+    accent: "#e9a38a",
+    featured: false,
+    githubUrl: "https://github.com/EXCALIBUR303/quadruped-rl",
+    liveUrl: null,
+    sourceVisibility: "public",
+    interactionLabel: "Source-backed architecture explorer",
+    overview:
+      "A speech command goes through Whisper and a local language model to become a velocity and turn command, which a PPO-trained policy turns into joint targets for a simulated robot dog.",
+    problem:
+      "Learned walking policies often score well on speed alone while sliding or collapsing, and a robot is only fun to command if speech reliably maps to behaviour.",
+    solution:
+      "Train in body-frame coordinates with PD joint control, evaluate posture and foot slip as well as speed, and put a small local speech layer in front of the policy.",
+    features: [
+      "Custom 12-joint robot dog trained with PPO to stand, walk, reverse and turn.",
+      "The policy outputs target joint angles that a PD loop converts to torques, rather than raw torques.",
+      "Evaluation checks velocity, body height and foot slip so a collapsed gait cannot pass on speed alone.",
+      "Keyframe tricks, fetch with obstacle avoidance, patrol and follow modes.",
+      "Local speech pipeline: Whisper speech-to-text, an Ollama language model for intent, and macOS speech output.",
+    ],
+    limitations: [
+      "Simulation only; there is no physical robot.",
+      "The README's own results mark walking fast and walking while turning as only partly clean on foot slip.",
+      "Voice control is set up for a Mac with Ollama.",
+      "Not run in this portfolio audit.",
+    ],
+    architecture: {
+      kind: "Reconstructed from the repository README",
+      nodes: [
+        {
+          id: "speech",
+          label: "Speech",
+          description: "Whisper turns spoken commands into text.",
+        },
+        {
+          id: "intent",
+          label: "Intent model",
+          description:
+            "A local Ollama model maps text to a command with speed, turn and reply.",
+        },
+        {
+          id: "controller",
+          label: "Mode controller",
+          description:
+            "Switches between policy walking, tricks, fetch navigation and spin.",
+        },
+        {
+          id: "policy",
+          label: "PPO policy",
+          description:
+            "Outputs 12 target joint angles from body-frame observations.",
+        },
+        {
+          id: "sim",
+          label: "MuJoCo simulation",
+          description:
+            "Runs the robot dog physics under a PD joint controller.",
+        },
+      ],
+      edges: [
+        ["speech", "intent"],
+        ["intent", "controller"],
+        ["controller", "policy"],
+        ["policy", "sim"],
+      ],
+    },
+    sources: [
+      {
+        label: "Overview, results and quick start",
+        path: "README.md",
+        url: "https://github.com/EXCALIBUR303/quadruped-rl/blob/86c8d3dd172b092fc0159766a78b17074015ad2d/README.md",
+      },
+      {
+        label: "Training environment and reward",
+        path: "sim/envs/robot_v2_env.py",
+        url: "https://github.com/EXCALIBUR303/quadruped-rl/blob/86c8d3dd172b092fc0159766a78b17074015ad2d/sim/envs/robot_v2_env.py",
+      },
+      {
+        label: "Speech to command mapping",
+        path: "brain/nlu.py",
+        url: "https://github.com/EXCALIBUR303/quadruped-rl/blob/86c8d3dd172b092fc0159766a78b17074015ad2d/brain/nlu.py",
+      },
+      {
+        label: "Evaluation of velocity, height and foot slip",
+        path: "training/evaluate_v2.py",
+        url: "https://github.com/EXCALIBUR303/quadruped-rl/blob/86c8d3dd172b092fc0159766a78b17074015ad2d/training/evaluate_v2.py",
+      },
+    ],
+    sourceCommit: "86c8d3dd172b092fc0159766a78b17074015ad2d",
+    eyebrow: "Personal / Reinforcement learning",
+  },
+  {
+    id: "private-local-ai",
+    slug: "private-local-ai",
+    repository: "private-local-ai",
+    title: "Private Local AI",
+    tagline: "An assistant that never phones home.",
+    description:
+      "A personal AI assistant for macOS that runs entirely on the machine: chat, private document search with citations, push-to-talk voice and a small set of approved Mac actions.",
+    collection: "Personal",
+    discipline: "Software",
+    classificationNote:
+      "Personal software project; classification follows the repository's own description.",
+    demo: {
+      type: "local",
+      url: null,
+      summary:
+        "Run the FastAPI app against local Ollama models and open it on localhost.",
+      commands: [
+        "# From the repository root, on a Mac with Ollama installed.",
+        "./setup.sh",
+        "./start.sh",
+        "./.venv/bin/python -m pytest",
+      ],
+      environment: [],
+      runtimeStatus:
+        "Not run in this portfolio audit. Commands come from the repository README.",
+      testStatus:
+        "The README reports 238 offline tests; they were not re-run here.",
+      verifiedOn: "2026-10-23",
+      notes: [
+        "Source and documentation were read at the pinned commit; nothing was executed.",
+        "Needs Ollama and downloaded models, which are large.",
+      ],
+    },
+    categories: ["AI/ML", "Engineering", "Web Development"],
+    stack: ["Python", "FastAPI", "Ollama", "SQLite", "whisper.cpp", "Swift"],
+    status: "Working application",
+    kind: "architecture",
+    accent: "#a7c4f2",
+    featured: false,
+    githubUrl: "https://github.com/EXCALIBUR303/private-local-ai",
+    liveUrl: null,
+    sourceVisibility: "public",
+    interactionLabel: "Source-backed architecture explorer",
+    overview:
+      "A browser interface on localhost talks to a FastAPI server that uses local models through Ollama, stores chats and document embeddings in SQLite, and exposes only four allowlisted Mac actions behind explicit approval.",
+    problem:
+      "Cloud assistants send documents and voice off the machine, and an assistant with broad Mac control is risky if it can be steered by the text it reads.",
+    solution:
+      "Keep every model and the index local, show a live local-only status, cite file and page for answers, fence retrieved text against injection and limit actions to a short approved list.",
+    features: [
+      "Local chat streamed from Ollama with history in SQLite.",
+      "Document assistant for Markdown, text, PDF, DOCX and CSV with hybrid dense and keyword retrieval and citations by file and page or section.",
+      "Push-to-talk voice transcribed on the device, with the transcript reviewed before it is sent.",
+      "Exactly four allowlisted Mac actions, each proposed, approved and then executed, with an audit log.",
+      "Retrieved passages are fenced and sanitised as untrusted content.",
+    ],
+    limitations: [
+      "Designed for one Mac; setup depends on Ollama and large local models.",
+      "Answer quality is bounded by the small local models the README names.",
+      "The README reports measured performance for the author's own machine only.",
+      "Not run in this portfolio audit.",
+    ],
+    architecture: {
+      kind: "Reconstructed from the repository README",
+      nodes: [
+        {
+          id: "browser",
+          label: "Browser UI",
+          description: "Localhost-only interface using streaming responses.",
+        },
+        {
+          id: "api",
+          label: "FastAPI server",
+          description:
+            "Routes chat, retrieval, voice and actions on 127.0.0.1.",
+        },
+        {
+          id: "llm",
+          label: "Ollama models",
+          description: "Local chat, fast and embedding models.",
+        },
+        {
+          id: "rag",
+          label: "Hybrid retrieval",
+          description:
+            "NumPy cosine similarity plus BM25 over chunks, with fenced passages and citations.",
+        },
+        {
+          id: "actions",
+          label: "Approved actions",
+          description:
+            "Four-action allowlist with propose, approve and execute steps.",
+        },
+        {
+          id: "store",
+          label: "SQLite store",
+          description: "Chats, chunks, embeddings and the audit log.",
+        },
+      ],
+      edges: [
+        ["browser", "api"],
+        ["api", "llm"],
+        ["api", "rag"],
+        ["api", "actions"],
+        ["rag", "store"],
+      ],
+    },
+    sources: [
+      {
+        label: "Features, architecture, privacy and security model",
+        path: "README.md",
+        url: "https://github.com/EXCALIBUR303/private-local-ai/blob/091da754e267b7af71d4fc0052df6a083c389bbd/README.md",
+      },
+      {
+        label: "Server entry point",
+        path: "app/main.py",
+        url: "https://github.com/EXCALIBUR303/private-local-ai/blob/091da754e267b7af71d4fc0052df6a083c389bbd/app/main.py",
+      },
+      {
+        label: "Allowlisted Mac actions",
+        path: "app/actions.py",
+        url: "https://github.com/EXCALIBUR303/private-local-ai/blob/091da754e267b7af71d4fc0052df6a083c389bbd/app/actions.py",
+      },
+      {
+        label: "Retrieval, citations and injection defence",
+        path: "app/rag.py",
+        url: "https://github.com/EXCALIBUR303/private-local-ai/blob/091da754e267b7af71d4fc0052df6a083c389bbd/app/rag.py",
+      },
+    ],
+    sourceCommit: "091da754e267b7af71d4fc0052df6a083c389bbd",
+    eyebrow: "Personal / Local AI",
+  },
+  {
+    id: "lifeos",
+    slug: "lifeos",
+    repository: "lifeos",
+    title: "LifeOS",
+    tagline: "Your life, in one place.",
+    description:
+      "A local-first personal life tracker covering tasks, habits, money, goals, health, journaling, focus, study and notes, with an on-device insights engine and an optional AI assistant.",
+    collection: "Personal",
+    discipline: "Software",
+    classificationNote:
+      "Personal software project; classification follows the repository's own description.",
+    demo: {
+      type: "local",
+      url: null,
+      summary:
+        "Open the deployed app, or run it locally with npm; all data stays in the browser unless sync is turned on.",
+      commands: ["# From the repository root.", "npm install", "npm run dev"],
+      environment: [
+        {
+          name: "Anthropic or Gemini API key",
+          purpose:
+            "Optional, entered in the app's settings and kept in the browser; the app falls back to an on-device engine without one.",
+        },
+      ],
+      runtimeStatus:
+        "Not run in this portfolio audit. The README links a deployed version.",
+      testStatus: "No test suite is named in the README.",
+      verifiedOn: "2026-10-23",
+      notes: [
+        "Source and documentation were read at the pinned commit; nothing was executed.",
+        "The deployed link comes from the repository README and was not opened here.",
+      ],
+    },
+    categories: ["Web Development", "Interactive Systems", "AI/ML"],
+    stack: [
+      "Next.js",
+      "React",
+      "TypeScript",
+      "Tailwind CSS",
+      "Zustand",
+      "Framer Motion",
+      "Supabase",
+    ],
+    status: "Working application",
+    kind: "architecture",
+    accent: "#c6a8f0",
+    featured: false,
+    githubUrl: "https://github.com/EXCALIBUR303/lifeos",
+    liveUrl: "https://lifeos-eta-woad.vercel.app",
+    sourceVisibility: "public",
+    interactionLabel: "Source-backed architecture explorer",
+    overview:
+      "One installable web app for everyday life data. It keeps everything in the browser, scores each area with a rule-based engine and can sync between devices with end-to-end encryption.",
+    problem:
+      "Tasks, habits, money, health and notes usually live in separate apps that cannot see each other.",
+    solution:
+      "A single local-first app with shared data, so insights such as a life score, unusual spending, habit risk and burnout watch can use all of it.",
+    features: [
+      "Modules for tasks, habits, money, goals, journal, health, focus, calendar, study and notes.",
+      "Natural-language task entry and a command palette.",
+      "Rule-based, on-device insights: life score, spending anomalies, habit risk and burnout watch.",
+      "Optional encrypted sync between devices, where the key is derived from a code and the server stores only ciphertext.",
+      "Calendar subscription feed, ICS import and export, offline support and installation as an app.",
+      "Assistant that can use Claude or Gemini with the user's own key, or an on-device fallback.",
+    ],
+    limitations: [
+      "Data lives in the browser's local storage unless the user turns on sync.",
+      "Conflicts in sync resolve by newest write wins.",
+      "Health data from phones and two-way calendar sync are listed in the README as future work.",
+      "Not run in this portfolio audit; no tests are named in the README.",
+    ],
+    architecture: {
+      kind: "Reconstructed from the repository README",
+      nodes: [
+        {
+          id: "pages",
+          label: "Module pages",
+          description: "One route per module, rendered on the client.",
+        },
+        {
+          id: "store",
+          label: "Zustand store",
+          description: "App state persisted to browser local storage.",
+        },
+        {
+          id: "insights",
+          label: "Insights engine",
+          description:
+            "Rule-based life score and detectors that run on the device.",
+        },
+        {
+          id: "assistant",
+          label: "Assistant",
+          description:
+            "Claude, Gemini or an on-device fallback, using the user's own key.",
+        },
+        {
+          id: "sync",
+          label: "Encrypted sync",
+          description:
+            "Optional device sync that stores only ciphertext on the server.",
+        },
+      ],
+      edges: [
+        ["pages", "store"],
+        ["store", "insights"],
+        ["insights", "assistant"],
+        ["store", "sync"],
+      ],
+    },
+    sources: [
+      {
+        label: "Modules, architecture and privacy model",
+        path: "README.md",
+        url: "https://github.com/EXCALIBUR303/lifeos/blob/0d63cbbd48789835ff8c5d7b3163d4aac99e4b3a/README.md",
+      },
+      {
+        label: "On-device insights engine",
+        path: "src/lib/insights.ts",
+        url: "https://github.com/EXCALIBUR303/lifeos/blob/0d63cbbd48789835ff8c5d7b3163d4aac99e4b3a/src/lib/insights.ts",
+      },
+      {
+        label: "Persisted application store",
+        path: "src/lib/store.ts",
+        url: "https://github.com/EXCALIBUR303/lifeos/blob/0d63cbbd48789835ff8c5d7b3163d4aac99e4b3a/src/lib/store.ts",
+      },
+    ],
+    sourceCommit: "0d63cbbd48789835ff8c5d7b3163d4aac99e4b3a",
+    eyebrow: "Personal / Productivity app",
+  },
+  {
+    id: "aura",
+    slug: "aura",
+    repository: "AURA",
+    title: "AURA",
+    tagline: "A developer universe you can walk through.",
+    description:
+      "A native macOS app that hosts a navigable 3D developer studio and an AI companion, with a SwiftUI shell and a React and three.js scene in a web view.",
+    collection: "Personal",
+    discipline: "Software",
+    classificationNote:
+      "Personal software project; the README describes work in progress.",
+    demo: {
+      type: "local",
+      url: null,
+      summary:
+        "Run the studio in a browser with a mock bridge, or run it inside the native shell on Apple Silicon.",
+      commands: [
+        "# From the repository root.",
+        "npm --prefix frontend install",
+        "npm --prefix frontend run dev",
+        "# In a second terminal, for the native shell:",
+        "AURA_DEV_SERVER_URL=http://127.0.0.1:5173 swift run --package-path macos AuraApp",
+      ],
+      environment: [],
+      runtimeStatus:
+        "Not run in this portfolio audit. Commands come from the repository README.",
+      testStatus:
+        "The README lists TypeScript and Swift test commands; they were not run here.",
+      verifiedOn: "2026-10-23",
+      notes: [
+        "Source and documentation were read at the pinned commit; nothing was executed.",
+        "Needs macOS 15 on Apple Silicon and the avatar model, which is not stored in git.",
+      ],
+    },
+    categories: ["Interactive Systems", "AI/ML", "Engineering"],
+    stack: [
+      "Swift",
+      "SwiftUI",
+      "React",
+      "three.js",
+      "React Three Fiber",
+      "TypeScript",
+      "SQLite",
+    ],
+    status: "Work in progress",
+    kind: "architecture",
+    accent: "#9ac2f5",
+    featured: false,
+    githubUrl: "https://github.com/EXCALIBUR303/AURA",
+    liveUrl: null,
+    sourceVisibility: "public",
+    interactionLabel: "Source-backed architecture explorer",
+    overview:
+      "The web layer owns everything visual and the native layer owns everything privileged, such as credentials, files, the microphone and storage. They talk only through a typed, versioned JSON bridge.",
+    problem:
+      "A rich 3D interface is easiest to build on the web, but an app that touches tokens, files and voice should not give that code direct access.",
+    solution:
+      "Split the app along a bridge: a React and three.js studio in a web view for the visuals, and Swift services behind a router for the privileged work.",
+    features: [
+      "Navigable 3D studio with zones for a hardware lab, software studio, AI lab and GitHub projects.",
+      "Typed bridge contracts in TypeScript that both the web client and Swift tests decode.",
+      "Read-only GitHub integration using a GitHub App with device-flow sign-in and the token in the Keychain.",
+      "Provider-neutral AI service with a mock and an OpenAI-compatible adapter that can also reach local runtimes.",
+      "Speech recognition and synthesis using system frameworks on the device.",
+    ],
+    limitations: [
+      "The README describes the app as in progress, with AI and voice still mocked or unavailable over the bridge at that point.",
+      "Requires macOS 15 on Apple Silicon.",
+      "The 3D avatar model is not in the repository and carries its own CC BY 4.0 credit.",
+      "Not run in this portfolio audit.",
+    ],
+    architecture: {
+      kind: "Reconstructed from the repository architecture document",
+      nodes: [
+        {
+          id: "studio",
+          label: "React studio",
+          description:
+            "React, three.js and React Three Fiber scene inside a web view.",
+        },
+        {
+          id: "bridge",
+          label: "Typed bridge",
+          description:
+            "Versioned JSON contracts shared by the web client and Swift.",
+        },
+        {
+          id: "router",
+          label: "Bridge router",
+          description:
+            "Swift router that dispatches to preferences, projects, GitHub, AI and voice services.",
+        },
+        {
+          id: "github",
+          label: "GitHub service",
+          description:
+            "Read-only GitHub App access with the token held in the Keychain.",
+        },
+        {
+          id: "ai",
+          label: "AI and voice",
+          description:
+            "Provider-neutral AI service and on-device speech frameworks.",
+        },
+        {
+          id: "store",
+          label: "SQLite store",
+          description: "Local persistence for preferences and project data.",
+        },
+      ],
+      edges: [
+        ["studio", "bridge"],
+        ["bridge", "router"],
+        ["router", "github"],
+        ["router", "ai"],
+        ["router", "store"],
+      ],
+    },
+    sources: [
+      {
+        label: "Overview, requirements and quick start",
+        path: "README.md",
+        url: "https://github.com/EXCALIBUR303/AURA/blob/895ebc3fed1017d86854e03a0789c11a2b7a7155/README.md",
+      },
+      {
+        label: "Architecture and bridge design",
+        path: "ARCHITECTURE.md",
+        url: "https://github.com/EXCALIBUR303/AURA/blob/895ebc3fed1017d86854e03a0789c11a2b7a7155/ARCHITECTURE.md",
+      },
+      {
+        label: "GitHub integration design",
+        path: "docs/PHASE3B_GITHUB.md",
+        url: "https://github.com/EXCALIBUR303/AURA/blob/895ebc3fed1017d86854e03a0789c11a2b7a7155/docs/PHASE3B_GITHUB.md",
+      },
+    ],
+    sourceCommit: "895ebc3fed1017d86854e03a0789c11a2b7a7155",
+    eyebrow: "Personal / Native app",
   },
 ];
 
