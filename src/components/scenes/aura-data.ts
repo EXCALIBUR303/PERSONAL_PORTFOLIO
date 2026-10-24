@@ -65,7 +65,7 @@ export const auraParts: AuraPart[] = [
     id: "companion",
     label: "AI companion",
     layer: "web",
-    text: "The companion at the centre of the studio. In AURA it is backed by the AI and voice services; here it is only a shape.",
+    text: "The companion at the centre of the studio. In AURA it is a rigged 3D android backed by the AI and voice services. This stand-in only plays set movements: it turns towards what you select and follows a request's route.",
     service: "ai",
     at: [0, DECK_Y + 1.2, 0],
   },

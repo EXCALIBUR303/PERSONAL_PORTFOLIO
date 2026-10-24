@@ -1,6 +1,6 @@
 "use client";
 import dynamic from "next/dynamic";
-import { useCallback, useRef, useState } from "react";
+import { useState } from "react";
 import { Send } from "lucide-react";
 import { useMode } from "@/components/mode";
 import {
@@ -10,6 +10,7 @@ import {
   requestRoute,
   type AuraPartId,
 } from "./aura-data";
+import { Callouts, useCallouts } from "./aura-callouts";
 import { SceneToolbar, useSceneControls } from "./scene-controls";
 import { useWebGL } from "./use-webgl";
 
@@ -66,19 +67,19 @@ export default function AuraScene() {
   const [runId, setRunId] = useState(0);
   const [route, setRoute] = useState<AuraPartId[]>([]);
   const [hop, setHop] = useState(-1);
-  const labels = useRef<Record<string, HTMLSpanElement | null>>({});
-  const setLabel = useCallback((id: string, node: HTMLSpanElement | null) => {
-    labels.current[id] = node;
-  }, []);
-  // Called every rendered frame with each label's screen position.
-  const placeLabel = useCallback((id: string, x: number, y: number, visible: boolean) => {
-    const el = labels.current[id];
-    if (!el) return;
-    el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
-    el.style.visibility = visible ? "visible" : "hidden";
-  }, []);
+  const [hovered, setHovered] = useState<AuraPartId | null>(null);
+  const callouts = useCallouts(selected, hovered);
   const part = auraPart(selected);
   const canSend = Boolean(part.service);
+  const busy = route.length > 0 && hop < route.length - 1;
+  // The companion follows a request along its route, otherwise the selection.
+  const focus = busy && hop >= 0 ? route[hop] : selected;
+  const hoverProps = (id: AuraPartId) => ({
+    onPointerEnter: () => setHovered(id),
+    onPointerLeave: () => setHovered(null),
+    onFocus: () => setHovered(id),
+    onBlur: () => setHovered(null),
+  });
 
   const select = (id: AuraPartId) => {
     setSelected(id);
@@ -115,9 +116,12 @@ export default function AuraScene() {
           runId={runId}
           onHop={setHop}
           fallback={flat}
-          labels={setLabel}
-          placeLabel={placeLabel}
-          busy={route.length > 0 && hop < route.length - 1}
+          hovered={hovered}
+          onHover={setHovered}
+          focus={focus}
+          overlay={<Callouts selected={selected} hovered={hovered} />}
+          placeLabels={callouts.place}
+          busy={busy}
         />
       ) : webgl === false ? (
         flat
@@ -125,8 +129,17 @@ export default function AuraScene() {
         <div className="s3-loading mono">Checking for 3D support…</div>
       )}
       <div className="s3-parts" role="group" aria-label="AURA parts">
-        {auraParts.map((p) => (
-          <button key={p.id} type="button" aria-pressed={selected === p.id} onClick={() => select(p.id)}>
+        {auraParts.map((p, i) => (
+          <button
+            key={p.id}
+            type="button"
+            aria-pressed={selected === p.id}
+            onClick={() => select(p.id)}
+            {...hoverProps(p.id)}
+          >
+            <span className="s3-num" aria-hidden="true">
+              {i + 1}
+            </span>
             {p.label}
           </button>
         ))}
@@ -154,7 +167,8 @@ export default function AuraScene() {
           </ol>
         )}
         <p className="s3-fine">
-          Illustration of the documented split. Which zone calls which service is simplified, and no part of AURA runs here.
+          Illustration of the documented split. Which zone calls which service is simplified, the companion&apos;s
+          movements are predefined, and no part of AURA runs here.
         </p>
       </div>
     </div>

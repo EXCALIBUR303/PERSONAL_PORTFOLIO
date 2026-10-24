@@ -95,20 +95,159 @@ html[data-mode] .portfolio-root {
       min-height: 0;
     }
   }
+  /* AURA callouts: columns at the stage edges, thin elbow lines to the parts */
   .s3-label {
-    padding: 2px 7px;
-    border: 1.5px solid var(--m-ink);
-    border-radius: 999px;
-    background: var(--m-card);
-    color: var(--m-ink);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 7px 2px 3px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    background: color-mix(in srgb, var(--m-card) 84%, transparent);
+    color: color-mix(in srgb, var(--m-ink) 72%, transparent);
     font-family: var(--font-mono-set);
     font-size: 10.5px;
-    font-weight: 700;
+    font-weight: 600;
+    letter-spacing: 0.01em;
     white-space: nowrap;
     user-select: none;
+    transition:
+      color 160ms ease,
+      border-color 160ms ease,
+      background-color 160ms ease;
+  }
+  .s3-label b,
+  .s3-num {
+    display: inline-grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    border: 1px solid color-mix(in srgb, var(--m-ink) 40%, transparent);
+    border-radius: 50%;
+    background: var(--m-card);
+    font-family: var(--font-mono-set);
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    transition:
+      background-color 160ms ease,
+      color 160ms ease,
+      border-color 160ms ease;
+  }
+  .s3-label[data-hover] {
+    color: var(--m-ink);
+    border-color: color-mix(in srgb, var(--m-cobalt) 45%, transparent);
+  }
+  .s3-label[data-hover] b {
+    border-color: var(--m-cobalt);
+    color: var(--m-cobalt);
   }
   .s3-label[data-active] {
-    background: var(--m-ink);
+    color: var(--m-ink);
+    border-color: var(--m-ink);
+    background: var(--m-card);
+  }
+  .s3-label[data-active] b {
+    border-color: var(--station-accent, #ff6538);
+    background: var(--station-accent, #ff6538);
+    color: #fff;
+  }
+  .s3-leads {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .s3-leads path {
+    fill: none;
+    stroke: var(--m-ink);
+    stroke-opacity: 0.32;
+    stroke-width: 1;
+  }
+  .s3-leads circle {
+    fill: var(--m-ink);
+    fill-opacity: 0.6;
+  }
+  /* Points hidden behind the model: dashed, like hidden edges in a drawing */
+  .s3-leads [data-occluded] path {
+    stroke-dasharray: 3 3;
+  }
+  .s3-leads [data-occluded] circle {
+    fill: var(--m-card);
+    stroke: var(--m-ink);
+    stroke-opacity: 0.6;
+  }
+  .s3-leads [data-hover] path {
+    stroke: var(--m-cobalt);
+    stroke-opacity: 0.8;
+  }
+  .s3-leads [data-active] path {
+    stroke: var(--station-accent, #ff6538);
+    stroke-opacity: 1;
+    stroke-width: 1.5;
+  }
+  .s3-leads [data-active] circle {
+    fill: var(--station-accent, #ff6538);
+    fill-opacity: 1;
+  }
+  /* Narrow stage: numbered markers on the parts, names in the buttons below */
+  .s3-labels[data-compact] .s3-label {
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+  .s3-labels[data-compact] .s3-label > span {
+    display: none;
+  }
+  .s3-labels[data-compact] .s3-label b {
+    width: 19px;
+    height: 19px;
+    font-size: 10px;
+    box-shadow: 0 1px 3px #17171d33;
+  }
+  /* The one named callout a narrow stage keeps, for the part in focus */
+  .s3-focus,
+  .s3-focus-lead {
+    display: none;
+  }
+  .s3-labels[data-compact] .s3-label.s3-focus {
+    display: inline-flex;
+    padding: 2px 7px 2px 3px;
+    border: 1px solid var(--m-ink);
+    background: var(--m-card);
+    color: var(--m-ink);
+  }
+  .s3-labels[data-compact] .s3-focus > span {
+    display: inline;
+  }
+  .s3-labels[data-compact] .s3-focus b {
+    width: 16px;
+    height: 16px;
+    font-size: 9px;
+    box-shadow: none;
+  }
+  .s3-labels[data-compact] .s3-leads {
+    display: block;
+  }
+  .s3-labels[data-compact] .s3-leads g {
+    display: none;
+  }
+  .s3-labels[data-compact] .s3-focus-lead {
+    display: inline;
+    fill: none;
+    stroke: var(--station-accent, #ff6538);
+    stroke-opacity: 1;
+    stroke-width: 1.5;
+  }
+  .s3-parts button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .s3-parts button[aria-pressed="true"] .s3-num {
+    border-color: var(--station-accent, #ff6538);
+    background: var(--station-accent, #ff6538);
     color: #fff;
   }
   .s3-parts {

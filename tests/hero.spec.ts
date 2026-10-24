@@ -49,6 +49,11 @@ test.describe("Professional hero: project scenes in three categories", () => {
   }) => {
     await page.locator(".s3-parts").getByRole("button", { name: "AI lab" }).click();
     await expect(page.locator(".s3-panel")).toContainText("still mocked");
+    // The selected part's callout is marked, and the companion is labelled as a stand-in.
+    await expect(page.locator('.s3-label[data-part="ailab"]')).toHaveAttribute("data-active", "true");
+    await page.locator(".s3-parts").getByRole("button", { name: "AI companion" }).click();
+    await expect(page.locator(".s3-panel")).toContainText("set movements");
+    await page.locator(".s3-parts").getByRole("button", { name: "AI lab" }).click();
     await page.getByRole("button", { name: "Send a request" }).click();
     const hops = page.locator(".s3-hops li");
     await expect(hops).toHaveCount(7);

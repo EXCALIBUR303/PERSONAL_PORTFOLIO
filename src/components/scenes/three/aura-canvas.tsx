@@ -1,6 +1,7 @@
 "use client";
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
+import { RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
 import type { SiteMode } from "@/components/mode";
 import {
@@ -138,31 +139,171 @@ function ZoneProps({ id }: { id: AuraPartId }) {
   );
 }
 
-function Companion({ selected }: { selected: boolean }) {
-  const core = useRef<THREE.Mesh>(null);
-  const ring = useRef<THREE.Mesh>(null);
-  useFrame(({ clock }) => {
+const SHELL = "#fbfaf5";
+const VISOR = "#15161d";
+const EYE = "#8edbff";
+/** Height of the companion's neck above the deck; the head pivots here. */
+const NECK_Y = 1.4;
+/** The companion is modelled about 2 units tall and drawn a little larger. */
+const SCALE = 1.3;
+const wrapAngle = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
+
+/**
+ * A small hovering android standing in for AURA's companion. Its motion is
+ * predefined: an idle hover and blink, a turn towards whatever is in focus
+ * (the selected part, or the hop a request has reached), a short nod when the
+ * focus changes, and a scanning visor while a request is travelling.
+ */
+function Companion({
+  focus,
+  routing,
+  selected,
+  hovered,
+  paused,
+}: {
+  focus: AuraPartId;
+  routing: boolean;
+  selected: boolean;
+  hovered: boolean;
+  paused: boolean;
+}) {
+  const body = useRef<THREE.Group>(null);
+  const head = useRef<THREE.Group>(null);
+  const eyes = useRef<THREE.Group>(null);
+  const scan = useRef<THREE.Group>(null);
+  const hands = useRef<THREE.Group>(null);
+  const nod = useRef({ focus, start: -10 });
+  const goal = useMemo(() => new THREE.Vector3(...auraPart(focus).at), [focus]);
+
+  useFrame(({ clock, camera }, delta) => {
     const t = clock.elapsedTime;
-    if (core.current) {
-      core.current.rotation.y = t * 0.6;
-      core.current.position.y = Math.sin(t * 1.6) * 0.12;
+    const b = body.current;
+    const h = head.current;
+    if (!b || !h) return;
+    if (nod.current.focus !== focus) nod.current = { focus, start: t };
+    const k = paused ? 1 : 1 - Math.exp(-delta * 5);
+    // Look at the camera when the companion itself is selected.
+    const at = focus === "companion" ? camera.position : goal;
+    const flat = Math.hypot(at.x, at.z);
+    if (flat > 0.4) b.rotation.y += wrapAngle(Math.atan2(at.x, at.z) - b.rotation.y) * k;
+    const pitch = THREE.MathUtils.clamp(
+      Math.atan2(at.y - (DECK_Y + (NECK_Y + 0.2) * SCALE), Math.max(flat, 0.6)),
+      -0.5,
+      0.25,
+    );
+    const p = (t - nod.current.start) / 0.5;
+    const dip = p >= 0 && p <= 1 && !paused ? 0.22 * Math.sin(Math.PI * p) : 0;
+    h.rotation.x += (-pitch + dip - h.rotation.x) * k;
+    h.rotation.z = paused ? 0 : Math.sin(t * 0.7) * 0.04;
+    b.position.y = paused ? 0 : Math.sin(t * 1.6) * 0.05;
+
+    if (eyes.current) {
+      eyes.current.visible = !routing;
+      eyes.current.scale.y = !paused && t % 3.8 < 0.12 ? 0.15 : 1;
     }
-    if (ring.current) ring.current.rotation.z = t * 0.9;
+    if (scan.current) {
+      scan.current.visible = routing;
+      scan.current.children.forEach((bar, i) => {
+        bar.scale.y = 0.35 + 0.65 * Math.abs(Math.sin(t * 7 + i * 0.9));
+      });
+    }
+    // Hands drift beside the body, and come forward while a request travels.
+    hands.current?.children.forEach((hand, i) => {
+      const side = i === 0 ? -1 : 1;
+      const lift = paused ? 0 : Math.sin(t * 1.6 + 0.8 + i * 0.5) * 0.04;
+      const z = routing ? 0.26 : 0.04;
+      const y = (routing ? 1.0 : 0.82) + lift;
+      hand.position.x += (side * (routing ? 0.42 : 0.5) - hand.position.x) * k;
+      hand.position.y += (y - hand.position.y) * k;
+      hand.position.z += (z - hand.position.z) * k;
+    });
   });
+
+  const accent = selected ? ORANGE : COBALT;
   return (
-    <group position={auraPart("companion").at}>
-      <mesh ref={core} castShadow>
-        <icosahedronGeometry args={[0.42, 0]} />
-        <meshStandardMaterial
-          color={selected ? ORANGE : COBALT}
-          flatShading
-          roughness={0.35}
-        />
+    <group position={[0, DECK_Y, 0]} scale={SCALE}>
+      {/* the pad it hovers over */}
+      <mesh position={[0, 0.03, 0]} receiveShadow>
+        <cylinderGeometry args={[0.62, 0.66, 0.06, 48]} />
+        <meshStandardMaterial color={INK} roughness={0.5} />
       </mesh>
-      <mesh ref={ring} rotation={[Math.PI / 2.4, 0, 0]}>
-        <torusGeometry args={[0.72, 0.025, 8, 64]} />
-        <meshStandardMaterial color={INK} />
+      <mesh position={[0, 0.065, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.6, hovered || selected ? 0.03 : 0.018, 8, 64]} />
+        <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.5} />
       </mesh>
+      <group ref={body}>
+        <mesh position={[0, 0.8, 0]} scale={[1, 1, 0.82]} castShadow>
+          <capsuleGeometry args={[0.3, 0.42, 8, 24]} />
+          <meshStandardMaterial color={SHELL} roughness={0.35} />
+        </mesh>
+        <mesh position={[0, 0.64, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[1, 0.82, 1]}>
+          <torusGeometry args={[0.3, 0.028, 8, 48]} />
+          <meshStandardMaterial color={INK} />
+        </mesh>
+        <mesh position={[0, 0.92, 0.25]}>
+          <circleGeometry args={[0.075, 24]} />
+          <meshStandardMaterial
+            color={accent}
+            emissive={accent}
+            emissiveIntensity={routing ? 1.2 : 0.7}
+            toneMapped={false}
+          />
+        </mesh>
+        <mesh position={[0, NECK_Y - 0.06, 0]}>
+          <cylinderGeometry args={[0.07, 0.09, 0.16, 16]} />
+          <meshStandardMaterial color={INK} />
+        </mesh>
+        <group ref={head} position={[0, NECK_Y, 0]}>
+          <RoundedBox args={[0.66, 0.48, 0.52]} radius={0.16} smoothness={4} position={[0, 0.22, 0]} castShadow>
+            <meshStandardMaterial color={SHELL} roughness={0.3} />
+          </RoundedBox>
+          <RoundedBox args={[0.54, 0.3, 0.06]} radius={0.06} smoothness={3} position={[0, 0.22, 0.25]}>
+            <meshStandardMaterial color={VISOR} roughness={0.2} metalness={0.3} />
+          </RoundedBox>
+          <group ref={eyes} position={[0, 0.23, 0.285]}>
+            {[-0.12, 0.12].map((x) => (
+              <RoundedBox key={x} args={[0.1, 0.075, 0.02]} radius={0.03} smoothness={2} position={[x, 0, 0]}>
+                <meshStandardMaterial color={EYE} emissive={EYE} emissiveIntensity={1.4} toneMapped={false} />
+              </RoundedBox>
+            ))}
+          </group>
+          <group ref={scan} position={[0, 0.22, 0.285]} visible={false}>
+            {[-0.16, -0.08, 0, 0.08, 0.16].map((x) => (
+              <mesh key={x} position={[x, 0, 0]}>
+                <boxGeometry args={[0.045, 0.16, 0.02]} />
+                <meshStandardMaterial color={LIME} emissive={LIME} emissiveIntensity={1.2} toneMapped={false} />
+              </mesh>
+            ))}
+          </group>
+          {[-1, 1].map((side) => (
+            <mesh key={side} position={[side * 0.35, 0.22, 0]} rotation={[0, 0, Math.PI / 2]}>
+              <cylinderGeometry args={[0.1, 0.1, 0.06, 24]} />
+              <meshStandardMaterial color={ORANGE} roughness={0.4} />
+            </mesh>
+          ))}
+          <mesh position={[0.15, 0.55, -0.05]}>
+            <cylinderGeometry args={[0.014, 0.014, 0.2, 8]} />
+            <meshStandardMaterial color={INK} />
+          </mesh>
+          <mesh position={[0.15, 0.67, -0.05]}>
+            <sphereGeometry args={[0.04, 12, 12]} />
+            <meshStandardMaterial color={ORANGE} emissive={ORANGE} emissiveIntensity={0.6} />
+          </mesh>
+        </group>
+        <group ref={hands}>
+        {[-0.5, 0.5].map((x) => (
+          <group key={x} position={[x, 0.82, 0.04]}>
+            <RoundedBox args={[0.15, 0.2, 0.15]} radius={0.065} smoothness={3} castShadow>
+              <meshStandardMaterial color={SHELL} roughness={0.35} />
+            </RoundedBox>
+            <mesh position={[0, 0.1, 0]}>
+              <cylinderGeometry args={[0.065, 0.065, 0.035, 16]} />
+              <meshStandardMaterial color={INK} />
+            </mesh>
+          </group>
+        ))}
+        </group>
+      </group>
     </group>
   );
 }
@@ -280,60 +421,110 @@ function Idle() {
   );
 }
 
+type Hover = (id: AuraPartId | null) => void;
+/** Pointer handlers shared by every clickable part of the studio. */
+const pickHandlers = (id: AuraPartId, onSelect: (id: AuraPartId) => void, onHover: Hover) => ({
+  onClick: (event: { stopPropagation: () => void }) => {
+    event.stopPropagation();
+    onSelect(id);
+  },
+  onPointerOver: (event: { stopPropagation: () => void }) => {
+    event.stopPropagation();
+    document.body.style.cursor = "pointer";
+    onHover(id);
+  },
+  onPointerOut: () => {
+    document.body.style.cursor = "";
+    onHover(null);
+  },
+});
+
 function Selectable({
   id,
   selected,
+  hovered,
   onSelect,
+  onHover,
   children,
 }: {
   id: AuraPartId;
   selected: AuraPartId;
+  hovered: AuraPartId | null;
   onSelect: (id: AuraPartId) => void;
+  onHover: Hover;
   children: React.ReactNode;
 }) {
-  const part = auraPart(id);
+  const on = selected === id;
   return (
-    <group
-      position={id === "companion" ? [0, 0, 0] : part.at}
-      onClick={(event) => {
-        event.stopPropagation();
-        onSelect(id);
-      }}
-      onPointerOver={() => (document.body.style.cursor = "pointer")}
-      onPointerOut={() => (document.body.style.cursor = "")}
-    >
+    <group position={auraPart(id).at} {...pickHandlers(id, onSelect, onHover)}>
       {children}
-      {id !== "companion" && (
-        <>
-          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
-            <ringGeometry args={[0.95, selected === id ? 1.12 : 1.0, 48]} />
-            <meshBasicMaterial color={selected === id ? ORANGE : INK} />
-          </mesh>
-        </>
-      )}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+        <ringGeometry args={[0.95, on ? 1.12 : hovered === id ? 1.06 : 1.0, 48]} />
+        <meshBasicMaterial color={on ? ORANGE : hovered === id ? COBALT : INK} />
+      </mesh>
     </group>
   );
 }
 
-/** Where each part's label sits in the scene. */
+/** The point on each part that its annotation line points at. */
 const labelPoint = (id: AuraPartId) => {
   const part = auraPart(id);
   const [x, y, z] = part.at;
-  if (id === "bridge") return new THREE.Vector3(0.75, y, 0);
-  if (id === "companion") return new THREE.Vector3(x, y + 0.85, z);
-  return new THREE.Vector3(x, y + (part.layer === "native" ? 1.0 : 1.55), z);
+  if (id === "bridge") return new THREE.Vector3(0.3, y, 0);
+  if (id === "companion") return new THREE.Vector3(0, DECK_Y + 2.05 * SCALE, 0);
+  return new THREE.Vector3(x, y + (part.layer === "native" ? 0.6 : 1.15), z);
 };
 
-/** Projects label points to the screen and moves the DOM labels to them. */
-type PlaceLabel = (id: string, x: number, y: number, visible: boolean) => void;
-function LabelTracker({ place }: { place: PlaceLabel }) {
-  const points = useMemo(() => auraParts.map((p) => [p.id, labelPoint(p.id)] as const), []);
+export type LabelPoint = {
+  id: AuraPartId;
+  x: number;
+  y: number;
+  visible: boolean;
+  /** Something solid sits between the camera and the point. */
+  occluded: boolean;
+};
+type PlaceLabels = (points: LabelPoint[], width: number, height: number, canvas: HTMLElement) => void;
+
+/** Visible, opaque meshes hide what is behind them; lines and glass do not. */
+function isSolid(object: THREE.Object3D) {
+  const mesh = object as THREE.Mesh;
+  if (!mesh.isMesh) return false;
+  const material = mesh.material as THREE.Material;
+  if (material.transparent) return false;
+  for (let o: THREE.Object3D | null = object; o; o = o.parent) if (!o.visible) return false;
+  return true;
+}
+
+/**
+ * Projects every annotation point to the screen once per rendered frame, and
+ * every fourth frame checks whether the point is hidden behind the model.
+ */
+function LabelTracker({ place }: { place: PlaceLabels }) {
+  const world = useMemo(() => auraParts.map((p) => labelPoint(p.id)), []);
+  const out = useMemo<LabelPoint[]>(
+    () => auraParts.map((p) => ({ id: p.id, x: 0, y: 0, visible: false, occluded: false })),
+    [],
+  );
   const v = useMemo(() => new THREE.Vector3(), []);
-  useFrame(({ camera, size }) => {
-    for (const [id, point] of points) {
+  const ray = useMemo(() => new THREE.Raycaster(), []);
+  const frame = useRef(0);
+  useFrame(({ camera, size, gl, scene }) => {
+    const check = frame.current++ % 4 === 0;
+    world.forEach((point, i) => {
+      const o = out[i];
+      if (check) {
+        v.copy(point).sub(camera.position);
+        const distance = v.length();
+        ray.set(camera.position, v.normalize());
+        ray.far = distance - 0.15;
+        o.occluded = ray.intersectObjects(scene.children, true).some((hit) => isSolid(hit.object));
+      }
       v.copy(point).project(camera);
-      place(id, ((v.x + 1) / 2) * size.width, ((1 - v.y) / 2) * size.height, v.z < 1);
-    }
+      o.x = ((v.x + 1) / 2) * size.width;
+      o.y = ((1 - v.y) / 2) * size.height;
+      o.visible = v.z < 1;
+    });
+    place(out, size.width, size.height, gl.domElement);
   });
   return null;
 }
@@ -348,8 +539,11 @@ export default function AuraCanvas({
   runId,
   onHop,
   fallback,
-  labels,
-  placeLabel,
+  hovered,
+  onHover,
+  focus,
+  overlay,
+  placeLabels,
   busy,
 }: {
   mode: SiteMode;
@@ -361,8 +555,12 @@ export default function AuraCanvas({
   runId: number;
   onHop: (index: number) => void;
   fallback: React.ReactNode;
-  labels: (id: string, node: HTMLSpanElement | null) => void;
-  placeLabel: PlaceLabel;
+  hovered: AuraPartId | null;
+  onHover: Hover;
+  /** What the companion looks at: the selected part, or a request's current hop. */
+  focus: AuraPartId;
+  overlay: React.ReactNode;
+  placeLabels: PlaceLabels;
   busy: boolean;
 }) {
   const services = auraParts.filter((p) => p.layer === "native" && p.id !== "router");
@@ -376,24 +574,11 @@ export default function AuraCanvas({
       distance={[7, 22]}
       autoRotate
       busy={busy}
-      label="3D model of AURA: four studio zones and a companion on a top deck, joined by a bridge column to Swift services on a lower deck. Use the buttons beside it to select parts."
+      label="3D model of AURA: four studio zones and a companion android on a top deck, joined by a bridge column to Swift services on a lower deck. Use the buttons beside it to select parts."
       fallback={fallback}
-      overlay={
-        <div className="s3-labels" aria-hidden="true">
-          {auraParts.map((p) => (
-            <span
-              key={p.id}
-              className="s3-label"
-              data-active={selected === p.id || undefined}
-              ref={(node) => labels(p.id, node)}
-            >
-              {p.label}
-            </span>
-          ))}
-        </div>
-      }
+      overlay={overlay}
     >
-      <LabelTracker place={placeLabel} />
+      <LabelTracker place={placeLabels} />
       {/* web layer deck */}
       <mesh position={[0, DECK_Y - 0.1, 0]} receiveShadow>
         <cylinderGeometry args={[4.4, 4.4, 0.2, 64]} />
@@ -409,47 +594,42 @@ export default function AuraCanvas({
         <meshStandardMaterial color="#e7e2d6" />
       </mesh>
       {/* bridge column */}
-      <group
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelect("bridge");
-        }}
-      >
+      <group {...pickHandlers("bridge", onSelect, onHover)}>
         <mesh position={[0, (DECK_Y + NATIVE_Y) / 2 - 0.1, 0]}>
           <cylinderGeometry args={[0.3, 0.3, DECK_Y - NATIVE_Y - 0.2, 24, 1, true]} />
           <meshStandardMaterial
             color={selected === "bridge" ? ORANGE : COBALT}
             transparent
-            opacity={0.35}
+            opacity={hovered === "bridge" ? 0.55 : 0.35}
             side={THREE.DoubleSide}
           />
         </mesh>
-
       </group>
       {!paused && <Idle />}
       {zones.map((zone) => (
         <group key={zone.id}>
           <Line from={anchor(zone.id)} to={anchor("bridge")} color={INK} />
-          <Selectable id={zone.id} selected={selected} onSelect={onSelect}>
+          <Selectable id={zone.id} selected={selected} hovered={hovered} onSelect={onSelect} onHover={onHover}>
             <ZoneProps id={zone.id} />
           </Selectable>
         </group>
       ))}
-      <group
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelect("companion");
-        }}
-      >
-        <Companion selected={selected === "companion"} />
+      <group {...pickHandlers("companion", onSelect, onHover)}>
+        <Companion
+          focus={focus}
+          routing={busy}
+          selected={selected === "companion"}
+          hovered={hovered === "companion"}
+          paused={paused}
+        />
       </group>
-      <Selectable id="router" selected={selected} onSelect={onSelect}>
+      <Selectable id="router" selected={selected} hovered={hovered} onSelect={onSelect} onHover={onHover}>
         <Box size={[0.9, 0.5, 0.9]} at={[0, 0.25, 0]} color={INK} />
       </Selectable>
       {services.map((service) => (
         <group key={service.id}>
           <Line from={anchor("router")} to={anchor(service.id)} color={INK} />
-          <Selectable id={service.id} selected={selected} onSelect={onSelect}>
+          <Selectable id={service.id} selected={selected} hovered={hovered} onSelect={onSelect} onHover={onHover}>
             <Box
               size={[0.8, 0.55, 0.8]}
               at={[0, 0.28, 0]}
