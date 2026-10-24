@@ -2,6 +2,8 @@
 import { useMemo, useRef, useState } from "react";
 import { useShiftIntro } from "../shift-intro";
 import Link from "next/link";
+import { m, useReducedMotion } from "motion/react";
+import { micro, motionTokens } from "../motion-config";
 import {
   ArrowDown,
   ArrowUpRight,
@@ -27,6 +29,7 @@ import { districtFor, districts, toneFor } from "./identity";
  * from what this visitor actually opened.
  */
 export default function CreativeHero() {
+  const reduced = useReducedMotion();
   const [slug, setSlug] = useState("mazera-ai-maze-solver");
   const [peek, setPeek] = useState(false);
   const { filtered, gallery } = useGalleryFilter();
@@ -176,7 +179,14 @@ export default function CreativeHero() {
             <p className="c-brief-no mono">
               Station {String(number).padStart(2, "0")} · {district.label}
             </p>
-            <h2>{project.title}</h2>
+            <m.h2
+              key={project.slug}
+              initial={reduced ? false : { y: 10 }}
+              animate={{ y: 0 }}
+              transition={{ duration: motionTokens.duration.normal, ease: motionTokens.ease }}
+            >
+              {project.title}
+            </m.h2>
             <p className="c-brief-tag">{project.tagline}</p>
             <ul className="c-brief-badges">
               <li>{project.collection} project</li>
@@ -282,11 +292,18 @@ export default function CreativeHero() {
                           <span className="sr-only">, explored</span>
                         )}
                         {visited.includes(p.slug) && (
-                          <Check
-                            size={14}
-                            className="c-pin-check"
-                            aria-hidden="true"
-                          />
+                          <m.span
+                            className="c-pin-check-pop"
+                            initial={reduced ? false : { scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={micro.glide}
+                          >
+                            <Check
+                              size={14}
+                              className="c-pin-check"
+                              aria-hidden="true"
+                            />
+                          </m.span>
                         )}
                       </button>
                     </li>

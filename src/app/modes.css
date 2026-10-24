@@ -373,136 +373,12 @@ html[data-mode] .portfolio-root main > section {
 html[data-mode] .portfolio-root .projects-section {
   background: transparent;
 }
-html[data-mode] .portfolio-root .universe-section-heading p,
-html[data-mode] .portfolio-root .classification-note {
-  color: var(--m-graphite);
-}
-html[data-mode] .portfolio-root .collection-total {
-  font-family: var(--font-display);
-  color: var(--m-cobalt);
-}
-html[data-mode] .portfolio-root .collection-sidebar {
-  background: var(--m-card);
-  border: var(--m-edge);
-  border-radius: 4px;
-  box-shadow: var(--m-shadow);
-}
-html[data-mode] .portfolio-root .collection-buttons button,
-html[data-mode] .portfolio-root .discipline-buttons button {
-  border: 1.5px solid transparent;
-  border-radius: 4px;
-  color: var(--m-ink);
-  font-weight: 600;
-}
-html[data-mode] .portfolio-root .collection-buttons button:hover,
-html[data-mode] .portfolio-root .discipline-buttons button:hover {
-  border-color: var(--m-ink);
-}
-html[data-mode] .portfolio-root .collection-buttons button[aria-pressed="true"],
-html[data-mode] .portfolio-root .discipline-buttons button[aria-pressed="true"],
-html[data-mode]
-  .portfolio-root
-  .gallery-view-toggle
-  button[aria-pressed="true"],
-html[data-mode] .portfolio-root .featured-toggle[aria-pressed="true"] {
-  background: var(--m-ink);
-  color: #fff;
-  border-color: var(--m-ink);
-}
-html[data-mode] .portfolio-root .project-search,
-html[data-mode] .portfolio-root .category-select select,
-html[data-mode] .portfolio-root .featured-toggle,
-html[data-mode] .portfolio-root .gallery-view-toggle {
-  background: var(--m-card);
-  border: var(--m-edge);
-  border-radius: 4px;
-  color: var(--m-ink);
-}
-html[data-mode] .portfolio-root .project-search:focus-within,
-html[data-mode] .portfolio-root .category-select select:focus {
-  box-shadow: 3px 3px 0 var(--m-cobalt);
-  outline: none;
-}
-html[data-mode] .portfolio-root .gallery-count {
-  color: var(--m-graphite);
-}
-html[data-mode] .portfolio-root .project-exhibit {
-  background: var(--m-card);
-  border: var(--m-edge);
-  border-radius: 4px;
-  box-shadow: var(--m-shadow);
-}
-
-html[data-mode] .portfolio-root .exhibit-art {
-  background: color-mix(in srgb, var(--world-accent, var(--m-sky)) 14%, #fff);
-  border-right: var(--m-edge);
-}
-html[data-mode] .portfolio-root .exhibit-coordinate {
-  color: var(--m-ink);
-  background: var(--m-card);
-  border: 1.5px solid var(--m-ink);
-  padding: 3px 8px;
-  border-radius: 999px;
-}
-html[data-mode] .portfolio-root .exhibit-copy h3 {
-  font-size: clamp(32px, 3.4vw, 52px);
-  line-height: 1.02;
-}
-html[data-mode] .portfolio-root .project-card {
-  background: var(--m-card);
-  border: var(--m-edge);
-  border-radius: 4px;
-  box-shadow: var(--m-shadow);
-  color: var(--m-ink);
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
-}
-html[data-mode] .portfolio-root .project-card:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: var(--m-shadow-hover);
-}
-
-html[data-mode] .portfolio-root .project-preview-frame {
-  background: color-mix(in srgb, var(--world-accent, var(--m-sky)) 12%, #fff);
-  border: 1.5px solid var(--m-ink);
-  border-radius: 4px;
-  overflow: hidden;
-}
 
 .mini-anim {
   display: block;
   width: 100%;
   aspect-ratio: 240 / 150;
   height: auto;
-}
-html[data-mode] .portfolio-root .project-demo {
-  bottom: auto;
-  top: 10px;
-  height: fit-content;
-  background: var(--m-card);
-  color: var(--m-ink);
-  border: 1.5px solid var(--m-ink);
-  border-radius: 999px;
-  padding: 2px 8px;
-  font-size: 10px;
-}
-html[data-mode] .portfolio-root .project-open {
-  background: var(--m-lime);
-  color: var(--m-ink);
-  border: 1.5px solid var(--m-ink);
-}
-html[data-mode] .portfolio-root .project-info h3 {
-  font-size: clamp(24px, 2.2vw, 32px);
-  line-height: 1.08;
-}
-html[data-mode] .portfolio-root .project-info p {
-  color: var(--m-graphite);
-  font-size: 14px;
-}
-html[data-mode] .portfolio-root .project-index {
-  color: var(--m-cobalt);
-  font-weight: 700;
 }
 html[data-mode] .portfolio-root .project-tags span {
   background: var(--m-paper);
@@ -514,22 +390,6 @@ html[data-mode] .portfolio-root .project-tags span {
 }
 html[data-mode="creative"] .portfolio-root .project-tags span {
   background: var(--m-lime);
-}
-html[data-mode] .portfolio-root .project-status {
-  font-family: var(--font-mono-set);
-  font-size: 11px;
-  color: var(--m-ink);
-}
-html[data-mode] .portfolio-root .project-status i {
-  background: #16a34a;
-  box-shadow: 0 0 0 3px #4ade8055;
-}
-html[data-mode] .portfolio-root .exhibit-select,
-html[data-mode] .portfolio-root .project-quick {
-  border: 1.5px solid var(--m-ink);
-  background: var(--m-card);
-  color: var(--m-ink);
-  border-radius: 4px;
 }
 html[data-mode] .portfolio-root .gallery-empty {
   background: var(--m-card);
@@ -877,132 +737,16 @@ html.mode-switching .portfolio-root * {
   html[data-mode] .portfolio-root .desk-introduction {
     grid-template-columns: minmax(0, 1fr);
   }
-  html[data-mode="creative"] .portfolio-root .project-index-entry .project-card,
   html[data-mode="creative"] .portfolio-root .chapter-card {
     transform: none;
   }
 }
 
 /* ---------- gallery as a grid of playing cards ---------- */
-html[data-mode] .portfolio-root .project-index-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr));
-  gap: 28px;
-  align-items: start;
-}
-html[data-mode] .portfolio-root .project-index-list.compact-index {
-  grid-template-columns: minmax(0, 1fr);
-  gap: 14px;
-}
-html[data-mode] .portfolio-root .project-index-entry {
-  padding: 0;
-  border-top: 0;
-  min-width: 0;
-}
-html[data-mode] .portfolio-root .project-index-entry .project-card {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 14px;
-  margin: 0;
-  height: 100%;
-}
-html[data-mode] .portfolio-root .project-index-entry .project-preview-frame {
-  height: auto;
-  grid-row: auto;
-  width: 100%;
-}
-html[data-mode] .portfolio-root .project-index-entry .project-info {
-  padding: 0;
-  gap: 10px;
-  align-items: start;
-}
-html[data-mode] .portfolio-root .project-index-entry .project-info h3 {
-  font-size: clamp(24px, 2vw, 30px);
-  line-height: 1.1;
-  letter-spacing: -0.015em;
-  margin-top: 4px;
-}
-html[data-mode] .portfolio-root .project-index-entry .project-info p {
-  font-size: 14px;
-  line-height: 1.55;
-  max-width: none;
-  margin-top: 8px;
-}
-html[data-mode] .portfolio-root .project-index-entry .project-index {
-  font-size: 11px;
-}
-html[data-mode] .portfolio-root .project-index-entry .project-tags {
-  margin: 0;
-  gap: 6px;
-}
-html[data-mode] .portfolio-root .project-index-entry .project-tags span {
-  font-size: 11px;
-  padding: 3px 7px;
-  border: 1.5px solid var(--m-ink);
-  background: var(--m-paper);
-}
-
-html[data-mode] .portfolio-root .project-index-entry .project-status {
-  margin: 0;
-  font-size: 11px;
-  color: var(--m-ink);
-  padding-right: 96px;
-}
-html[data-mode] .portfolio-root .project-index-entry .project-demo {
-  display: inline-flex;
-  align-items: center;
-  height: auto;
-  top: 10px;
-  bottom: auto;
-  left: 10px;
-}
-html[data-mode] .portfolio-root .project-index-entry .exhibit-select {
-  top: auto;
-  bottom: 16px;
-  right: 16px;
-  font-size: 11px;
-  z-index: 2;
-}
-html[data-mode] .portfolio-root .project-index-entry .project-open {
-  width: 38px;
-  height: 38px;
-}
-html[data-mode] .portfolio-root .project-index-entry .project-quick {
-  width: 36px;
-  height: 36px;
-}
-html[data-mode]
-  .portfolio-root
-  .project-index-list.compact-index
-  .project-index-entry
-  .project-card {
-  flex-direction: row;
-  flex-wrap: wrap;
-}
 /* readable small text everywhere */
 html[data-mode] .portfolio-root .work-end,
-html[data-mode] .portfolio-root .gallery-count,
-html[data-mode] .portfolio-root .exhibit-copy > p,
-html[data-mode] .portfolio-root .desk-mode-controls button,
-html[data-mode] .portfolio-root .collection-buttons small,
-html[data-mode] .portfolio-root .sidebar-source {
+html[data-mode] .portfolio-root .desk-mode-controls button {
   font-size: 12px;
-}
-html[data-mode] .portfolio-root .exhibit-copy > p {
-  font-size: 16px;
-  color: var(--m-graphite);
-}
-html[data-mode] .portfolio-root .exhibit-copy .button {
-  font-size: 13px;
-}
-html[data-mode] .portfolio-root .classification-note {
-  font-size: 12px;
-}
-html[data-mode] .portfolio-root .exhibit-art .mini-anim {
-  height: 100%;
-  max-height: 340px;
-  object-fit: contain;
 }
 
 /* ---------- contact band and light-only fixes ---------- */
@@ -1219,9 +963,6 @@ html[data-mode="creative"] .skills-marquee li::after {
   50% {
     transform: rotate(3deg) translateY(-3px);
   }
-}
-
-@media (prefers-reduced-motion: reduce) {
 }
 
 /* ---------- project page loop ---------- */

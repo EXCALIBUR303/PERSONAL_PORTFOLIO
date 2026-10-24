@@ -495,7 +495,7 @@ html[data-mode="creative"] .portfolio-root {
   /* ---------- home hero: the studio map ---------- */
   .c-hero {
     position: relative;
-    padding: clamp(14px, 2.4vw, 30px) 0 clamp(48px, 6vw, 90px);
+    padding: clamp(14px, 2.4vw, 30px) 0 clamp(32px, 4vw, 56px);
   }
   .c-hero-top {
     display: grid;
@@ -2345,6 +2345,19 @@ html[data-mode="creative"] .portfolio-root {
     outline: 3px solid var(--c-cobalt);
     outline-offset: 3px;
   }
+}
+
+/* Press feedback shared with the Professional page (see micro.css). */
+html[data-mode="creative"] .portfolio-root .c-pin:active,
+html[data-mode="creative"] .portfolio-root .c-surprise:active,
+html[data-mode="creative"] .portfolio-root .c-btn:active,
+html[data-mode="creative"] .portfolio-root .c-open:active,
+html[data-mode="creative"] .portfolio-root .c-card:active {
+  transform: scale(var(--mi-press));
+  transition-duration: 80ms;
+}
+html[data-mode="creative"] .portfolio-root .c-pin-check-pop {
+  display: inline-grid;
 }
 
 @media (prefers-reduced-motion: reduce) {

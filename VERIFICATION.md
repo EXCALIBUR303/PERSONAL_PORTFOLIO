@@ -1,3 +1,5 @@
+> **Out of date.** This file records the earlier V3 baseline (50 tests, before the hero scenes, portal ride and gallery rewrite). The suite now has 97 tests; see the README. It has not been regenerated.
+
 # Verification — Devfolio V3
 
 Verified 22 October 2026 in managed Linux with Node.js 24.19.0, Python 3.12 and Chromium 154.0.8037.57. Mac startup commands are documented; physical Mac/Safari execution is not claimed.

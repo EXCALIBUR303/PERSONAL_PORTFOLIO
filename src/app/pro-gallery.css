@@ -65,7 +65,8 @@
   box-shadow: 3px 3px 0 var(--m-cobalt);
   border-color: var(--m-cobalt);
 }
-.pg .pg-search input {
+html[data-mode] .portfolio-root .pg .pg-search input,
+html[data-mode] .portfolio-root .pg .pg-search input:focus {
   flex: 1;
   border: 0;
   border-radius: 0;
