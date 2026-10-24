@@ -1,4 +1,5 @@
 "use client";
+import Highlights from "../about-highlights";
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Asterisk, Sparkles } from "lucide-react";
@@ -145,9 +146,7 @@ export function CreativeAbout() {
               </li>
             ))}
           </ul>
-          <a className="c-link" href="#chapters">
-            Explore the chapters <ArrowUpRight size={15} aria-hidden="true" />
-          </a>
+          <Highlights variant="creative" />
         </div>
       </div>
     </section>

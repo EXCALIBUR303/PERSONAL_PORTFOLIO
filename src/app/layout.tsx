@@ -13,6 +13,8 @@ import "./universe.css";
 import "./modes.css";
 import "./hero.css";
 import "./lens.css";
+import "./scenes.css";
+import "./world-shift.css";
 import "./project.css";
 import "./creative.css";
 import AppFrame from "@/components/app-frame";
@@ -98,6 +100,7 @@ export default function RootLayout({
         className={`${display.variable} ${body.variable} ${playfair.variable} ${mono.variable} ${instrument.variable} ${familjen.variable}`}
       >
         <AppFrame>{children}</AppFrame>
+        <div className="ws-ring" aria-hidden="true" />
       </body>
     </html>
   );

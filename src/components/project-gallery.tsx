@@ -306,8 +306,8 @@ export default function ProjectGallery() {
           <span>
             SOURCE EVIDENCE, EXECUTION STATUS & DEMO OPTIONS INSIDE EACH WORLD.
           </span>
-          <a href="#engine">
-            INSPECT THE SYSTEMS <ArrowUpRight size={14} />
+          <a href="#skills">
+            SEE THE TOOLKIT <ArrowUpRight size={14} />
           </a>
         </div>
       </div>

@@ -28,7 +28,6 @@ const loadFeatures = () =>
 const navigation = [
   { id: "projects", name: "Worlds" },
   { id: "skills", name: "Toolkit" },
-  { id: "engine", name: "Engine" },
   { id: "about", name: "About" },
   { id: "contact", name: "Contact" },
 ];

@@ -295,3 +295,34 @@ test("Creative contact is a guided terminal that only prepares a draft", async (
   await page.getByRole("button", { name: "Start over" }).click();
   await expect(page.locator(".c-term-choices button")).toHaveCount(4);
 });
+
+test("World Shift reveals the other mode in place, and rapid toggling settles", async ({
+  page,
+}) => {
+  await page.goto("/projects/mazera-ai-maze-solver/");
+  await page.evaluate(() => ((window as unknown as { marker: number }).marker = 1));
+  await page.getByRole("button", { name: "Creative" }).click();
+  await expect(html(page)).toHaveAttribute("data-mode", "creative");
+  await expect(html(page)).not.toHaveAttribute("data-shift", /.*/, {
+    timeout: 3000,
+  });
+  expect(
+    await page.evaluate(() => (window as unknown as { marker: number }).marker),
+  ).toBe(1);
+  expect(page.url()).toContain("/projects/mazera-ai-maze-solver/");
+  await page.evaluate(async () => {
+    const click = (m: string) =>
+      document.querySelector<HTMLElement>(`[data-mode-option="${m}"]`)!.click();
+    click("pro");
+    await new Promise((r) => setTimeout(r, 90));
+    click("creative");
+    await new Promise((r) => setTimeout(r, 60));
+    click("pro");
+  });
+  await expect(html(page)).toHaveAttribute("data-mode", "pro");
+  await expect(html(page)).not.toHaveAttribute("data-shift", /.*/, {
+    timeout: 3000,
+  });
+  expect(await page.evaluate(() => document.documentElement.getAttribute("style") || "")).toBe("");
+  expect(await page.evaluate(() => localStorage.getItem("portfolio-mode"))).toBe("pro");
+});

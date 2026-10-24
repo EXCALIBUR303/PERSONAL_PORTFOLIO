@@ -145,7 +145,7 @@ export default function Contact() {
   return (
     <section id="contact" className="contact-section section-pad">
       <div className="container">
-        <SectionLabel number="07">GOOD THINGS START WITH A HELLO</SectionLabel>
+        <SectionLabel number="04">GOOD THINGS START WITH A HELLO</SectionLabel>
         <div className="contact-grid">
           <Reveal>
             <h2>

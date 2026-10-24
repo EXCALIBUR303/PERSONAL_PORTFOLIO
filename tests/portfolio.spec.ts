@@ -27,18 +27,12 @@ test("home renders all chapters with valid anchors and no runtime errors", async
   await expect(page.locator("h1")).toHaveText(
     "Hi, I'm Sidharth. I build intelligent systems, and make them explorable.",
   );
-  for (const id of [
-    "projects",
-    "skills",
-    "engine",
-    "about",
-    "education",
-    "experience",
-    "milestones",
-    "lab",
-    "contact",
-  ])
+  for (const id of ["projects", "skills", "about", "highlights", "contact"])
     await expect(page.locator(`#${id}`)).toBeVisible();
+  // Removed from the home page: redundant with project pages, or decoration.
+  for (const id of ["engine", "lab", "chapters"])
+    await expect(page.locator(`#${id}`)).toHaveCount(0);
+  await expect(page.getByText(/not provided/i)).toHaveCount(0);
   const broken = await page.locator('a[href^="#"]').evaluateAll((links) =>
     links
       .filter((link) => {
@@ -199,18 +193,8 @@ for (const project of projects)
     expect(errors).toEqual([]);
   });
 
-test("Dimension Engine and toolkit selections reveal real project context", async ({
-  page,
-}) => {
-  await page.goto("/#engine");
-  await page
-    .getByLabel("Project architecture")
-    .selectOption("smart-parking-dbms");
-  const engine = page.locator("#engine");
-  await engine.getByRole("button", { name: "Allocation transaction" }).click();
-  await expect(engine.locator(".component-inspector")).toContainText(
-    "row locks",
-  );
+test("toolkit selections reveal real project context", async ({ page }) => {
+  await page.goto("/#skills");
   await page
     .locator("#skills")
     .getByRole("button", { name: "PostgreSQL", exact: true })
@@ -439,33 +423,6 @@ test("Mazera is a College project everywhere it is shown", async ({ page }) => {
   await expect(
     page.locator(".project-card h3").filter({ hasText: "Mazera" }),
   ).toHaveCount(0);
-});
-
-test("Color Field controls and reduced-motion CSS are preserved", async ({
-  page,
-}) => {
-  await page.goto("/#lab");
-  const lab = page.locator("#lab");
-  await lab.getByRole("button", { name: "Coral & blue" }).click();
-  await expect(
-    lab.getByRole("button", { name: "Coral & blue" }),
-  ).toHaveAttribute("aria-pressed", "true");
-  const slider = lab.getByRole("slider", { name: "Spread" });
-  await slider.focus();
-  await page.keyboard.press("ArrowRight");
-  await expect(slider).toHaveValue("46");
-  await lab.getByRole("button", { name: "Pause", exact: true }).click();
-  await expect(
-    lab.getByRole("button", { name: "Play", exact: true }),
-  ).toHaveAttribute("aria-pressed", "true");
-  await lab.getByRole("button", { name: "Reset color field" }).click();
-  await expect(slider).toHaveValue("45");
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  expect(
-    await page
-      .locator(".circle-a")
-      .evaluate((el) => getComputedStyle(el).animationName),
-  ).toBe("none");
 });
 
 test("configured email and profile clipboard work without a delivery claim", async ({

@@ -1,0 +1,110 @@
+/*
+ * World Shift (see src/lib/world-shift.ts). GSAP tweens the --ws-* variables on
+ * <html>; these rules turn them into the reveal circle, the accent ring on its
+ * edge and the receding old world. The pseudo-element animations only hold the
+ * transition open for its length; they do not move anything themselves.
+ */
+@keyframes ws-hold {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+  }
+}
+::view-transition {
+  pointer-events: none;
+}
+html[data-shift]::view-transition-old(root),
+html[data-shift]::view-transition-new(root) {
+  animation: ws-hold 760ms linear both;
+  mix-blend-mode: normal;
+}
+html[data-shift]::view-transition-old(root) {
+  transform: scale(var(--ws-old, 1));
+  transform-origin: var(--ws-x) var(--ws-y);
+}
+html[data-shift]::view-transition-new(root) {
+  clip-path: circle(var(--ws-r, 0px) at var(--ws-x) var(--ws-y));
+}
+html[data-shift]::view-transition-group(ws-ring) {
+  animation: none;
+}
+html[data-shift]::view-transition-old(ws-ring) {
+  display: none;
+}
+html[data-shift]::view-transition-new(ws-ring) {
+  animation: ws-hold 760ms linear both;
+}
+.ws-ring {
+  display: none;
+}
+html[data-shift] .ws-ring {
+  --ws-a: #2f4bf5;
+  --ws-b: #ff6538;
+  --ws-in: calc(var(--ws-r) - var(--ws-w));
+  --ws-mid: calc(var(--ws-r) - var(--ws-w) / 2);
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  view-transition-name: ws-ring;
+  background: radial-gradient(
+    circle at var(--ws-x) var(--ws-y),
+    transparent var(--ws-in),
+    var(--ws-a) var(--ws-in),
+    var(--ws-a) var(--ws-mid),
+    var(--ws-b) var(--ws-mid),
+    var(--ws-b) var(--ws-r),
+    transparent var(--ws-r)
+  );
+}
+html[data-shift="pro"] .ws-ring {
+  --ws-a: #ff6538;
+  --ws-b: #2f4bf5;
+}
+
+/* Annotation layers the shift intro draws (shift-intro.ts). */
+html[data-mode] .portfolio-root {
+  .ws-grid {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .ws-grid line {
+    stroke: #17171d;
+    stroke-opacity: 0.06;
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+  .hx-pro .container {
+    position: relative;
+    z-index: 1;
+  }
+  .c-scribble.c-draw svg path {
+    animation: none;
+  }
+  .c-doodle {
+    position: absolute;
+    top: -46px;
+    right: 18px;
+    width: 92px;
+    height: 54px;
+    fill: none;
+    stroke: var(--c-ink, #17171d);
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transform: rotate(8deg);
+    pointer-events: none;
+  }
+  @media (max-width: 760px) {
+    .c-doodle {
+      display: none;
+    }
+  }
+}

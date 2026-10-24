@@ -1,0 +1,511 @@
+/*
+ * Hero scenes: the 3D stage (s3-*) and the flat scenes (fl-*). They read the
+ * --m-* tokens, so the same markup fits both modes.
+ */
+html[data-mode] .portfolio-root {
+  .s3-picker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 10px clamp(14px, 2vw, 22px) 0;
+  }
+  .s3-picker > span {
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--m-graphite);
+    margin-right: 4px;
+  }
+  .s3-picker button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    padding: 0 12px;
+    border: 1.5px solid var(--m-ink);
+    border-radius: 999px;
+    background: var(--m-card);
+    color: var(--m-ink);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .s3-picker button:hover {
+    background: var(--m-lime);
+  }
+  .s3-picker button[aria-pressed="true"] {
+    background: var(--m-ink);
+    color: #fff;
+  }
+  .s3-picker button:focus-visible {
+    outline: 3px solid var(--m-cobalt);
+    outline-offset: 2px;
+  }
+
+  .s3-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .s3-toolbar > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--m-graphite);
+  }
+  .s3-stage,
+  .s3-loading {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    min-height: 260px;
+    max-height: 460px;
+    border: 1.5px solid var(--m-ink);
+    border-radius: 8px;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 50% 40%, #ffffff 0%, transparent 70%),
+      linear-gradient(#17171d0d 1px, transparent 1px) 0 0 / 24px 24px,
+      linear-gradient(90deg, #17171d0d 1px, transparent 1px) 0 0 / 24px 24px,
+      var(--m-paper);
+    touch-action: none;
+  }
+  .s3-loading {
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    color: var(--m-graphite);
+    touch-action: auto;
+  }
+  .s3-stage canvas {
+    display: block;
+    cursor: grab;
+  }
+  .s3-stage canvas:active {
+    cursor: grabbing;
+  }
+  @media (max-width: 560px) {
+    .s3-stage,
+    .s3-loading {
+      aspect-ratio: 1 / 1;
+      min-height: 0;
+    }
+  }
+  .s3-label {
+    padding: 2px 7px;
+    border: 1.5px solid var(--m-ink);
+    border-radius: 999px;
+    background: var(--m-card);
+    color: var(--m-ink);
+    font-family: var(--font-mono-set);
+    font-size: 10.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .s3-label[data-active] {
+    background: var(--m-ink);
+    color: #fff;
+  }
+  .s3-parts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .s3-parts button,
+  .s3-flat button {
+    min-height: 30px;
+    padding: 0 10px;
+    border: 1.5px solid #17171d55;
+    border-radius: 6px;
+    background: var(--m-card);
+    color: var(--m-ink);
+    font-size: 12.5px;
+    cursor: pointer;
+  }
+  .s3-parts button[aria-pressed="true"],
+  .s3-flat button[aria-pressed="true"] {
+    border-color: var(--m-ink);
+    background: var(--m-ink);
+    color: #fff;
+  }
+  .s3-parts button:focus-visible,
+  .s3-flat button:focus-visible,
+  .s3-say :is(input, button):focus-visible {
+    outline: 3px solid var(--m-cobalt);
+    outline-offset: 2px;
+  }
+  @media (pointer: coarse) {
+    .s3-parts button,
+    .s3-picker button {
+      min-height: 44px;
+    }
+  }
+  .s3-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .s3-hops {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: hop;
+  }
+  .s3-hops li {
+    counter-increment: hop;
+    display: flex;
+    gap: 8px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--m-graphite);
+  }
+  .s3-hops li::before {
+    content: counter(hop);
+    font-family: var(--font-mono-set);
+    font-weight: 700;
+  }
+  .s3-hops li[data-done] {
+    color: var(--m-ink);
+  }
+  .s3-hops li[aria-current="step"] {
+    background: var(--m-ink);
+    color: #fff;
+  }
+  .s3-hint,
+  .s3-fine {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--m-graphite);
+  }
+  .s3-flat {
+    display: grid;
+    gap: 8px;
+  }
+  .s3-flat-layer {
+    display: grid;
+    gap: 6px;
+    padding: 10px;
+    border: 1.5px dashed #17171d66;
+    border-radius: 8px;
+  }
+  .s3-flat-layer > span {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--m-graphite);
+  }
+  .s3-flat-layer > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .s3-speed {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+  }
+  .s3-speed input {
+    accent-color: var(--m-cobalt);
+  }
+  .s3-say {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .s3-say label {
+    font-size: 11px;
+    color: var(--m-graphite);
+  }
+  .s3-say input {
+    flex: 1 1 160px;
+    min-height: 36px;
+    padding: 0 10px;
+    border: 1.5px solid var(--m-ink);
+    border-radius: 6px;
+    background: var(--m-card);
+    color: var(--m-ink);
+    font: inherit;
+    font-size: 14px;
+  }
+  .s3-say button {
+    min-height: 36px;
+    padding: 0 14px;
+    border: 1.5px solid var(--m-ink);
+    border-radius: 6px;
+    background: var(--m-ink);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* flat scenes */
+  .fl-map,
+  .fl-grid {
+    width: 100%;
+    height: auto;
+    max-height: 420px;
+    border: 1.5px solid var(--m-ink);
+    border-radius: 8px;
+    background: var(--m-card);
+  }
+  .fl-ground {
+    fill: #f1efe6;
+  }
+  .fl-stop circle {
+    fill: var(--m-card);
+    stroke: var(--m-ink);
+    stroke-width: 0.8;
+  }
+  .fl-stop circle[data-end] {
+    fill: var(--m-tan);
+  }
+  .fl-stop text {
+    font-family: var(--font-mono-set);
+    font-size: 4.2px;
+    font-weight: 700;
+    fill: var(--m-ink);
+  }
+  .fl-stop[data-out] {
+    opacity: 0.3;
+  }
+  .fl-small {
+    font-family: var(--font-mono-set);
+    font-size: 3.2px !important;
+    font-weight: 500 !important;
+    fill: var(--m-graphite);
+  }
+  .fl-depot {
+    fill: var(--m-ink);
+  }
+  .fl-depot-text {
+    font-family: var(--font-mono-set);
+    font-size: 4.4px;
+    font-weight: 700;
+    fill: #fff;
+  }
+  .fl-tree {
+    stroke: var(--m-cobalt);
+    stroke-width: 1.2;
+    stroke-dasharray: 2 1.4;
+  }
+  .fl-route {
+    fill: #2f4bf514;
+    stroke: var(--m-ink);
+    stroke-width: 1.1;
+    stroke-linejoin: round;
+  }
+  .fl-edge {
+    stroke: #17171d66;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+  .fl-edge[data-feature="stairs"] {
+    stroke-dasharray: 1 1.6;
+  }
+  .fl-edge[data-feature="steep"] {
+    stroke: #b23a14;
+  }
+  .fl-edge[data-off] {
+    stroke: #17171d22;
+  }
+  .fl-edge[data-used] {
+    stroke: var(--m-cobalt);
+    stroke-width: 3.2;
+  }
+  .fl-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--m-ink);
+  }
+  .fl-check input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--m-cobalt);
+  }
+  .fl-passages {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .fl-passages li {
+    padding: 8px 10px;
+    border: 1.5px solid #17171d33;
+    border-radius: 6px;
+    background: var(--m-card);
+  }
+  .fl-passages li[data-top] {
+    border-color: var(--m-ink);
+    box-shadow: inset 4px 0 0 var(--station-accent, var(--m-tan));
+  }
+  .fl-passages span {
+    font-size: 10.5px;
+    color: var(--m-graphite);
+  }
+  .fl-passages p {
+    margin: 2px 0 0;
+    font-size: 13.5px;
+    line-height: 1.4;
+  }
+  .fl-scores {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--m-graphite);
+  }
+  .fl-scores b {
+    color: var(--m-ink);
+  }
+  .fl-fence {
+    margin: 0;
+    padding: 12px;
+    border-radius: 6px;
+    background: var(--m-ink);
+    color: #e9ebf3;
+    font-family: var(--font-mono-set);
+    font-size: 12px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .fl-answer {
+    padding: 14px;
+    border: 1.5px solid var(--m-ink);
+    border-radius: 8px;
+    background: var(--m-card);
+  }
+  .fl-answer p {
+    margin: 0 0 6px;
+    font-size: 16px;
+    line-height: 1.45;
+  }
+  .fl-answer span {
+    font-size: 11px;
+    color: var(--m-graphite);
+  }
+  .fl-wall {
+    fill: var(--m-ink);
+  }
+  .fl-fog {
+    fill: #dedad0;
+  }
+  .fl-seen {
+    fill: #f8f7f2;
+  }
+  .fl-agent {
+    fill: var(--m-cobalt);
+  }
+  .fl-found {
+    fill: var(--m-tan);
+    stroke: var(--m-ink);
+    stroke-width: 0.6;
+  }
+  .fl-hidden {
+    fill: #17171d18;
+  }
+}
+html[data-mode] .portfolio-root {
+  .s3-labels {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .s3-labels .s3-label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    will-change: transform;
+  }
+}
+html[data-mode] .portfolio-root .s3-labels .s3-label {
+  visibility: hidden;
+}
+
+/* About: highlights that replaced the separate Chapters section */
+html[data-mode] .portfolio-root {
+  .about-highlights,
+  .c-highlights {
+    margin-top: 28px;
+  }
+  .about-highlights h3,
+  .c-highlights h3 {
+    margin: 0 0 10px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--m-graphite);
+  }
+  .about-highlights ul,
+  .c-highlights ul {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .about-highlights a,
+  .c-highlights a {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 12px;
+    padding: 12px 14px;
+    border: var(--m-edge);
+    border-radius: var(--radius, 4px);
+    background: var(--m-card);
+    color: var(--m-ink);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .about-highlights a:hover,
+  .c-highlights a:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--m-shadow);
+  }
+  .about-highlights a:focus-visible,
+  .c-highlights a:focus-visible {
+    outline: 3px solid var(--m-cobalt);
+    outline-offset: 2px;
+  }
+  .about-highlights strong,
+  .c-highlights strong {
+    font-size: 15px;
+  }
+  .about-highlights span,
+  .c-highlights span {
+    grid-column: 1;
+    font-size: 13.5px;
+    line-height: 1.45;
+    color: var(--m-graphite);
+  }
+  .about-highlights svg,
+  .c-highlights svg {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+  }
+  .c-highlights a {
+    border-radius: 14px;
+    border-width: 2px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-mode] .portfolio-root :is(.about-highlights, .c-highlights) a {
+    transition: none;
+  }
+}

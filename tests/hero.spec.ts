@@ -3,38 +3,40 @@ import { test, expect, type Page } from "@playwright/test";
 const setMode = (page: Page, mode: "pro" | "creative") =>
   page.addInitScript((m) => localStorage.setItem("portfolio-mode", m), mode);
 
-test.describe("Professional hero: three project visualisations", () => {
+test.describe("Professional hero: project scenes in three categories", () => {
   test.beforeEach(async ({ page }) => {
     await setMode(page, "pro");
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/");
   });
 
-  test("each lens is tied to a real project and says what kind of visual it is", async ({
+  const pickScene = async (page: Page, category: string, scene: string) => {
+    await page.getByRole("button", { name: category, exact: true }).click();
+    await page
+      .locator(".s3-picker")
+      .getByRole("button", { name: new RegExp(`^${scene}( \\(3D\\))?$`) })
+      .click();
+  };
+
+  test("every category offers three real-project scenes that say what they are", async ({
     page,
   }) => {
-    await expect(page.locator(".hx-pro canvas")).toHaveCount(0);
     const cases = [
-      ["01 / Systems", "Illustrative sequence", "smart-parking-dbms"],
-      ["02 / Algorithms", "Working demo", "mazera-ai-maze-solver"],
-      [
-        "03 / Intelligence",
-        "Sample-data walkthrough",
-        "predictive-maintenance",
-      ],
+      ["01 / Systems", "AURA studio", "Illustrative 3D model", "aura"],
+      ["01 / Systems", "SmartPark", "Illustrative sequence", "smart-parking-dbms"],
+      ["01 / Systems", "Private Local AI", "Sample-data walkthrough", "private-local-ai"],
+      ["02 / Algorithms", "Mazera", "Working demo", "mazera-ai-maze-solver"],
+      ["02 / Algorithms", "Last Mile DAA", "Sample-data walkthrough", "last-mile-daa"],
+      ["02 / Algorithms", "PathAble", "Sample-data walkthrough", "pathable"],
+      ["03 / Intelligence", "Robot dog", "Simulation", "quadruped-rl"],
+      ["03 / Intelligence", "SWARMMIND", "Simulation", "swarmmind"],
+      ["03 / Intelligence", "Predictive Maintenance", "Sample-data walkthrough", "predictive-maintenance"],
     ] as const;
-    for (const [name, badge, slug] of cases) {
-      await page.getByRole("button", { name, exact: true }).click();
-      await expect(
-        page.getByRole("button", { name, exact: true }),
-      ).toHaveAttribute("aria-pressed", "true");
+    for (const [category, scene, badge, slug] of cases) {
+      await pickScene(page, category, scene);
+      await expect(page.locator(".s3-picker button")).toHaveCount(3);
       await expect(page.locator(".lz-badge")).toHaveText(badge);
-      await expect(page.locator(".lz-caption")).toContainText(
-        "What you are seeing.",
-      );
-      await expect(page.locator(".lz-caption")).toContainText(
-        "Why it is here.",
-      );
+      await expect(page.locator(".lz-caption")).toContainText("Why it is here.");
       await expect(page.locator(".lz-caption a")).toHaveAttribute(
         "href",
         `/projects/${slug}/`,
@@ -42,85 +44,107 @@ test.describe("Professional hero: three project visualisations", () => {
     }
   });
 
-  test("Systems: a plain check-then-write conflicts, row-locked allocation does not", async ({
+  test("AURA: a request crosses the bridge hop by hop, and services cannot send", async ({
     page,
   }) => {
-    const next = page.getByRole("button", { name: "Next step" });
-    for (let i = 0; i < 3; i++) await next.click();
-    await expect(page.locator(".lz-verdict")).toContainText("Conflict");
-    await page.getByRole("button", { name: "Row-locked allocation" }).click();
-    await expect(page.locator(".lz-verdict")).toHaveCount(0);
-    for (let i = 0; i < 3; i++) await next.click();
-    await expect(page.locator(".lz-verdict")).toContainText("Safe");
-    await expect(page.locator(".lz-bay")).toContainText("Occupied by Car 1");
+    await page.locator(".s3-parts").getByRole("button", { name: "AI lab" }).click();
+    await expect(page.locator(".s3-panel")).toContainText("still mocked");
+    await page.getByRole("button", { name: "Send a request" }).click();
+    const hops = page.locator(".s3-hops li");
+    await expect(hops).toHaveCount(7);
+    await expect(hops.nth(3)).toContainText("AI service");
+    await expect(hops.last()).toHaveAttribute("data-done", "true", { timeout: 10_000 });
+    await page.locator(".s3-parts").getByRole("button", { name: "Bridge router" }).click();
+    await expect(page.getByRole("button", { name: "Send a request" })).toBeDisabled();
   });
 
-  test("Algorithms: six real solvers run on the maze and the grid can change", async ({
+  test("Mazera: six solvers, step and reset, and the grid can change", async ({
     page,
   }) => {
-    await page
-      .getByRole("button", { name: "02 / Algorithms", exact: true })
-      .click();
+    await pickScene(page, "02 / Algorithms", "Mazera");
     const chips = page.locator(".lz-chips button");
     await expect(chips).toHaveCount(6);
-    await expect(page.locator(".lz-stats")).toContainText("steps");
+    const explored = page.locator(".lz-stats dd").first();
+    await page.getByRole("button", { name: "Reset search" }).click();
+    await expect(explored).toHaveText(/^0/);
+    await page.getByRole("button", { name: "Step" }).click();
+    await expect(explored).toHaveText(/^1/);
     const counts: number[] = [];
-    for (const name of [
-      "BFS",
-      "DFS",
-      "Dijkstra",
-      "A*",
-      "Greedy",
-      "Bidirectional",
-    ]) {
-      const chip = page.getByRole("button", {
-        name: new RegExp(`^${name.replace("*", "\\*")} `),
-      });
+    for (const name of ["BFS", "DFS", "Dijkstra", "A*", "Greedy", "Bidirectional"]) {
+      const chip = page.getByRole("button", { name: new RegExp(`^${name.replace("*", "\\*")} `) });
       await chip.click();
       await expect(chip).toHaveAttribute("aria-pressed", "true");
-      await expect(page.locator(".lz-maze-svg .lz-path").first()).toBeVisible();
-      counts.push(
-        Number((await chip.locator("small").innerText()).replace(/\D/g, "")),
-      );
+      counts.push(Number((await chip.locator("small").innerText()).replace(/\D/g, "")));
     }
     expect(new Set(counts).size).toBeGreaterThan(1);
     await page.getByRole("button", { name: "Open field", exact: true }).click();
-    await page.getByRole("button", { name: /^BFS / }).click();
-    const bfs = Number(
-      (
-        await page
-          .getByRole("button", { name: /^BFS / })
-          .locator("small")
-          .innerText()
-      ).replace(/\D/g, ""),
-    );
-    const greedy = Number(
-      (
-        await page
-          .getByRole("button", { name: /^Greedy / })
-          .locator("small")
-          .innerText()
-      ).replace(/\D/g, ""),
-    );
-    expect(greedy).toBeLessThan(bfs);
+    const count = async (name: string) =>
+      Number(
+        (await page.getByRole("button", { name: new RegExp(`^${name} `) }).locator("small").innerText()).replace(/\D/g, ""),
+      );
+    expect(await count("Greedy")).toBeLessThan(await count("BFS"));
     await page.getByRole("button", { name: "New maze" }).click();
-    await expect(page.locator(".lz-maze-svg")).toBeVisible();
+    await expect(page.locator(".lz-note")).toContainText(".");
   });
 
-  test("Intelligence: splitting by window leaks engines across sets, splitting by engine does not", async ({
+  test("Robot dog: a typed command goes through the documented chain", async ({
     page,
   }) => {
-    await page
-      .getByRole("button", { name: "03 / Intelligence", exact: true })
-      .click();
-    const shared = page.locator(".lz-stats dd").first();
-    await expect(shared).not.toHaveText(/^0/);
-    await expect(page.locator(".lz-note")).toContainText("Leaky.");
-    await page.getByRole("button", { name: "Split by engine" }).click();
-    await expect(shared).toHaveText(/^0/);
-    await expect(page.locator(".lz-note")).toContainText("Clean.");
-    await page.getByRole("button", { name: "Reshuffle" }).click();
-    await expect(shared).toHaveText(/^0/);
+    await pickScene(page, "03 / Intelligence", "Robot dog");
+    await page.getByLabel("Or type a command").fill("please turn left");
+    await page.getByRole("button", { name: "Send", exact: true }).click();
+    const stages = page.locator(".s3-dog .lz-stages li");
+    await expect(stages.first()).toContainText("please turn left");
+    await expect(stages.nth(1)).toContainText("Turning left.");
+    await expect(page.getByRole("button", { name: "Turn left" })).toHaveAttribute("aria-pressed", "true");
+    await page.getByLabel("Or type a command").fill("do a backflip");
+    await page.getByRole("button", { name: "Send", exact: true }).click();
+    await expect(page.locator(".s3-dog")).toContainText("Not understood");
+  });
+
+  test("PathAble: a wheelchair route avoids stairs and reroutes after a report", async ({
+    page,
+  }) => {
+    await pickScene(page, "02 / Algorithms", "PathAble");
+    const note = page.locator(".fl-pathable .lz-note");
+    await expect(note).toContainText("Walking: Main gate → Quad → Library → CS lab");
+    await page.getByRole("button", { name: "Wheelchair" }).click();
+    await expect(note).toContainText("Cafe → Library → CS lab");
+    await page.getByLabel("Community report: the cafe ramp is blocked").check();
+    await expect(note).toContainText("Car park");
+  });
+
+  test("Last Mile: stages run from orders to compared routes", async ({ page }) => {
+    await pickScene(page, "02 / Algorithms", "Last Mile DAA");
+    const next = page.getByRole("button", { name: "Next stage" });
+    await next.click();
+    await page.getByRole("button", { name: "Greedy by value per kg" }).click();
+    await expect(page.locator(".fl-lastmile .lz-note")).toContainText("value 46");
+    await page.getByRole("button", { name: "Knapsack · best fit" }).click();
+    await expect(page.locator(".fl-lastmile .lz-note")).toContainText("value 48");
+    await next.click();
+    await next.click();
+    const chips = page.locator(".fl-lastmile .lz-chips button");
+    await expect(chips).toHaveCount(4);
+    const len = async (i: number) => Number((await chips.nth(i).locator("small").innerText()).replace(/[^\d.]/g, ""));
+    expect(await len(0)).toBeGreaterThan(await len(3));
+  });
+
+  test("Private Local AI: the answer is a fenced, cited passage", async ({ page }) => {
+    await pickScene(page, "01 / Systems", "Private Local AI");
+    for (let i = 0; i < 3; i++) await page.getByRole("button", { name: "Next step" }).click();
+    await expect(page.locator(".fl-fence")).toContainText("UNTRUSTED");
+    await page.getByRole("button", { name: "Next step" }).click();
+    await expect(page.locator(".fl-answer")).toContainText("Lab doors lock");
+    await expect(page.locator(".fl-answer")).toContainText("lab-handbook.pdf · p. 2");
+  });
+
+  test("SWARMMIND: both baselines run and are compared honestly", async ({ page }) => {
+    await pickScene(page, "03 / Intelligence", "SWARMMIND");
+    await expect(page.locator(".fl-swarm .lz-note")).toContainText("not SWARMMIND results");
+    await page.getByRole("button", { name: "Reset", exact: true }).click();
+    await page.getByRole("button", { name: "Step", exact: true }).click();
+    await expect(page.locator(".fl-swarm .lz-stats dd").first()).toHaveText(/^1/);
   });
 
   test("the hero is usable at phone width without sideways scrolling", async ({
@@ -128,14 +152,12 @@ test.describe("Professional hero: three project visualisations", () => {
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
-    const overflow = await page.evaluate(
-      () => document.documentElement.scrollWidth - innerWidth,
-    );
-    expect(overflow).toBeLessThanOrEqual(1);
-    for (const name of ["02 / Algorithms", "03 / Intelligence"]) {
+    for (const name of ["01 / Systems", "02 / Algorithms", "03 / Intelligence"]) {
       await page.getByRole("button", { name, exact: true }).click();
       const box = await page.locator(".lz").boundingBox();
       expect(box!.width).toBeLessThanOrEqual(390);
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+      expect(overflow).toBeLessThanOrEqual(1);
     }
   });
 });
@@ -183,7 +205,7 @@ test.describe("Creative home: the studio map", () => {
     );
   });
 
-  test("quick peek shows the lens visualisation for the three featured ideas", async ({
+  test("quick peek shows the project's scene where one exists", async ({
     page,
   }) => {
     await page
@@ -191,7 +213,8 @@ test.describe("Creative home: the studio map", () => {
       .getByRole("button", { name: /Mazera/ })
       .click();
     await page.getByRole("button", { name: "Quick peek" }).click();
-    await expect(page.locator(".c-peek .lz-maze-svg")).toBeVisible();
+    await expect(page.locator('.c-peek [data-scene="mazera"]')).toBeVisible();
+    await expect(page.locator(".c-peek .lz-chips button")).toHaveCount(6);
     await page.getByRole("button", { name: "Hide quick peek" }).click();
     await expect(page.locator(".c-peek")).toHaveCount(0);
     await page

@@ -1,24 +1,33 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useShiftIntro } from "./shift-intro";
 import { ArrowDown, ArrowUpRight, Github } from "lucide-react";
 import { profile } from "@/data/profile";
 import { projects } from "@/data/projects";
-import LensExplorer from "./lens/lens-explorer";
-import { stations, type DeskMode } from "./desk-data";
+import HeroScenes from "./scenes/scene-stage";
+import { accentOf, type CategoryId } from "./scenes/catalog";
 
-export type { DeskMode };
-
-/** Professional hero: copy on the left, the project visualisation (three lenses) on the right. */
+/** Professional hero: copy on the left, the project scenes on the right. */
 export default function EngineeringDesk() {
-  const [mode, setMode] = useState<DeskMode>("systems");
-  const station = stations.find((item) => item.id === mode)!;
+  const [category, setCategory] = useState<CategoryId>("systems");
+  const section = useRef<HTMLElement>(null);
+  useShiftIntro(section, "pro");
   const github = profile.socials.find((s) => s.name === "GitHub")?.url;
   return (
     <section
+      ref={section}
       className="hx hx-pro engineering-hero"
       aria-labelledby="hero-title"
-      style={{ "--station-accent": station.accent } as React.CSSProperties}
+      style={{ "--station-accent": accentOf(category) } as React.CSSProperties}
     >
+      <svg className="ws-grid" aria-hidden="true" preserveAspectRatio="none">
+        {Array.from({ length: 13 }, (_, i) => (
+          <line key={`v${i}`} x1={`${(i * 100) / 12}%`} y1="0" x2={`${(i * 100) / 12}%`} y2="100%" />
+        ))}
+        {Array.from({ length: 7 }, (_, i) => (
+          <line key={`h${i}`} x1="0" y1={`${(i * 100) / 6}%`} x2="100%" y2={`${(i * 100) / 6}%`} />
+        ))}
+      </svg>
       <div className="container hx-grid">
         <div className="hx-copy">
           <p className="hx-topline mono">
@@ -60,7 +69,7 @@ export default function EngineeringDesk() {
           </dl>
         </div>
         <div className="hx-visual">
-          <LensExplorer mode={mode} onModeChange={setMode} />
+          <HeroScenes onCategoryChange={setCategory} />
         </div>
       </div>
     </section>

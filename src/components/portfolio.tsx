@@ -1,14 +1,11 @@
 "use client";
-import { ArrowUpRight, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { profile } from "@/data/profile";
 import EngineeringDesk from "./engineering-desk";
-import SkillsMarquee from "./skills-marquee";
 import ProjectGallery from "./project-gallery";
 import GrowingToolkit from "./growing-toolkit";
-import DimensionEngine from "./dimension-engine";
-import Chapters from "./chapters";
-import ColorLab from "./color-lab";
 import Contact from "./contact";
+import Highlights from "./about-highlights";
 import { Reveal, SectionLabel } from "./ui";
 import type { CSSProperties } from "react";
 import { useMode } from "./mode";
@@ -28,7 +25,6 @@ export default function Portfolio() {
         <CreativeGallery />
         <CreativeToolkit />
         <CreativeAbout />
-        <Chapters number="04" />
         <CreativeContact />
       </main>
     );
@@ -36,13 +32,11 @@ export default function Portfolio() {
   return (
     <main id="main" tabIndex={-1}>
       <EngineeringDesk />
-      <SkillsMarquee />
       <ProjectGallery />
       <GrowingToolkit />
-      <DimensionEngine />
       <section id="about" className="about-section section-pad">
         <div className="container">
-          <SectionLabel number="04">THE PERSON BEHIND THE CODE</SectionLabel>
+          <SectionLabel number="03">THE PERSON BEHIND THE CODE</SectionLabel>
           <div className="about-grid">
             <Reveal className="about-visual">
               <span className="about-stamp mono">
@@ -92,16 +86,11 @@ export default function Portfolio() {
                   </span>
                 ))}
               </div>
-              <a className="about-chapters-link" href="#chapters">
-                Explore the chapters
-                <ArrowUpRight size={15} />
-              </a>
+              <Highlights variant="pro" />
             </Reveal>
           </div>
         </div>
       </section>
-      <Chapters />
-      <ColorLab />
       <Contact />
     </main>
   );

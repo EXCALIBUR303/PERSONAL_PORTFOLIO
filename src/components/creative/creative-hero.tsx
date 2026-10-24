@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useRef, useState } from "react";
+import { useShiftIntro } from "../shift-intro";
 import Link from "next/link";
 import {
   ArrowDown,
@@ -14,15 +15,10 @@ import { profile } from "@/data/profile";
 import { projects, type Project } from "@/data/projects";
 import { demoClassFor } from "@/data/demo-class";
 import { missionSteps, useExploration } from "@/lib/exploration";
-import { LensStage } from "../lens/lens-explorer";
+import { SceneStage } from "../scenes/scene-stage";
+import { sceneForSlug } from "../scenes/catalog";
 import { useGalleryFilter } from "../use-gallery-filter";
 import { districtFor, districts, toneFor } from "./identity";
-
-const lensOf = Object.fromEntries([
-  ["smart-parking-dbms", "systems"],
-  ["mazera-ai-maze-solver", "algorithms"],
-  ["predictive-maintenance", "computation"],
-] as const);
 
 /**
  * Creative home: a studio map. Every project is a station on one of three
@@ -36,6 +32,8 @@ export default function CreativeHero() {
   const { filtered, gallery } = useGalleryFilter();
   const { visited, stepsFor, markStep, reset } = useExploration();
   const brief = useRef<HTMLElement>(null);
+  const section = useRef<HTMLElement>(null);
+  useShiftIntro(section, "creative", { onLoad: true });
   const project = projects.find((p) => p.slug === slug) ?? projects[0];
   const matching = new Set(filtered.map((p) => p.slug));
   const filtering = filtered.length !== projects.length;
@@ -52,7 +50,7 @@ export default function CreativeHero() {
     (d) => d.id === districtFor(project.categories),
   )!;
   const demo = demoClassFor(project);
-  const lens = lensOf[project.slug];
+  const lens = sceneForSlug(project.slug)?.id;
   const done = stepsFor(project.slug);
 
   function choose(next: Project) {
@@ -80,7 +78,12 @@ export default function CreativeHero() {
   }
 
   return (
-    <section id="map" className="c-hero" aria-labelledby="hero-title">
+    <section
+      id="map"
+      ref={section}
+      className="c-hero"
+      aria-labelledby="hero-title"
+    >
       <div className="container">
         <div className="c-hero-top">
           <div className="c-hero-copy">
@@ -91,7 +94,7 @@ export default function CreativeHero() {
             <h1 id="hero-title" tabIndex={-1}>
               Hi, I&apos;m Sidharth. <br className="c-br" />I build{" "}
               <em className="c-mark">intelligent systems</em>, and make them{" "}
-              <em className="c-scribble">
+              <em className="c-scribble c-draw">
                 explorable
                 <svg
                   viewBox="0 0 220 16"
@@ -106,6 +109,14 @@ export default function CreativeHero() {
           </div>
           <div className="c-note">
             <span className="c-tape" aria-hidden="true" />
+            <svg
+              className="c-doodle c-draw"
+              viewBox="0 0 120 70"
+              aria-hidden="true"
+            >
+              <path d="M6 8 C 40 4, 80 18, 92 52" />
+              <path d="M80 44 L 93 56 L 104 40" />
+            </svg>
             <p>{profile.introduction}</p>
             <p className="c-note-how">
               Pick a station on the map for a short briefing and four missions.
@@ -227,7 +238,7 @@ export default function CreativeHero() {
             </div>
             {lens && peek && (
               <div className="c-peek">
-                <LensStage mode={lens} />
+                <SceneStage id={lens} />
               </div>
             )}
           </aside>

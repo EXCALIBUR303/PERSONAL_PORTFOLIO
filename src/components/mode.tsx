@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { Briefcase, Sparkles } from "lucide-react";
+import { worldShift } from "@/lib/world-shift";
 
 export type SiteMode = "pro" | "creative";
 export const MODE_KEY = "portfolio-mode";
@@ -22,22 +23,28 @@ const subscribe = (cb: () => void) => {
   };
 };
 
-export function useMode(): [SiteMode, (mode: SiteMode) => void] {
+export function useMode(): [
+  SiteMode,
+  (mode: SiteMode, origin?: { x: number; y: number }) => void,
+] {
   const mode = useSyncExternalStore<SiteMode>(subscribe, read, () => "pro");
-  const setMode = useCallback((next: SiteMode) => {
-    const root = document.documentElement;
-    if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      root.classList.add("mode-switching");
-      window.setTimeout(() => root.classList.remove("mode-switching"), 350);
-    }
-    root.dataset.mode = next;
-    try {
-      localStorage.setItem(MODE_KEY, next);
-    } catch {
-      /* storage can be blocked; the mode still applies for this visit */
-    }
-    listeners.forEach((cb) => cb());
-  }, []);
+  const setMode = useCallback(
+    (next: SiteMode, origin?: { x: number; y: number }) => {
+      const root = document.documentElement;
+      if (root.dataset.mode === next) return;
+      const apply = () => {
+        root.dataset.mode = next;
+        try {
+          localStorage.setItem(MODE_KEY, next);
+        } catch {
+          /* storage can be blocked; the mode still applies for this visit */
+        }
+        listeners.forEach((cb) => cb());
+      };
+      worldShift(next, apply, origin);
+    },
+    [],
+  );
   return [mode, setMode];
 }
 
@@ -53,7 +60,15 @@ export default function ModeSwitcher() {
       const target = event.target as HTMLElement | null;
       if (target?.matches("input, textarea, select, [contenteditable]")) return;
       if (event.altKey && event.code === "KeyM") {
-        setMode(read() === "pro" ? "creative" : "pro");
+        const next = read() === "pro" ? "creative" : "pro";
+        const button = document.querySelector<HTMLElement>(
+          `[data-mode-option="${next}"]`,
+        );
+        const box = button?.getBoundingClientRect();
+        setMode(
+          next,
+          box && { x: box.left + box.width / 2, y: box.top + box.height / 2 },
+        );
       }
     };
     window.addEventListener("keydown", onKey);
@@ -76,7 +91,13 @@ export default function ModeSwitcher() {
           className="mode-option"
           data-mode-option={id}
           aria-pressed={mode === id}
-          onClick={() => setMode(id)}
+          onClick={(event) => {
+            const box = event.currentTarget.getBoundingClientRect();
+            setMode(id, {
+              x: box.left + box.width / 2,
+              y: box.top + box.height / 2,
+            });
+          }}
         >
           <Icon size={14} aria-hidden="true" />
           <span>{label}</span>

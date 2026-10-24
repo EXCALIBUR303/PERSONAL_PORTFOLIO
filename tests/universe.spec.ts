@@ -16,7 +16,7 @@ test.beforeEach(async ({ page }) => {
     } as typeof original;
   });
 });
-test("desk lenses change the visualisation and its meaningful destination", async ({
+test("hero categories change the scene and its meaningful destination", async ({
   page,
 }) => {
   await page.goto("/");
@@ -33,7 +33,7 @@ test("desk lenses change the visualisation and its meaningful destination", asyn
     .click();
   await expect(page.locator(".lz-caption a")).toHaveAttribute(
     "href",
-    "/projects/predictive-maintenance/",
+    "/projects/quadruped-rl/",
   );
 });
 test("collections, type filters, and hardware empty states reflect owner classification", async ({

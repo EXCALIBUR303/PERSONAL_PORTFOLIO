@@ -11,8 +11,6 @@ export const profile = {
     "I’m a B.Tech Computer Science and Engineering student exploring how useful systems are built, from data and algorithms to the interfaces that make them understandable. My projects connect academic questions with independent experiments in AI, sustainability, databases, and interactive applications.",
   focus:
     "Intelligent systems, algorithms, sustainable engineering, and creative interfaces.",
-  background:
-    "B.Tech · Computer Science and Engineering. University and academic dates have not been provided.",
   interests: [
     "Intelligent systems",
     "Algorithms & simulation",
