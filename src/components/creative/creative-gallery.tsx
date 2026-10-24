@@ -48,6 +48,7 @@ function PinCard({
   return (
     <article
       className={`c-card c-card-${list ? "list" : span >= 6 ? "wide" : "std"}`}
+      data-ws-card={project.slug}
       data-tone={toneFor(project.slug)}
       style={
         {

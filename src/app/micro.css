@@ -1,0 +1,27 @@
+/*
+ * Microinteraction tokens shared by CSS and Motion (see `micro` in
+ * components/motion-config.ts, which holds the same numbers). Use these for
+ * hover, press and focus on anything clickable so every control answers the
+ * pointer the same way.
+ */
+:root {
+  --mi-fast: 160ms;
+  --mi-base: 240ms;
+  --mi-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --mi-lift: -3px;
+  --mi-press: 0.97;
+}
+
+/* Pressing a button or icon button sinks it slightly, in both modes. */
+.button:active,
+.icon-button:active:not(:disabled) {
+  transform: scale(var(--mi-press));
+  transition-duration: 80ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button:active,
+  .icon-button:active:not(:disabled) {
+    transform: none;
+  }
+}

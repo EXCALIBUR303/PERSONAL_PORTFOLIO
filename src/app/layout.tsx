@@ -17,7 +17,10 @@ import "./scenes.css";
 import "./world-shift.css";
 import "./project.css";
 import "./creative.css";
+import "./micro.css";
+import "./pro-gallery.css";
 import AppFrame from "@/components/app-frame";
+import PortalLayer from "@/components/portal/portal-layer";
 import { modeBootScript } from "@/components/mode";
 
 const display = localFont({
@@ -101,6 +104,7 @@ export default function RootLayout({
       >
         <AppFrame>{children}</AppFrame>
         <div className="ws-ring" aria-hidden="true" />
+        <PortalLayer />
       </body>
     </html>
   );

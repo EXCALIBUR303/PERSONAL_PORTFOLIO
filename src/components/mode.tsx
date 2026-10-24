@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { Briefcase, Sparkles } from "lucide-react";
-import { worldShift } from "@/lib/world-shift";
+import { prewarmPortal, worldShift } from "@/lib/world-shift";
 
 export type SiteMode = "pro" | "creative";
 export const MODE_KEY = "portfolio-mode";
@@ -83,6 +83,8 @@ export default function ModeSwitcher() {
       className="mode-switcher"
       role="group"
       aria-label="Site mode (Alt+M toggles)"
+      onPointerEnter={prewarmPortal}
+      onFocus={prewarmPortal}
     >
       {options.map(({ id, label, Icon }) => (
         <button

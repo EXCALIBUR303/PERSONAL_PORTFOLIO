@@ -152,6 +152,31 @@ test.describe("Professional hero: project scenes in three categories", () => {
     await expect(page.locator(".fl-swarm .lz-stats dd").first()).toHaveText(/^1/);
   });
 
+  test("Predictive Maintenance: the data steps run on made-up engines and results are the repository's", async ({
+    page,
+  }) => {
+    await pickScene(page, "03 / Intelligence", "Predictive Maintenance");
+    const scene = page.locator(".s3-rul");
+    const step = (name: string) => scene.locator(".rul-steps").getByRole("button", { name });
+    await step("Engine split").click();
+    await expect(scene.locator(".lz-stats dd")).toHaveText(/^0/);
+    await scene.getByRole("button", { name: "Split by window (leaky)" }).click();
+    await expect(scene.locator(".lz-stats dd")).not.toHaveText(/^0/);
+    await step("Scale and filter").click();
+    await expect(scene.locator(".rul-dropped")).toContainText("Kept");
+    await step("30-cycle window").click();
+    await expect(scene.locator(".rul-stats dt")).toHaveText(["mean", "std", "min", "max", "last", "slope", "delta"]);
+    await step("Target").click();
+    const slider = scene.getByRole("slider");
+    await slider.fill("40");
+    await expect(scene.locator(".lz-stats dd").first()).toHaveText(/^125/);
+    await step("Published results").click();
+    await expect(scene.locator(".rul-results tbody tr").first()).toContainText("12.369");
+    await scene.getByRole("button", { name: "FD004" }).click();
+    await expect(scene.locator(".rul-results tbody tr").first()).toContainText("15.924");
+    await expect(scene.locator(".lz-note")).toContainText("not from this page");
+  });
+
   test("the hero is usable at phone width without sideways scrolling", async ({
     page,
   }) => {

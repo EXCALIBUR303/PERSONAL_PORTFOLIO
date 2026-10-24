@@ -60,9 +60,11 @@ test("the chosen mode survives a refresh and is applied before first paint", asy
 }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Creative" }).click();
-  expect(
-    await page.evaluate(() => localStorage.getItem("portfolio-mode")),
-  ).toBe("creative");
+  // The World Shift applies the mode inside a view transition callback, so the
+  // stored value lands a frame or two after the click.
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem("portfolio-mode")))
+    .toBe("creative");
   await page.reload();
   await expect(html(page)).toHaveAttribute("data-mode", "creative");
   await expect(page.getByRole("button", { name: "Creative" })).toHaveAttribute(
@@ -97,11 +99,14 @@ test("search and filters keep working after switching modes", async ({
 }) => {
   await page.goto("/#projects");
   await page.getByRole("button", { name: "Creative" }).click();
+  // Wait for the World Shift to swap in the Creative page before typing.
+  await expect(html(page)).toHaveAttribute("data-mode", "creative");
   await page
     .getByRole("searchbox", { name: "Search project worlds" })
     .fill("mazera");
   await expect(page.locator(".c-card")).toHaveCount(1);
   await page.getByRole("button", { name: "Professional" }).click();
+  await expect(html(page)).toHaveAttribute("data-mode", "pro");
   await expect(page.locator(".project-card")).toHaveCount(1);
   await expect(
     page.getByRole("searchbox", { name: "Search project worlds" }),
@@ -201,9 +206,14 @@ test("Creative gallery shares every filter and keeps the empty states", async ({
   await page.getByRole("button", { name: "Featured only" }).click();
   expect(await page.locator(".c-card").count()).toBeLessThan(20);
   await page.getByRole("button", { name: "Professional" }).click();
-  await expect(
-    page.locator(".gallery-view-toggle button").nth(1),
-  ).toHaveAttribute("aria-pressed", "true");
+  // Pro has no layout toggle; a shared "Featured only" filter shows as a chip.
+  const chip = page.getByRole("button", { name: /Featured only/ });
+  await expect(chip).toBeVisible();
+  await expect(page.locator(".project-card")).toHaveCount(6);
+  await expect(page.locator(".pg-row")).toHaveCount(0);
+  await chip.click();
+  await expect(chip).toHaveCount(0);
+  await expect(page.locator(".pg-row")).toHaveCount(14);
 });
 
 test("Creative project page is a mission board over the same project data", async ({

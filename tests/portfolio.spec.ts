@@ -49,18 +49,23 @@ test("search, categories, featured filtering, and empty-state reset work", async
   page,
 }) => {
   await page.goto("/#projects");
-  await expect(page.locator(".project-card")).toHaveCount(projects.length);
+  await expect(page.locator(".project-card")).toHaveCount(
+    projects.filter((p) => p.featured).length,
+  );
+  await expect(page.locator(".pg-row")).toHaveCount(
+    projects.filter((p) => !p.featured).length,
+  );
   await page
     .getByRole("combobox", { name: "Filter projects by category" })
     .selectOption("Algorithms");
   await expect(
-    page.locator(".project-card h3").filter({ hasText: "Mazera" }),
+    page.locator(".project-card h3, .pg-row-title strong").filter({ hasText: "Mazera" }),
   ).toBeVisible();
   await expect(
-    page.locator(".project-card h3").filter({ hasText: "AERIS" }),
+    page.locator(".project-card h3, .pg-row-title strong").filter({ hasText: "AERIS" }),
   ).toBeVisible();
   await expect(
-    page.locator(".project-card h3").filter({ hasText: "Student Burnout" }),
+    page.locator(".project-card h3, .pg-row-title strong").filter({ hasText: "Student Burnout" }),
   ).toHaveCount(0);
   await page
     .getByRole("combobox", { name: "Filter projects by category" })
@@ -69,22 +74,20 @@ test("search, categories, featured filtering, and empty-state reset work", async
     .getByRole("searchbox", { name: "Search project worlds" })
     .fill("PostgreSQL");
   await expect(
-    page.locator(".project-card h3").filter({ hasText: "SmartPark" }),
+    page.locator(".project-card h3, .pg-row-title strong").filter({ hasText: "SmartPark" }),
   ).toBeVisible();
   await expect(
-    page.locator(".project-card h3").filter({ hasText: "Mazera" }),
+    page.locator(".project-card h3, .pg-row-title strong").filter({ hasText: "Mazera" }),
   ).toHaveCount(0);
   await page.getByRole("button", { name: "Clear project search" }).click();
-  await page
-    .getByRole("button", { name: "Featured only", exact: true })
-    .click();
-  await expect(page.locator(".project-card")).toHaveCount(6);
   await page
     .getByRole("searchbox", { name: "Search project worlds" })
     .fill("no-such-world");
   await expect(page.locator(".gallery-empty")).toBeVisible();
   await page.getByRole("button", { name: "Reset filters" }).click();
-  await expect(page.locator(".project-card")).toHaveCount(projects.length);
+  await expect(page.locator(".project-card, .pg-row")).toHaveCount(
+    projects.length,
+  );
 });
 
 test("primary cards enter routes and Back preserves gallery state and mode", async ({
@@ -116,27 +119,63 @@ test("primary cards enter routes and Back preserves gallery state and mode", asy
   await expect(page.locator("html")).toHaveAttribute("data-mode", "creative");
 });
 
-test("quick overview retains accessible native dialog behavior", async ({
+test("featured cards show title, one line, collection, status and one action", async ({
   page,
 }) => {
   await page.goto("/#projects");
-  const trigger = page.getByRole("button", {
-    name: "Quick overview of Student Burnout AI",
-  });
-  await trigger.focus();
+  const cards = page.locator(".project-card");
+  const featured = projects.filter((p) => p.featured);
+  await expect(cards).toHaveCount(featured.length);
+  for (const project of featured) {
+    const card = cards.filter({ hasText: project.title });
+    await expect(card.locator("h3")).toHaveText(project.title);
+    await expect(card.locator(".pg-pill")).toHaveText(
+      `${project.collection} project`,
+    );
+    await expect(card.locator(".pg-status")).toHaveText(project.status);
+    await expect(card.getByRole("link")).toHaveCount(1);
+    await expect(card.getByRole("link")).toHaveAttribute(
+      "href",
+      new RegExp(`/projects/${project.slug}/?$`),
+    );
+  }
+});
+
+test("the project section does not scroll sideways at phone width", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/#projects");
+  await page.getByRole("button", { name: /Quick view of AERIS/ }).click();
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+});
+
+test("a quick view opens in place, is keyboard operable, and links onward", async ({
+  page,
+}) => {
+  await page.goto("/#projects");
+  const row = page.getByRole("button", { name: /Quick view of AERIS/ });
+  await expect(row).toHaveAttribute("aria-expanded", "false");
+  await row.focus();
   await page.keyboard.press("Enter");
-  const dialog = page.getByRole("dialog");
-  await expect(dialog).toBeVisible();
+  await expect(row).toHaveAttribute("aria-expanded", "true");
+  const panel = page.getByRole("region", { name: "AERIS quick view" });
+  await expect(panel).toBeVisible();
+  await expect(panel.getByRole("link", { name: /Open project/ })).toBeVisible();
+  // Only one row is open at a time.
+  await page.getByRole("button", { name: /Quick view of RupeeRise/ }).click();
+  await expect(row).toHaveAttribute("aria-expanded", "false");
+  await expect(panel).toHaveCount(0);
   await expect(
-    dialog.getByRole("heading", { name: "Student Burnout AI", exact: true }),
+    page.getByRole("region", { name: "RupeeRise quick view" }),
   ).toBeVisible();
-  for (let i = 0; i < 6; i++) await page.keyboard.press("Tab");
-  expect(
-    await dialog.evaluate((el) => el.contains(document.activeElement)),
-  ).toBe(true);
-  await page.keyboard.press("Escape");
-  await expect(dialog).toHaveCount(0);
-  await expect(trigger).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(
+    page.getByRole("region", { name: "RupeeRise quick view" }),
+  ).toHaveCount(0);
 });
 
 test("mobile menu supports Escape and section navigation", async ({ page }) => {
@@ -153,7 +192,7 @@ test("mobile menu supports Escape and section navigation", async ({ page }) => {
   await toggle.click();
   await page
     .getByRole("navigation", { name: "Mobile navigation" })
-    .getByRole("link", { name: "Worlds" })
+    .getByRole("link", { name: "Projects" })
     .click();
   await expect(page).toHaveURL(/#projects$/);
   await expect(toggle).toHaveAttribute("aria-expanded", "false");
@@ -417,11 +456,11 @@ test("Mazera is a College project everywhere it is shown", async ({ page }) => {
   await page.goto("/#projects");
   await page.getByRole("button", { name: /College Projects/ }).click();
   await expect(
-    page.locator(".project-card h3").filter({ hasText: "Mazera" }),
+    page.locator(".project-card h3, .pg-row-title strong").filter({ hasText: "Mazera" }),
   ).toBeVisible();
   await page.getByRole("button", { name: /Personal Projects/ }).click();
   await expect(
-    page.locator(".project-card h3").filter({ hasText: "Mazera" }),
+    page.locator(".project-card h3, .pg-row-title strong").filter({ hasText: "Mazera" }),
   ).toHaveCount(0);
 });
 
@@ -592,9 +631,9 @@ test("project spatial view uses WebGL with working controls", async ({
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
-  await expect(page.locator("canvas:not(.mini-anim)")).toHaveCount(0);
+  await expect(page.locator("main canvas:not(.mini-anim)")).toHaveCount(0);
   await page.goto("/projects/mazera-ai-maze-solver/");
-  await expect(page.locator("canvas:not(.mini-anim)")).toBeVisible({
+  await expect(page.locator("main canvas:not(.mini-anim)")).toBeVisible({
     timeout: 20000,
   });
   await expect(page.locator(".spatial-fallback")).toHaveCount(0);
@@ -607,7 +646,7 @@ test("project spatial view uses WebGL with working controls", async ({
     page.getByRole("button", { name: "Isometric", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: "2D", exact: true }).click();
-  await expect(page.locator("canvas:not(.mini-anim)")).toHaveCount(0);
+  await expect(page.locator("main canvas:not(.mini-anim)")).toHaveCount(0);
   await expect(page.locator(".maze-grid-svg")).toBeVisible();
   expect(errors).toEqual([]);
   await context.close();
@@ -624,11 +663,11 @@ test("touch devices opt into 3D on project pages while 2D stays fully usable", a
   });
   const page = await context.newPage();
   await page.goto("/");
-  await expect(page.locator("canvas:not(.mini-anim)")).toHaveCount(0);
+  await expect(page.locator("main canvas:not(.mini-anim)")).toHaveCount(0);
   await page.goto("/projects/smart-parking-dbms/");
-  await expect(page.locator("canvas:not(.mini-anim)")).toHaveCount(0);
+  await expect(page.locator("main canvas:not(.mini-anim)")).toHaveCount(0);
   await page.getByRole("button", { name: "Enable 3D view" }).click();
-  await expect(page.locator("canvas:not(.mini-anim)")).toBeVisible({
+  await expect(page.locator("main canvas:not(.mini-anim)")).toBeVisible({
     timeout: 20000,
   });
   await context.close();

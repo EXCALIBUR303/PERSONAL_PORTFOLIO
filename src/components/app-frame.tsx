@@ -26,7 +26,7 @@ import { CreativeFooter, CreativeHeader } from "./creative/creative-chrome";
 const loadFeatures = () =>
   import("./motion-features").then((module) => module.default);
 const navigation = [
-  { id: "projects", name: "Worlds" },
+  { id: "projects", name: "Projects" },
   { id: "skills", name: "Toolkit" },
   { id: "about", name: "About" },
   { id: "contact", name: "Contact" },

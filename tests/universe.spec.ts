@@ -43,7 +43,7 @@ test("collections, type filters, and hardware empty states reflect owner classif
   await page.getByRole("button", { name: /College Projects/ }).click();
   for (const title of ["SmartPark", "Last Mile DAA", "Mazera"])
     await expect(
-      page.locator(".project-card h3").filter({ hasText: title }),
+      page.locator(".project-card h3, .pg-row-title strong").filter({ hasText: title }),
     ).toBeVisible();
   await page.getByRole("button", { name: "Hardware", exact: true }).click();
   await expect(page.locator(".gallery-empty")).toContainText(
@@ -53,39 +53,31 @@ test("collections, type filters, and hardware empty states reflect owner classif
   await expect(page.locator(".gallery-empty")).toBeVisible();
   await page.getByRole("button", { name: "Software", exact: true }).click();
   await expect(
-    page.locator(".project-card h3").filter({ hasText: "Mazera" }),
+    page.locator(".project-card h3, .pg-row-title strong").filter({ hasText: "Mazera" }),
   ).toHaveCount(0);
   await expect(
-    page.locator(".project-card h3").filter({ hasText: "AERIS" }),
+    page.locator(".project-card h3, .pg-row-title strong").filter({ hasText: "AERIS" }),
   ).toBeVisible();
 });
-test("index and exhibit controls work, and browser navigation retains collection state", async ({
+test("quick view and browser navigation retain collection state", async ({
   page,
 }) => {
   await page.goto("/#projects");
   await page.getByRole("button", { name: /College Projects/ }).click();
-  await page.getByRole("button", { name: "Index view" }).click();
-  await expect(page.locator(".project-exhibit")).toHaveCount(0);
   await page
-    .getByRole("button", { name: "Preview Mazera AI Maze Solver in exhibit" })
+    .getByRole("button", { name: /Quick view of Campus Green Mobility/ })
     .click();
-  await expect(page.locator(".project-exhibit h3")).toHaveText(
-    "Mazera AI Maze Solver",
-  );
   await page
-    .locator(".project-exhibit")
-    .getByRole("link", { name: "Explore project" })
+    .getByRole("region", { name: "Campus Green Mobility quick view" })
+    .getByRole("link", { name: /Open project/ })
     .click();
-  await expect(page).toHaveURL(/mazera-ai-maze-solver/);
+  await expect(page).toHaveURL(/green-mobility/);
   await page.goBack();
   await expect(
     page.getByRole("button", { name: /College Projects/ }),
   ).toHaveAttribute("aria-pressed", "true");
-  await expect(page.locator(".project-exhibit h3")).toHaveText(
-    "Mazera AI Maze Solver",
-  );
   await page.goForward();
-  await expect(page.locator("h1")).toHaveText("Mazera AI Maze Solver");
+  await expect(page).toHaveURL(/green-mobility/);
 });
 test("Last Mile DAA is a public college entry with source-backed architecture and repository link", async ({
   page,

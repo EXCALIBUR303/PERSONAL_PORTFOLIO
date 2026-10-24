@@ -23,7 +23,7 @@ const views: Record<SceneId, React.ComponentType> = {
   pathable: dynamic(() => import("./flat/pathable-scene"), { loading }),
   "robot-dog": dynamic(() => import("./dog-scene"), { loading }),
   swarmmind: dynamic(() => import("./flat/swarm-scene"), { loading }),
-  maintenance: dynamic(() => import("@/components/lens/lens-intelligence"), { loading }),
+  maintenance: dynamic(() => import("./maintenance-scene"), { loading }),
 };
 
 /** One scene with a plain statement of what it is and why it is here. */

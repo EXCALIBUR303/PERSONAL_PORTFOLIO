@@ -17,15 +17,114 @@
 }
 html[data-shift]::view-transition-old(root),
 html[data-shift]::view-transition-new(root) {
-  animation: ws-hold 760ms linear both;
+  animation: ws-hold var(--ws-ms, 760ms) linear both;
   mix-blend-mode: normal;
 }
-html[data-shift]::view-transition-old(root) {
+
+/* Fallback ring reveal (no 3D portal layer yet) */
+html[data-shift]:not([data-portal])::view-transition-old(root) {
   transform: scale(var(--ws-old, 1));
   transform-origin: var(--ws-x) var(--ws-y);
 }
-html[data-shift]::view-transition-new(root) {
+html[data-shift]:not([data-portal])::view-transition-new(root) {
   clip-path: circle(var(--ws-r, 0px) at var(--ws-x) var(--ws-y));
+}
+
+/*
+ * Portal ride. "in" = Professional to Creative: the new (Creative) world is
+ * beyond the portal, clipped to its opening; the old wall flies past. "out" is
+ * the way back: the old Creative world is the one inside the portal, shrinking
+ * away, and the Professional wall settles around it.
+ */
+html[data-portal="in"]::view-transition-new(root),
+html[data-portal="out"]::view-transition-old(root) {
+  z-index: 2;
+  transform: var(--ws-in-t);
+  clip-path: circle(var(--ws-cr, 0px) at var(--ws-cx, 50%) var(--ws-cy, 50%));
+}
+html[data-portal="in"]::view-transition-old(root),
+html[data-portal="out"]::view-transition-new(root) {
+  z-index: 1;
+  transform: var(--ws-out-t);
+}
+html[data-portal] :is(.site-header, .c-header) {
+  view-transition-name: ws-header;
+  view-transition-class: ws-morph;
+}
+/* Shared elements (the header, and project cards on screen) glide to their
+   new place once the portal has formed. Everything else belongs to its world:
+   the old page flies past with the wall, the new one arrives through the portal. */
+html[data-portal]::view-transition-group(*.ws-morph) {
+  animation-duration: 640ms;
+  animation-delay: 160ms;
+  animation-timing-function: cubic-bezier(0.65, 0, 0.25, 1);
+}
+/* The old copy leaves early and the new one arrives late, so the two never
+   sit on top of each other at full strength. */
+@keyframes ws-morph-out {
+  from {
+    opacity: 1;
+  }
+  55%,
+  to {
+    opacity: 0;
+  }
+}
+@keyframes ws-morph-in {
+  from,
+  30% {
+    opacity: 0;
+  }
+  90%,
+  to {
+    opacity: 1;
+  }
+}
+html[data-portal]::view-transition-old(*.ws-morph) {
+  animation: ws-morph-out 640ms 160ms ease-out both;
+}
+html[data-portal]::view-transition-new(*.ws-morph) {
+  animation: ws-morph-in 640ms 160ms ease-in both;
+}
+html[data-portal]::view-transition-group(ws-portal) {
+  animation: none;
+}
+html[data-portal]::view-transition-old(ws-portal) {
+  display: none;
+}
+html[data-portal]::view-transition-new(ws-portal) {
+  animation: ws-hold var(--ws-ms, 760ms) linear both;
+}
+.ws-portal {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  visibility: hidden;
+}
+html[data-portal] .ws-portal {
+  visibility: visible;
+  view-transition-name: ws-portal;
+}
+.ws-sparks {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+  overflow: visible;
+}
+.ws-sparks line {
+  stroke: #ff6538;
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0;
+}
+html[data-portal] .ws-sparks line {
+  opacity: 1;
+}
+.ws-sparks[data-next="pro"] line {
+  stroke: #2f4bf5;
+  stroke-width: 2;
 }
 html[data-shift]::view-transition-group(ws-ring) {
   animation: none;
@@ -34,12 +133,12 @@ html[data-shift]::view-transition-old(ws-ring) {
   display: none;
 }
 html[data-shift]::view-transition-new(ws-ring) {
-  animation: ws-hold 760ms linear both;
+  animation: ws-hold var(--ws-ms, 760ms) linear both;
 }
 .ws-ring {
   display: none;
 }
-html[data-shift] .ws-ring {
+html[data-shift]:not([data-portal]) .ws-ring {
   --ws-a: #2f4bf5;
   --ws-b: #ff6538;
   --ws-in: calc(var(--ws-r) - var(--ws-w));
@@ -60,7 +159,7 @@ html[data-shift] .ws-ring {
     transparent var(--ws-r)
   );
 }
-html[data-shift="pro"] .ws-ring {
+html[data-shift="pro"]:not([data-portal]) .ws-ring {
   --ws-a: #ff6538;
   --ws-b: #2f4bf5;
 }
