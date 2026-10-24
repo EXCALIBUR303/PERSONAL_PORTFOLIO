@@ -23,7 +23,7 @@ test.describe("Professional hero: project scenes in three categories", () => {
   }) => {
     const cases = [
       ["01 / Systems", "AURA studio", "Illustrative 3D model", "aura"],
-      ["01 / Systems", "SmartPark", "Illustrative sequence", "smart-parking-dbms"],
+      ["01 / Systems", "SmartPark", "Illustrative 3D sequence", "smart-parking-dbms"],
       ["01 / Systems", "Private Local AI", "Sample-data walkthrough", "private-local-ai"],
       ["02 / Algorithms", "Mazera", "Working demo", "mazera-ai-maze-solver"],
       ["02 / Algorithms", "Last Mile DAA", "Sample-data walkthrough", "last-mile-daa"],
@@ -119,6 +119,36 @@ test.describe("Professional hero: project scenes in three categories", () => {
     await expect(note).toContainText("Car park");
   });
 
+  test("PathAble 3D: the campus is drawn and destinations and profiles change the route", async ({
+    page,
+  }) => {
+    await pickScene(page, "02 / Algorithms", "PathAble");
+    await expect(page.locator(".s3-campus canvas")).toBeVisible();
+    const note = page.locator(".s3-campus .lz-note");
+    await page.getByRole("button", { name: "Wheelchair" }).click();
+    await page.getByRole("group", { name: "Destination" }).getByRole("button", { name: "Hostel" }).click();
+    await expect(note).toContainText("Car park → Hostel");
+    await expect(note).toContainText("red cross");
+    await expect(page.getByRole("button", { name: /Follow the walker/ })).toBeVisible();
+    await page.getByRole("button", { name: "Follow the walker" }).click();
+    await expect(page.getByRole("button", { name: "Stop following" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  test("SmartPark 3D: the garage steps through a conflict, then the row-locked fix", async ({
+    page,
+  }) => {
+    await pickScene(page, "01 / Systems", "SmartPark");
+    await expect(page.locator(".s3-garage canvas")).toBeVisible();
+    const next = page.getByRole("button", { name: "Next step" });
+    for (let i = 0; i < 3; i++) await next.click();
+    await expect(page.locator(".s3-garage .lz-verdict")).toContainText("Conflict");
+    await page.getByRole("button", { name: "Row-locked allocation" }).click();
+    await expect(page.locator(".s3-garage .lz-verdict")).toHaveCount(0);
+    for (let i = 0; i < 3; i++) await next.click();
+    await expect(page.locator(".s3-garage .lz-verdict")).toContainText("Safe");
+    await expect(page.locator(".s3-garage .lz-note").first()).toContainText("Select any bay");
+  });
+
   test("Last Mile: stages run from orders to compared routes", async ({ page }) => {
     await pickScene(page, "02 / Algorithms", "Last Mile DAA");
     const next = page.getByRole("button", { name: "Next stage" });
@@ -150,6 +180,36 @@ test.describe("Professional hero: project scenes in three categories", () => {
     await page.getByRole("button", { name: "Reset", exact: true }).click();
     await page.getByRole("button", { name: "Step", exact: true }).click();
     await expect(page.locator(".fl-swarm .lz-stats dd").first()).toHaveText(/^1/);
+  });
+
+  test("Private Local AI 3D: the chamber scores passages, ranks them and cites the best", async ({ page }) => {
+    await pickScene(page, "01 / Systems", "Private Local AI");
+    await expect(page.locator(".s3-vault canvas")).toBeVisible();
+    const next = page.getByRole("button", { name: "Next step" });
+    await next.click();
+    await expect(page.locator(".s3-vault .fl-table tbody tr")).toHaveCount(5);
+    await next.click();
+    await expect(page.locator(".s3-vault .fl-table tr[data-top] th")).toContainText("lab-handbook.pdf · p. 2");
+    await expect(page.locator(".s3-vault")).toContainText("Sample data");
+  });
+
+  test("Last Mile 3D: the district runs from orders to a driven route", async ({ page }) => {
+    await pickScene(page, "02 / Algorithms", "Last Mile DAA");
+    await expect(page.locator(".s3-city canvas")).toBeVisible();
+    for (let i = 0; i < 3; i++) await page.getByRole("button", { name: "Next stage" }).click();
+    await expect(page.getByRole("button", { name: "Drive the route again" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Follow the van" })).toBeVisible();
+    await expect(page.locator(".s3-city .lz-chips button")).toHaveCount(4);
+  });
+
+  test("SWARMMIND 3D: searchers are numbered, selectable and stepped", async ({ page }) => {
+    await pickScene(page, "03 / Intelligence", "SWARMMIND");
+    await expect(page.locator(".s3-swarm canvas")).toBeVisible();
+    await expect(page.locator(".s3-swarm .s3-selection")).toContainText("numbered as well as coloured");
+    await page.getByRole("button", { name: "Random walk" }).click();
+    await page.getByRole("button", { name: "Reset", exact: true }).click();
+    await page.getByRole("button", { name: "Step", exact: true }).click();
+    await expect(page.locator(".s3-swarm .lz-stats dd").first()).toHaveText(/^1/);
   });
 
   test("Predictive Maintenance: the data steps run on made-up engines and results are the repository's", async ({

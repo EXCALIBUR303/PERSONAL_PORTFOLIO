@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Move3D, Pause, Play, RotateCcw } from "lucide-react";
+import { Crosshair, Move3D, Pause, Play, RotateCcw } from "lucide-react";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 
 export type SceneControls = ReturnType<typeof useSceneControls>;
@@ -11,7 +11,11 @@ export function useSceneControls() {
   const [choice, setChoice] = useState<boolean | null>(null);
   const [resetKey, setResetKey] = useState(0);
   const paused = choice ?? reduced;
+  const [following, setFollowing] = useState(false);
   return {
+    /** Camera-follow, for scenes that have something moving to follow. */
+    following,
+    toggleFollow: () => setFollowing(!following),
     paused,
     togglePause: () => setChoice(!paused),
     resetKey,
@@ -19,7 +23,14 @@ export function useSceneControls() {
   };
 }
 
-export function SceneToolbar({ controls }: { controls: SceneControls }) {
+export function SceneToolbar({
+  controls,
+  followLabel,
+}: {
+  controls: SceneControls;
+  /** Names what the camera follows; the Follow button shows only when set. */
+  followLabel?: string;
+}) {
   return (
     <div className="s3-toolbar">
       <span className="mono">
@@ -30,6 +41,11 @@ export function SceneToolbar({ controls }: { controls: SceneControls }) {
           {controls.paused ? <Play size={14} aria-hidden="true" /> : <Pause size={14} aria-hidden="true" />}
           {controls.paused ? "Resume motion" : "Pause motion"}
         </button>
+        {followLabel && (
+          <button type="button" aria-pressed={controls.following} onClick={controls.toggleFollow}>
+            <Crosshair size={14} aria-hidden="true" /> {controls.following ? "Stop following" : `Follow ${followLabel}`}
+          </button>
+        )}
         <button type="button" onClick={controls.reset}>
           <RotateCcw size={14} aria-hidden="true" /> Reset view
         </button>

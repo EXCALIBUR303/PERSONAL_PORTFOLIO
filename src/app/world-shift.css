@@ -22,11 +22,11 @@ html[data-shift]::view-transition-new(root) {
 }
 
 /* Fallback ring reveal (no 3D portal layer yet) */
-html[data-shift]:not([data-portal])::view-transition-old(root) {
+html[data-shift]:not([data-portal]):not([data-scanner])::view-transition-old(root) {
   transform: scale(var(--ws-old, 1));
   transform-origin: var(--ws-x) var(--ws-y);
 }
-html[data-shift]:not([data-portal])::view-transition-new(root) {
+html[data-shift]:not([data-portal]):not([data-scanner])::view-transition-new(root) {
   clip-path: circle(var(--ws-r, 0px) at var(--ws-x) var(--ws-y));
 }
 
@@ -47,14 +47,14 @@ html[data-portal="out"]::view-transition-new(root) {
   z-index: 1;
   transform: var(--ws-out-t);
 }
-html[data-portal] :is(.site-header, .c-header) {
+html:is([data-portal], [data-scanner]) :is(.site-header, .c-header) {
   view-transition-name: ws-header;
   view-transition-class: ws-morph;
 }
 /* Shared elements (the header, and project cards on screen) glide to their
    new place once the portal has formed. Everything else belongs to its world:
    the old page flies past with the wall, the new one arrives through the portal. */
-html[data-portal]::view-transition-group(*.ws-morph) {
+html:is([data-portal], [data-scanner])::view-transition-group(*.ws-morph) {
   animation-duration: 640ms;
   animation-delay: 160ms;
   animation-timing-function: cubic-bezier(0.65, 0, 0.25, 1);
@@ -80,10 +80,10 @@ html[data-portal]::view-transition-group(*.ws-morph) {
     opacity: 1;
   }
 }
-html[data-portal]::view-transition-old(*.ws-morph) {
+html:is([data-portal], [data-scanner])::view-transition-old(*.ws-morph) {
   animation: ws-morph-out 640ms 160ms ease-out both;
 }
-html[data-portal]::view-transition-new(*.ws-morph) {
+html:is([data-portal], [data-scanner])::view-transition-new(*.ws-morph) {
   animation: ws-morph-in 640ms 160ms ease-in both;
 }
 html[data-portal]::view-transition-group(ws-portal) {
@@ -138,7 +138,7 @@ html[data-shift]::view-transition-new(ws-ring) {
 .ws-ring {
   display: none;
 }
-html[data-shift]:not([data-portal]) .ws-ring {
+html[data-shift]:not([data-portal]):not([data-scanner]) .ws-ring {
   --ws-a: #2f4bf5;
   --ws-b: #ff6538;
   --ws-in: calc(var(--ws-r) - var(--ws-w));
@@ -159,7 +159,7 @@ html[data-shift]:not([data-portal]) .ws-ring {
     transparent var(--ws-r)
   );
 }
-html[data-shift="pro"]:not([data-portal]) .ws-ring {
+html[data-shift="pro"]:not([data-portal]):not([data-scanner]) .ws-ring {
   --ws-a: #ff6538;
   --ws-b: #2f4bf5;
 }
@@ -205,5 +205,112 @@ html[data-mode] .portfolio-root {
     .c-doodle {
       display: none;
     }
+  }
+}
+
+/*
+ * Precision Scanner (src/lib/transition). The page inside the slit between the
+ * two scanners is the upper snapshot: the arriving Creative page on the way
+ * out, the departing Creative page on the way back. GSAP paints the --sc-*
+ * variables every frame (lib/transition/scanner.ts); these rules only apply them.
+ */
+html[data-scanner="to-creative"]::view-transition-new(root),
+html[data-scanner="to-pro"]::view-transition-old(root) {
+  z-index: 2;
+  transform: var(--sc-top-t, none);
+  filter: var(--sc-top-f, none);
+  clip-path: inset(0 calc(100% - var(--sc-cr, 0px)) 0 var(--sc-cl, 0px));
+}
+html[data-scanner="to-creative"]::view-transition-old(root),
+html[data-scanner="to-pro"]::view-transition-new(root) {
+  z-index: 1;
+  filter: var(--sc-bottom-f, none);
+}
+html[data-scanner]::view-transition-group(ws-scanner) {
+  animation: none;
+}
+html[data-scanner]::view-transition-old(ws-scanner) {
+  display: none;
+}
+html[data-scanner]::view-transition-new(ws-scanner) {
+  animation: ws-hold var(--ws-ms, 1450ms) linear both;
+}
+/* Shared elements keep the browser's own morph; their timing is written per
+   element so each one moves as a scanner passes it (writeMorphTimings). */
+html[data-scanner]::view-transition-group(*.ws-morph) {
+  animation-timing-function: cubic-bezier(0.65, 0, 0.25, 1);
+}
+.sc-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  visibility: hidden;
+  contain: strict;
+}
+html[data-scanner] .sc-layer {
+  visibility: visible;
+  view-transition-name: ws-scanner;
+}
+.sc-layer canvas {
+  position: absolute;
+  inset: 0;
+}
+
+/* The drawn frame of the scanner (components/scanner/scanner-frame.tsx). */
+.sc-frame-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.sc-frame-svg:not([data-armed]) {
+  opacity: 0;
+}
+.sc-frame-svg :is(.sc-frame, .sc-corner, .sc-cross, .sc-link, .sc-reticle-arm, .sc-dial, .sc-beam-line) {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.sc-frame-svg .sc-frame {
+  stroke-width: 1;
+  stroke-opacity: 0.55;
+}
+.sc-frame-svg :is(.sc-corner, .sc-reticle-arm) {
+  stroke-width: 3;
+}
+.sc-frame-svg :is(.sc-cross, .sc-link) {
+  stroke-width: 1.5;
+}
+.sc-frame-svg .sc-dial {
+  stroke-width: 2.5;
+}
+.sc-frame-svg .sc-spin {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.sc-frame-svg text {
+  font-family: var(--font-mono), ui-monospace, "SFMono-Regular", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  paint-order: stroke;
+  stroke: #fffdf6;
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+.sc-frame-svg .sc-beam {
+  opacity: var(--sc-beam-o, 0);
+}
+.sc-frame-svg .sc-beam-l {
+  transform: translateX(var(--sc-l, -100px));
+}
+.sc-frame-svg .sc-beam-r {
+  transform: translateX(var(--sc-r, -100px));
+}
+@media (max-width: 560px) {
+  .sc-frame-svg text {
+    font-size: 9px;
   }
 }

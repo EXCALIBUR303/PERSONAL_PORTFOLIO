@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { animate, createDrawable } from "animejs";
 import { onPrewarm, portal, subscribePortal } from "@/lib/world-shift";
+import { requestedStyle } from "@/lib/transition/state";
 import { useWebGL } from "@/components/scenes/use-webgl";
 
 const PortalCanvas = dynamic(() => import("./portal-canvas"), { ssr: false });
@@ -24,8 +25,12 @@ export default function PortalLayer() {
   const running = useSyncExternalStore(subscribePortal, () => portal.running, () => false);
 
   useEffect(() => {
+    // The portal ride is the earlier transition, kept for comparison: it loads
+    // only when asked for (?transition=portal).
     const capable =
-      "startViewTransition" in document && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+      "startViewTransition" in document &&
+      !matchMedia("(prefers-reduced-motion: reduce)").matches &&
+      requestedStyle() === "portal";
     if (!capable) return;
     const off = onPrewarm(() => setLoad(true));
     // Touch screens have no hover, so also load once the page has settled,

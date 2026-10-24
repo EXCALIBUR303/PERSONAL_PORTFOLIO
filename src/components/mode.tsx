@@ -40,6 +40,8 @@ export function useMode(): [
           /* storage can be blocked; the mode still applies for this visit */
         }
         listeners.forEach((cb) => cb());
+        const announcer = document.getElementById("mode-announcer");
+        if (announcer) announcer.textContent = next === "creative" ? "Creative mode" : "Professional mode";
       };
       worldShift(next, apply, origin);
     },

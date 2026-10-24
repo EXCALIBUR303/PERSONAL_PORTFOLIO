@@ -579,74 +579,6 @@ html[data-mode] .portfolio-root .s3-labels .s3-label {
 
 /* About: highlights that replaced the separate Chapters section */
 html[data-mode] .portfolio-root {
-  .about-highlights,
-  .c-highlights {
-    margin-top: 28px;
-  }
-  .about-highlights h3,
-  .c-highlights h3 {
-    margin: 0 0 10px;
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--m-graphite);
-  }
-  .about-highlights ul,
-  .c-highlights ul {
-    display: grid;
-    gap: 8px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-  .about-highlights a,
-  .c-highlights a {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 2px 12px;
-    padding: 12px 14px;
-    border: var(--m-edge);
-    border-radius: var(--radius, 4px);
-    background: var(--m-card);
-    color: var(--m-ink);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-  }
-  .about-highlights a:hover,
-  .c-highlights a:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: var(--m-shadow);
-  }
-  .about-highlights a:focus-visible,
-  .c-highlights a:focus-visible {
-    outline: 3px solid var(--m-cobalt);
-    outline-offset: 2px;
-  }
-  .about-highlights strong,
-  .c-highlights strong {
-    font-size: 15px;
-  }
-  .about-highlights span,
-  .c-highlights span {
-    grid-column: 1;
-    font-size: 13.5px;
-    line-height: 1.45;
-    color: var(--m-graphite);
-  }
-  .about-highlights svg,
-  .c-highlights svg {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-    align-self: center;
-  }
-  .c-highlights a {
-    border-radius: 14px;
-    border-width: 2px;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  html[data-mode] .portfolio-root :is(.about-highlights, .c-highlights) a {
-    transition: none;
-  }
 }
 
 /* Predictive Maintenance: 3D engine above a stepped walk through the data steps */
@@ -871,4 +803,35 @@ html[data-mode] .portfolio-root {
   .rul-cycle input {
     flex: 1;
   }
+}
+
+/* Small print under a scene, and the score table for the 3D vault. */
+.lz .lz-fine {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--m-graphite, #4b5262);
+}
+.lz .fl-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.lz .fl-table th,
+.lz .fl-table td {
+  padding: 6px 8px;
+  text-align: left;
+  border-bottom: 1px solid #17171d26;
+}
+.lz .fl-table thead th {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--m-graphite, #4b5262);
+}
+.lz .fl-table tbody th {
+  font-weight: 500;
+}
+.lz .fl-table tr[data-top] {
+  background: #ffd9c7;
 }

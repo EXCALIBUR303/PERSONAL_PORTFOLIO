@@ -16,13 +16,13 @@ const loading = () => <div className="s3-loading mono">Loading scene…</div>;
 // Each scene is its own chunk, so only the one on screen is downloaded.
 const views: Record<SceneId, React.ComponentType> = {
   aura: dynamic(() => import("./aura-scene"), { loading }),
-  smartpark: dynamic(() => import("@/components/lens/lens-systems"), { loading }),
-  "private-ai": dynamic(() => import("./flat/retrieval-scene"), { loading }),
+  smartpark: dynamic(() => import("./smartpark-scene"), { loading }),
+  "private-ai": dynamic(() => import("./retrieval-scene"), { loading }),
   mazera: dynamic(() => import("./maze-scene"), { loading }),
-  lastmile: dynamic(() => import("./flat/lastmile-scene"), { loading }),
-  pathable: dynamic(() => import("./flat/pathable-scene"), { loading }),
+  lastmile: dynamic(() => import("./lastmile-scene"), { loading }),
+  pathable: dynamic(() => import("./pathable-scene"), { loading }),
   "robot-dog": dynamic(() => import("./dog-scene"), { loading }),
-  swarmmind: dynamic(() => import("./flat/swarm-scene"), { loading }),
+  swarmmind: dynamic(() => import("./swarm-scene"), { loading }),
   maintenance: dynamic(() => import("./maintenance-scene"), { loading }),
 };
 

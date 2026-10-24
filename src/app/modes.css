@@ -417,8 +417,7 @@ html[data-mode] .portfolio-root .engine-selector,
 html[data-mode] .portfolio-root .engine-layout > *,
 html[data-mode] .portfolio-root .chapter-card,
 html[data-mode] .portfolio-root .contact-form,
-html[data-mode] .portfolio-root .contact-link,
-html[data-mode] .portfolio-root .about-facts > div {
+html[data-mode] .portfolio-root .contact-link {
   background: var(--m-card);
   border: var(--m-edge);
   border-radius: 4px;
@@ -439,7 +438,6 @@ html[data-mode="creative"] .portfolio-root .chapter-card:nth-child(even) {
 html[data-mode] .portfolio-root .skill-cluster button,
 html[data-mode] .portfolio-root .skill-orbit button,
 html[data-mode] .portfolio-root .engine-selector button,
-html[data-mode] .portfolio-root .interest-tags span,
 html[data-mode] .portfolio-root .chapter-tags span {
   border: 1.5px solid var(--m-ink);
   background: var(--m-paper);
@@ -453,21 +451,8 @@ html[data-mode] .portfolio-root .engine-selector button[aria-pressed="true"] {
   background: var(--m-ink);
   color: #fff;
 }
-html[data-mode] .portfolio-root .about-visual {
-  background: var(--m-lime);
-  border: var(--m-edge);
-  border-radius: 4px;
-  box-shadow: var(--m-shadow);
-  color: var(--m-ink);
-}
-html[data-mode] .portfolio-root .about-copy p,
 html[data-mode] .portfolio-root .contact-section p {
   color: var(--m-graphite);
-}
-html[data-mode] .portfolio-root .about-lead {
-  color: var(--m-ink);
-  font-family: var(--font-display);
-  font-size: 22px;
 }
 html[data-mode] .portfolio-root input,
 html[data-mode] .portfolio-root textarea,
@@ -832,39 +817,6 @@ html[data-mode] .portfolio-root .site-footer .footer-top {
 }
 
 /* ---------- minimum readable sizes ---------- */
-html[data-mode]
-  .portfolio-root
-  :is(
-    .about-facts span,
-    .about-facts p,
-    .interest-tags span,
-    .chapter-card p,
-    .chapter-type,
-    .chapter-tags span,
-    .skill-inspector p,
-    .skill-inspector span,
-    .component-inspector p,
-    .architecture-toolbar,
-    .diagram-badge,
-    .diagram-caption,
-    .engine-project-meta,
-    .engine-selector label,
-    .engine-layout p,
-    .toolkit-layout p,
-    .contact-form label,
-    .form-row span,
-    .world-breadcrumb,
-    .world-header-meta,
-    .demo-console p,
-    .demo-console li,
-    .demo-console span,
-    .world-section-heading span,
-    .source-ledger a span,
-    .source-commit,
-    .unavailable
-  ) {
-  font-size: max(13px, 1em);
-}
 html[data-mode] .portfolio-root .skill-cluster button {
   font-size: 13px;
 }

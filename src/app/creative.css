@@ -1479,109 +1479,6 @@ html[data-mode="creative"] .portfolio-root {
   }
 
   /* ---------- about: notebook page ---------- */
-  .c-about-grid {
-    display: grid;
-    gap: clamp(30px, 5vw, 76px);
-    grid-template-columns: minmax(0, 1fr);
-    align-items: center;
-  }
-  @media (min-width: 900px) {
-    .c-about-grid {
-      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-    }
-  }
-  .c-notebook {
-    position: relative;
-    min-height: clamp(300px, 36vw, 460px);
-    padding: 44px 36px 60px 78px;
-    background-color: #fff;
-    background-image:
-      radial-gradient(
-        circle at 30px 50%,
-        var(--c-paper) 0 9px,
-        var(--c-ink) 9px 11px,
-        transparent 11.5px
-      ),
-      repeating-linear-gradient(transparent 0 31px, #2f4bff33 31px 32px);
-    background-size:
-      60px 64px,
-      100% 100%;
-    background-repeat: repeat-y, no-repeat;
-    border: 2px solid var(--c-ink);
-    border-radius: 10px 28px 28px 10px;
-    box-shadow: var(--c-shadow-lg);
-    transform: rotate(-2deg);
-  }
-  .c-notebook-hand {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: clamp(3.6rem, 8vw, 6.6rem);
-    font-style: italic;
-    line-height: 0.9;
-    color: var(--c-cobalt);
-  }
-  .c-notebook-star {
-    position: absolute;
-    top: 26px;
-    right: 28px;
-    color: var(--c-orange);
-    animation: c-spin 22s linear infinite;
-  }
-  .c-notebook-foot {
-    position: absolute;
-    left: 78px;
-    bottom: 22px;
-    margin: 0;
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--c-graphite);
-  }
-  .c-about-copy > p.c-about-lead {
-    margin: 14px 0 12px;
-    font-family: var(--font-display);
-    font-size: clamp(1.7rem, 2.8vw, 2.3rem);
-    font-style: italic;
-    line-height: 1.1;
-    color: var(--c-ink);
-  }
-  .c-about-copy > p {
-    max-width: 58ch;
-    font-size: 16.5px;
-    color: var(--c-graphite);
-  }
-  .c-notes {
-    display: grid;
-    gap: 18px;
-    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-    margin: 26px 0 22px;
-  }
-  .c-interests {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin: 0 0 18px;
-    padding: 0;
-    list-style: none;
-  }
-  .c-interests li {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 14px;
-    background: var(--c-pink);
-    border: 2px solid var(--c-ink);
-    border-radius: 999px;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--c-ink);
-  }
-  .c-interests li:nth-child(2) {
-    background: var(--c-sky);
-  }
-  .c-interests li:nth-child(3) {
-    background: var(--c-lime);
-  }
 
   /* ---------- contact: postcard ---------- */
   .c-contact-grid {
@@ -2360,6 +2257,193 @@ html[data-mode="creative"] .portfolio-root .c-pin-check-pop {
   display: inline-grid;
 }
 
+/* About: a developer's notebook. Page, a pulled question, sticky notes, lessons. */
+html[data-mode="creative"] .portfolio-root .c-ab-board {
+  display: grid;
+  gap: clamp(22px, 3vw, 36px);
+  margin-top: clamp(28px, 4vw, 48px);
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 900px) {
+  html[data-mode="creative"] .portfolio-root .c-ab-board {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    align-items: start;
+  }
+  html[data-mode="creative"] .portfolio-root .c-ab-page {
+    grid-column: 1 / span 5;
+    grid-row: 1 / span 2;
+  }
+  html[data-mode="creative"] .portfolio-root .c-ab-pull {
+    grid-column: 6 / span 7;
+  }
+  html[data-mode="creative"] .portfolio-root .c-ab-bench {
+    grid-column: 6 / span 7;
+  }
+  html[data-mode="creative"] .portfolio-root .c-ab-lessons {
+    grid-column: 1 / -1;
+  }
+}
+html[data-mode="creative"] .portfolio-root .c-ab-hand {
+  font-family: var(--font-display), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(26px, 2.6vw, 34px);
+  line-height: 1.1;
+}
+html[data-mode="creative"] .portfolio-root .c-ab-page {
+  position: relative;
+  padding: 40px 28px 30px 64px;
+  background-color: #fff;
+  background-image:
+    linear-gradient(90deg, transparent 52px, #ff8fc0 52px 54px, transparent 54px),
+    repeating-linear-gradient(transparent 0 33px, #8edbff80 33px 34px);
+  background-position: 0 0, 0 14px;
+  border: 2px solid var(--c-ink);
+  border-radius: 6px;
+  box-shadow: var(--c-shadow);
+  transform: rotate(-1deg);
+}
+html[data-mode="creative"] .portfolio-root .c-ab-page ul {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+}
+html[data-mode="creative"] .portfolio-root .c-ab-page li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 34px;
+  padding-top: 4px;
+  font-size: 17px;
+  line-height: 30px;
+}
+html[data-mode="creative"] .portfolio-root .c-ab-page li svg {
+  flex: none;
+  margin-top: 8px;
+  color: var(--c-orange);
+}
+html[data-mode="creative"] .portfolio-root .c-ab-foot {
+  margin: 22px 0 0;
+  color: var(--c-graphite);
+  font-size: 12px;
+}
+html[data-mode="creative"] .portfolio-root .c-ab-pull {
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+  padding: 22px 24px 24px;
+  background: var(--c-butter);
+  border: 2px solid var(--c-ink);
+  border-radius: 6px;
+  box-shadow: var(--c-shadow);
+  transform: rotate(0.8deg);
+}
+html[data-mode="creative"] .portfolio-root .c-ab-pull h3 {
+  font-size: 12px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+html[data-mode="creative"] .portfolio-root .c-ab-q {
+  min-height: 7.2em;
+  width: 100%;
+}
+html[data-mode="creative"] .portfolio-root .c-ab-q blockquote {
+  margin: 0;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(24px, 2.6vw, 34px);
+  line-height: 1.18;
+}
+html[data-mode="creative"] .portfolio-root .c-ab-q footer {
+  margin-top: 12px;
+  font-family: var(--font-body), sans-serif;
+  font-size: 14px;
+}
+html[data-mode="creative"] .portfolio-root .c-ab-q footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
+  border-bottom: 2px solid var(--c-ink);
+}
+html[data-mode="creative"] .portfolio-root .c-ab-bench ul {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+html[data-mode="creative"] .portfolio-root .c-ab-bench li {
+  transform: rotate(var(--r, 0deg));
+  border: 2px solid var(--c-ink);
+  box-shadow: 4px 4px 0 var(--c-ink);
+  background: var(--c-lime);
+}
+html[data-mode="creative"] .portfolio-root .c-ab-bench li[data-tone="pink"] {
+  background: var(--c-pink);
+}
+html[data-mode="creative"] .portfolio-root .c-ab-bench li[data-tone="sky"] {
+  background: var(--c-sky);
+}
+html[data-mode="creative"] .portfolio-root .c-ab-bench a {
+  display: grid;
+  gap: 6px;
+  height: 100%;
+  padding: 16px 16px 18px;
+  color: var(--c-ink);
+}
+html[data-mode="creative"] .portfolio-root .c-ab-bench a span {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+html[data-mode="creative"] .portfolio-root .c-ab-bench strong {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+html[data-mode="creative"] .portfolio-root .c-ab-bench em {
+  font-size: 14px;
+  font-style: normal;
+}
+html[data-mode="creative"] .portfolio-root .c-ab-lessons {
+  padding: 22px 26px 24px;
+  background: var(--c-card);
+  border: 2px dashed var(--c-ink);
+  border-radius: 6px;
+}
+html[data-mode="creative"] .portfolio-root .c-ab-lessons ol {
+  display: grid;
+  gap: 14px;
+  margin: 16px 0 0;
+  padding-left: 22px;
+}
+html[data-mode="creative"] .portfolio-root .c-ab-lessons li {
+  font-size: 16px;
+  line-height: 1.55;
+  padding-left: 6px;
+}
+html[data-mode="creative"] .portfolio-root .c-ab-lessons li::marker {
+  font-family: var(--font-mono-set);
+  font-weight: 700;
+  color: var(--c-orange);
+}
+html[data-mode="creative"] .portfolio-root .c-ab-lessons a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  border-bottom: 2px solid var(--c-lime);
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-mode="creative"] .portfolio-root .c-ab-page,
+  html[data-mode="creative"] .portfolio-root .c-ab-pull,
+  html[data-mode="creative"] .portfolio-root .c-ab-bench li {
+    transform: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html[data-mode="creative"] .portfolio-root {
     .c-card,
@@ -2384,7 +2468,6 @@ html[data-mode="creative"] .portfolio-root .c-pin-check-pop {
       transition: none;
       transform: none;
     }
-    .c-notebook-star,
     .c-scribble svg path {
       animation: none;
     }

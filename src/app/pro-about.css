@@ -1,0 +1,243 @@
+/*
+ * Professional About: an engineering approach and the evidence for it. Thin
+ * rules, mono labels and a four-step row, in the same paper, ink and cobalt
+ * as the rest of the page.
+ */
+.pa-head {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 32px 56px;
+  align-items: end;
+}
+.pa-head h2 {
+  font-size: clamp(42px, 4.8vw, 70px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+.pa-head p {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--m-graphite, #4b5262);
+  max-width: 58ch;
+}
+
+/* four principles on one measured line */
+.pa-principles {
+  list-style: none;
+  margin: 56px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1.5px solid var(--m-ink);
+}
+.pa-principles li {
+  position: relative;
+  padding: 22px 22px 6px 0;
+}
+.pa-principles li + li {
+  padding-left: 22px;
+  border-left: 1px solid var(--border);
+}
+.pa-principles li::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 0;
+  width: 9px;
+  height: 9px;
+  background: var(--m-cobalt);
+  transform: rotate(45deg);
+}
+.pa-principles li + li::before {
+  left: 22px;
+}
+.pa-no {
+  color: var(--m-cobalt);
+  font-size: 12px;
+}
+.pa-principles h3 {
+  margin-top: 10px;
+  font-size: 22px;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+.pa-principles p {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--m-graphite, #4b5262);
+}
+
+/* evidence rows */
+.pa-sub {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 64px;
+  font-size: 28px;
+  letter-spacing: -0.01em;
+}
+.pa-sub span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.pa-evidence > ul {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  border-top: 1.5px solid var(--m-ink);
+}
+.pa-evidence > ul > li {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: start;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--border);
+}
+.pa-shows {
+  color: var(--m-cobalt);
+  font-size: 11px;
+  text-transform: uppercase;
+  padding-top: 5px;
+}
+.pa-evidence h4 {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.pa-evidence-main p {
+  margin-top: 6px;
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 62ch;
+}
+.pa-tools {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+}
+.pa-tools li {
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--m-card);
+  font-size: 12px;
+}
+.pa-evidence-links {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+.pa-evidence-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  font-size: 14px;
+  font-weight: 600;
+  border-bottom: 1.5px solid transparent;
+  transition:
+    border-color var(--mi-fast) var(--mi-ease),
+    color var(--mi-fast) var(--mi-ease);
+}
+.pa-evidence-links a:hover {
+  color: var(--m-cobalt);
+  border-color: var(--m-cobalt);
+}
+.pa-evidence-links svg {
+  transition: transform var(--mi-fast) var(--mi-ease);
+}
+.pa-evidence-links a:hover svg {
+  transform: translate(2px, -2px);
+}
+
+/* education, direction, proof of work */
+.pa-foot {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px 56px;
+  margin-top: 56px;
+  padding-top: 28px;
+  border-top: 1.5px solid var(--m-ink);
+}
+.pa-facts {
+  display: grid;
+  gap: 18px;
+  margin: 0;
+}
+.pa-facts dt {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.pa-facts dd {
+  margin: 4px 0 0;
+  font-size: 16px;
+  line-height: 1.55;
+}
+.pa-proof > span {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.pa-proof > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  margin-top: 12px;
+}
+.pa-proof .button {
+  min-height: 48px;
+  gap: 10px;
+  padding: 10px 18px;
+}
+
+@media (max-width: 1000px) {
+  .pa-principles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .pa-principles li:nth-child(3) {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .pa-principles li:nth-child(3)::before {
+    left: 0;
+  }
+  .pa-principles li:nth-child(n + 3) {
+    border-top: 1px solid var(--border);
+    margin-top: 22px;
+  }
+  .pa-evidence > ul > li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .pa-shows {
+    grid-column: 1 / -1;
+    padding-top: 0;
+  }
+}
+@media (max-width: 720px) {
+  .pa-head,
+  .pa-foot {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pa-principles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pa-principles li + li {
+    padding-left: 0;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+    margin-top: 22px;
+  }
+  .pa-principles li + li::before {
+    left: 0;
+  }
+  .pa-evidence > ul > li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -1,68 +1,16 @@
 "use client";
 import { useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, RotateCcw } from "lucide-react";
+import { questions, scoreQuestion, steps } from "../retrieval-data";
 
-/** Made-up notes. Nothing here comes from Private Local AI or anyone's files. */
-const passages = [
-  { source: "travel-notes.md § Visa", text: "The visa appointment is booked for the second week of March at the consulate." },
-  { source: "travel-notes.md § Packing", text: "Pack the laptop charger, the adapter and printed copies of the hotel booking." },
-  { source: "lab-handbook.pdf · p. 2", text: "Lab doors lock at nine in the evening; ask the technician for weekend access." },
-  { source: "lab-handbook.pdf · p. 4", text: "Soldering stations must be switched off and the fume extractor left running for five minutes." },
-  { source: "budget.csv · row 7", text: "Monthly budget for groceries is set to four thousand rupees, reviewed every Sunday." },
-];
-const questions = [
-  "When do the lab doors lock?",
-  "What should I pack for the trip?",
-  "How much is the grocery budget?",
-];
-const STOP = new Set("the a an and of for to is are at in on what when how much should i be left every with".split(" "));
-const words = (s: string) =>
-  s.toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter((w) => w && !STOP.has(w));
-
-/** BM25 keyword score over the sample passages. */
-function bm25(query: string[]) {
-  const docs = passages.map((p) => words(p.text));
-  const avg = docs.reduce((n, d) => n + d.length, 0) / docs.length;
-  return docs.map((doc) =>
-    query.reduce((score, term) => {
-      const df = docs.filter((d) => d.includes(term)).length;
-      if (!df) return score;
-      const tf = doc.filter((w) => w === term).length;
-      const idf = Math.log(1 + (docs.length - df + 0.5) / (df + 0.5));
-      return score + (idf * tf * 2.2) / (tf + 1.2 * (0.25 + (0.75 * doc.length) / avg));
-    }, 0),
-  );
-}
-/** Stand-in for embedding similarity: cosine over word prefixes, so "lock" meets "locks". */
-function overlap(query: string[]) {
-  const stem = (w: string) => w.slice(0, 4);
-  const q = new Set(query.map(stem));
-  return passages.map((p) => {
-    const d = new Set(words(p.text).map(stem));
-    const shared = [...q].filter((w) => d.has(w)).length;
-    return shared / Math.sqrt(q.size * d.size || 1);
-  });
-}
-const normalise = (xs: number[]) => {
-  const max = Math.max(...xs) || 1;
-  return xs.map((x) => x / max);
-};
-
-const steps = ["Split", "Score", "Combine", "Fence", "Cite"] as const;
-
-export default function RetrievalScene() {
+export default function RetrievalFlat() {
   const [q, setQ] = useState(0);
   const [step, setStep] = useState(0);
   const scored = useMemo(() => {
-    const query = words(questions[q]);
-    const k = normalise(bm25(query));
-    const d = normalise(overlap(query));
-    return passages
-      .map((p, i) => ({ ...p, keyword: k[i], dense: d[i], total: (k[i] + d[i]) / 2 }))
-      .sort((a, b) => b.total - a.total);
+    return [...scoreQuestion(q)].sort((a, b) => b.total - a.total);
   }, [q]);
   const top = scored[0];
-  const list = step >= 2 ? scored : passages.map((p) => scored.find((s) => s.source === p.source)!);
+  const list = step >= 2 ? scored : scoreQuestion(q);
   return (
     <div className="lz-viz fl-rag">
       <div className="lz-seg" role="group" aria-label="Question">

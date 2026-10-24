@@ -19,6 +19,10 @@ export const profile = {
   email: "sidharthsood303@gmail.com" as string | null,
   socials: [
     { name: "GitHub", url: "https://github.com/EXCALIBUR303" as string | null },
+    {
+      name: "LinkedIn",
+      url: "https://in.linkedin.com/in/sidharth-sood-914481267/" as string | null,
+    },
   ],
 };
 export const site = {

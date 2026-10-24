@@ -50,8 +50,8 @@ export const scenes: SceneInfo[] = [
     category: "systems",
     name: "SmartPark",
     title: "Two cars, one last bay.",
-    badge: "Illustrative sequence",
-    is3d: false,
+    badge: "Illustrative 3D sequence",
+    is3d: true,
     seeing:
       "Two cars ask for the same free bay at the same moment. Switch between a plain check-then-write and a row-locked allocation to see why the database has to decide who gets it.",
     why: "SmartPark DBMS keeps capacity, tariff and access rules in the relational database. Row-locked slot allocation is how it avoids two sessions on one bay.",
@@ -64,7 +64,7 @@ export const scenes: SceneInfo[] = [
     name: "Private Local AI",
     title: "Answers with a receipt.",
     badge: "Sample-data walkthrough",
-    is3d: false,
+    is3d: true,
     seeing:
       "Three made-up notes are split into passages. Ask a question and step through scoring, combining, fencing and citing. No language model runs here: the answer is the best passage, quoted with its source.",
     why: "Private Local AI answers from your own files with hybrid dense and keyword retrieval, cites the file and page, and fences retrieved text as untrusted, all on the machine.",
@@ -90,7 +90,7 @@ export const scenes: SceneInfo[] = [
     name: "Last Mile DAA",
     title: "Pick the parcels, then the route.",
     badge: "Sample-data walkthrough",
-    is3d: false,
+    is3d: true,
     seeing:
       "Eight sample orders around a depot. Step through the stages: choose what fits the van, draw the spanning tree, then compare route orderings.",
     why: "Last Mile DAA chains MST zoning, knapsack selection and route sequencing. These are simplified versions running on sample stops, not outputs of its Python solver.",
@@ -103,7 +103,7 @@ export const scenes: SceneInfo[] = [
     name: "PathAble",
     title: "The shortest route is not always yours.",
     badge: "Sample-data walkthrough",
-    is3d: false,
+    is3d: true,
     seeing:
       "A small made-up campus. Change the travel profile or report a blocked path, and the route is recomputed with only the paths that profile can use.",
     why: "PathAble routes on a graph with accessibility constraints and reroutes after reviewed community reports. Its own campus examples are fictional too; this is a simplified re-implementation.",
@@ -129,7 +129,7 @@ export const scenes: SceneInfo[] = [
     name: "SWARMMIND",
     title: "Four searchers, two baselines.",
     badge: "Simulation",
-    is3d: false,
+    is3d: true,
     seeing:
       "Four agents search a grid for hidden survivors. Compare a random walk with frontier exploration, the two baselines SWARMMIND measures its learned policies against.",
     why: "SWARMMIND compares IPPO and MAPPO policies with random and frontier baselines in a search-and-rescue simulator. Only simplified baselines run here, not the learned policies.",

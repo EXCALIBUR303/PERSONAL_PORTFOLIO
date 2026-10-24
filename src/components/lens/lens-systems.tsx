@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, Pause, Play } from "lucide-react";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 
-type Mode = "unsafe" | "safe";
-type Step = {
+export type Mode = "unsafe" | "safe";
+export type Step = {
   text: string;
   car1: string;
   car2: string;
@@ -12,7 +12,7 @@ type Step = {
   bayTone: "free" | "locked" | "taken" | "conflict";
 };
 
-const steps: Record<Mode, Step[]> = {
+export const steps: Record<Mode, Step[]> = {
   unsafe: [
     {
       text: "Car 1 asks: is bay A07 free?",

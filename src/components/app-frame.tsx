@@ -243,6 +243,9 @@ export default function AppFrame({ children }: { children: ReactNode }) {
             className="portfolio-root multiverse engineering-universe"
             data-theme="light"
           >
+            {/* Announces a mode change. It lives outside both headers, which are
+                replaced on a switch; mode.tsx writes the text. */}
+            <p id="mode-announcer" className="sr-only" role="status" aria-live="polite" />
             <a className="skip-link" href="#main">
               Skip to content
             </a>

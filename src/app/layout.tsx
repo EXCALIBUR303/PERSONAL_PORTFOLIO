@@ -19,7 +19,10 @@ import "./project.css";
 import "./creative.css";
 import "./micro.css";
 import "./pro-gallery.css";
+import "./backdrop.css";
+import "./pro-about.css";
 import AppFrame from "@/components/app-frame";
+import ScannerLayer from "@/components/scanner/scanner-layer";
 import PortalLayer from "@/components/portal/portal-layer";
 import { modeBootScript } from "@/components/mode";
 
@@ -105,6 +108,7 @@ export default function RootLayout({
         <AppFrame>{children}</AppFrame>
         <div className="ws-ring" aria-hidden="true" />
         <PortalLayer />
+        <ScannerLayer />
       </body>
     </html>
   );

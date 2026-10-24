@@ -504,26 +504,6 @@
   background: var(--surface);
   padding-block: 100px;
 }
-.engineering-universe .about-grid {
-  grid-template-columns: 0.8fr 1.2fr;
-  gap: 80px;
-}
-.engineering-universe .about-visual {
-  border-radius: 50% 50% 5px 5px;
-  min-height: 440px;
-  background:
-    radial-gradient(circle at 50% 40%, #71828d33, transparent 65%), var(--bg);
-}
-.engineering-universe .about-flower {
-  filter: saturate(0.4);
-  transform: scale(0.82);
-}
-.engineering-universe .about-copy h2 {
-  font-size: clamp(45px, 5vw, 72px);
-}
-.engineering-universe .about-lead {
-  color: var(--accent);
-}
 .engineering-universe .chapter-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -941,9 +921,6 @@
   .engineering-universe .chapter-card > h3 {
     font-size: 24px;
   }
-  .engineering-universe .about-grid {
-    gap: 40px;
-  }
 }
 @media (max-width: 850px) {
   .engineering-universe .desktop-nav {
@@ -1235,16 +1212,6 @@
   .engineering-universe .architecture-toolbar .mono {
     font-size: 6px;
   }
-  .engineering-universe .about-grid {
-    grid-template-columns: 1fr;
-    gap: 40px;
-  }
-  .engineering-universe .about-visual {
-    min-height: 350px;
-  }
-  .engineering-universe .about-copy h2 {
-    font-size: 49px;
-  }
   .engineering-universe .chapter-card {
     grid-template-columns: 28px 1fr;
     gap: 0 16px;
@@ -1401,14 +1368,9 @@
 .engineering-universe .about-section .section-label {
   color: var(--fg);
 }
-.engineering-universe .about-section .section-label > span,
-.engineering-universe .about-copy h2 em,
-.engineering-universe .about-copy > p,
-.engineering-universe .about-facts p,
-.engineering-universe .about-facts .mono {
+.engineering-universe .about-section .section-label > span {
   color: var(--muted);
 }
-.engineering-universe .about-copy > .about-lead,
 .engineering-universe .about-chapters-link {
   color: var(--accent);
 }
@@ -1453,11 +1415,6 @@
 .engineering-universe .about-section {
   --muted: inherit;
   --accent: inherit;
-}
-.engineering-universe .interest-tags > span {
-  background: var(--bg);
-  border-color: var(--border);
-  color: var(--fg);
 }
 .engineering-universe .parking-map-road {
   color: #bacad2;

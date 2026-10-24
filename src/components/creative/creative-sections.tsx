@@ -1,10 +1,8 @@
 "use client";
-import Highlights from "../about-highlights";
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, Asterisk, Sparkles } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { skills } from "@/data/skills";
-import { profile } from "@/data/profile";
 import { CreativeContact } from "./creative-contact";
 
 const statusKey = (status: string) =>
@@ -101,56 +99,6 @@ export function CreativeToolkit() {
   );
 }
 
-/** About: a notebook page with sticky notes, in place of the Professional two-column copy block. */
-export function CreativeAbout() {
-  return (
-    <section id="about" className="c-section c-about">
-      <div className="container c-about-grid">
-        <div className="c-notebook" aria-hidden="true">
-          <span className="c-tape c-tape-a" />
-          <p className="c-notebook-hand">
-            hello
-            <br />
-            there.
-          </p>
-          <Asterisk className="c-notebook-star" size={64} strokeWidth={1.6} />
-          <p className="c-notebook-foot mono">
-            logic + curiosity → something useful
-          </p>
-        </div>
-        <div className="c-about-copy">
-          <p className="c-kicker mono">
-            <span className="c-pill c-pill-lime">03</span> The person behind the
-            code
-          </p>
-          <h2>
-            More than a <em>semicolon.</em>
-          </h2>
-          <p className="c-about-lead">Part problem solver. Always a student.</p>
-          <p>{profile.about}</p>
-          <div className="c-notes">
-            <div className="c-sticky c-sticky-butter">
-              <span className="mono">THE FOUNDATION</span>
-              <p>B.Tech · Computer Science and Engineering.</p>
-            </div>
-            <div className="c-sticky c-sticky-sky">
-              <span className="mono">CURRENTLY EXPLORING</span>
-              <p>{profile.focus}</p>
-            </div>
-          </div>
-          <ul className="c-interests">
-            {profile.interests.map((interest) => (
-              <li key={interest}>
-                <Sparkles size={13} aria-hidden="true" />
-                {interest}
-              </li>
-            ))}
-          </ul>
-          <Highlights variant="creative" />
-        </div>
-      </div>
-    </section>
-  );
-}
+export { default as CreativeAbout } from "./creative-about";
 
 export { CreativeContact };

@@ -1,0 +1,52 @@
+/*
+ * Site-wide background layers, built from tokens so both modes read as depth
+ * rather than decoration. Layers, back to front:
+ *   Professional  warm surface, soft tonal fields, fine blueprint grid,
+ *                 coarse major grid
+ *   Creative      warm paper, soft colour fields, dotted paper
+ * Everything stays very low contrast so text keeps its contrast on any layer.
+ */
+html[data-mode="pro"] .portfolio-root[data-theme] {
+  --bd-fine: #17171d0b;
+  --bd-major: #17171d12;
+  --bd-field-a: #2f4bf512;
+  --bd-field-b: #ff65380d;
+  background-image:
+    radial-gradient(60% 40% at 94% 0%, var(--bd-field-a), transparent 72%),
+    radial-gradient(48% 36% at 0% 46%, var(--bd-field-b), transparent 72%),
+    radial-gradient(55% 35% at 100% 90%, var(--bd-field-a), transparent 72%),
+    linear-gradient(var(--bd-major) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bd-major) 1px, transparent 1px),
+    linear-gradient(var(--bd-fine) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bd-fine) 1px, transparent 1px);
+  background-size:
+    auto,
+    auto,
+    auto,
+    240px 240px,
+    240px 240px,
+    48px 48px,
+    48px 48px;
+}
+/* Alternate sections sit on a slightly different tonal band, with a hairline. */
+html[data-mode="pro"] .portfolio-root #skills,
+html[data-mode="pro"] .portfolio-root #contact {
+  background: #17171d06;
+  border-block: 1px solid #17171d14;
+}
+
+html[data-mode="creative"] .portfolio-root[data-theme] {
+  --bd-dot: #17171d24;
+  background-image:
+    radial-gradient(45% 30% at 6% 4%, #c8f13b2e, transparent 72%),
+    radial-gradient(40% 30% at 96% 30%, #ff8fc028, transparent 72%),
+    radial-gradient(45% 30% at 4% 66%, #8edbff30, transparent 72%),
+    radial-gradient(40% 28% at 94% 94%, #ff653822, transparent 72%),
+    radial-gradient(var(--bd-dot) 1px, transparent 1.3px);
+  background-size:
+    auto,
+    auto,
+    auto,
+    auto,
+    22px 22px;
+}

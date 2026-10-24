@@ -169,7 +169,7 @@ test("Creative renders its own component tree on the home page", async ({
   await expect(page.locator(".c-map")).toBeVisible();
   await expect(page.locator(".engine-section")).toHaveCount(0);
   await expect(page.locator(".c-sheet-board")).toHaveCount(1);
-  await expect(page.locator(".c-notebook")).toHaveCount(1);
+  await expect(page.locator(".c-ab-page")).toHaveCount(1);
   await expect(page.locator(".engineering-hero")).toHaveCount(0);
   await expect(page.locator(".project-card")).toHaveCount(0);
   await expect(page.locator(".site-footer")).toHaveCount(0);
@@ -335,4 +335,53 @@ test("World Shift reveals the other mode in place, and rapid toggling settles", 
   });
   expect(await page.evaluate(() => document.documentElement.getAttribute("style") || "")).toBe("");
   expect(await page.evaluate(() => localStorage.getItem("portfolio-mode"))).toBe("pro");
+});
+
+test("Professional About explains the approach with project evidence and proof-of-work links", async ({
+  page,
+}) => {
+  await page.goto("/#about");
+  await expect(page.locator("#about h2")).toHaveText(
+    "How I turn questions into systems.",
+  );
+  await expect(page.getByText("More than a semicolon")).toHaveCount(0);
+  await expect(
+    page.getByRole("list", { name: "How I approach problems" }).getByRole("listitem"),
+  ).toHaveCount(4);
+  const evidence = page.locator("#highlights > ul > li");
+  await expect(evidence).toHaveCount(3);
+  for (const slug of [
+    "mazera-ai-maze-solver",
+    "smart-parking-dbms",
+    "predictive-maintenance",
+  ])
+    await expect(
+      page.locator(`#highlights a[href="/projects/${slug}/"]`),
+    ).toBeVisible();
+  const proof = page.locator("#about .pa-proof");
+  await expect(proof.getByRole("link", { name: /GitHub/ })).toHaveAttribute(
+    "href",
+    "https://github.com/EXCALIBUR303",
+  );
+  await expect(proof.getByRole("link", { name: /LinkedIn/ })).toHaveAttribute(
+    "href",
+    /linkedin\.com\/in\/sidharth-sood/,
+  );
+});
+
+test("Creative About is a notebook of questions, builds in progress and lessons", async ({
+  page,
+}) => {
+  await page.addInitScript(() => localStorage.setItem("portfolio-mode", "creative"));
+  await page.goto("/#about");
+  await expect(page.locator("#about h2")).toContainText("The person behind");
+  await expect(page.locator("#about h2")).toContainText("experiments.");
+  await expect(page.getByText("More than a semicolon")).toHaveCount(0);
+  const quote = page.locator(".c-ab-q blockquote");
+  const first = await quote.textContent();
+  await page.getByRole("button", { name: /Another question/ }).click();
+  await expect(quote).not.toHaveText(first || "");
+  await expect(page.locator(".c-ab-bench li")).toHaveCount(3);
+  await expect(page.locator(".c-ab-lessons li")).toHaveCount(3);
+  await expect(page.locator("#about")).not.toContainText("Professional");
 });
