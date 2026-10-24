@@ -1,5 +1,5 @@
 "use client";
-import dynamic from "next/dynamic";
+import { lazyView } from "./lazy-view";
 import { useState } from "react";
 import { Send } from "lucide-react";
 import { useMode } from "@/components/mode";
@@ -14,10 +14,9 @@ import { Callouts, useCallouts } from "./aura-callouts";
 import { SceneToolbar, useSceneControls } from "./scene-controls";
 import { useWebGL } from "./use-webgl";
 
-const AuraCanvas = dynamic(() => import("./three/aura-canvas"), {
-  ssr: false,
-  loading: () => <div className="s3-loading mono">Loading the 3D studio…</div>,
-});
+const AuraCanvas = lazyView(() => import("./three/aura-canvas"), () => <div className="s3-loading mono">Loading the 3D studio…</div>);
+/** Fetches the 3D canvas code early, so a scene built during a mode switch is ready at once. */
+export const preloadCanvas = () => AuraCanvas.preload();
 
 function hopLabel(route: AuraPartId[], index: number) {
   const id = route[index];

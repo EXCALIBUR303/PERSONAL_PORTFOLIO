@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { onPrewarm } from "@/lib/world-shift";
 import { requestedStyle, setLayerReady, subscribeTransition, transition } from "@/lib/transition/state";
 import { useWebGL } from "@/components/scenes/use-webgl";
+import { preloadHeroScene } from "@/components/scenes/registry";
 import ScannerFrame from "./scanner-frame";
 
 const ScannerCanvas = dynamic(() => import("./scanner-canvas"), { ssr: false });
@@ -65,6 +66,9 @@ export default function ScannerLayer() {
     const lite = prefersLite();
     const arm = () => {
       warmCreativeFonts();
+      // From Creative, the Professional hero scene is built on the way back:
+      // fetching its code now means the switch never waits on a download.
+      if (document.documentElement.dataset.mode === "creative") preloadHeroScene();
       if (lite) return;
       if (!transition.running) return setLoad(true);
       if (waiting) return;

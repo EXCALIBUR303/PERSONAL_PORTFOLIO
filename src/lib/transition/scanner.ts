@@ -4,6 +4,7 @@ import {
   CUE_SECONDS,
   SCANNER_SECONDS,
   clamp01,
+  easeInOut,
   easeOut,
   emitProgress,
   passProgress,
@@ -27,11 +28,10 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 /**
  * The page half of the scanner transition, as CSS variables on <html> that
  * world-shift.css turns into the two snapshots' clip, scale and filter, and
- * that position the scanner lines in the SVG frame:
+ * that carry the scanners (and the aperture halves riding them) in the SVG frame:
  *   --sc-l, --sc-r     the scanners' x in pixels
  *   --sc-cl, --sc-cr   the clip of the upper snapshot, in its own (scaled) pixels
  *   --sc-top-t, --sc-top-f, --sc-bottom-f   transform and filters
- *   --sc-beam-o        scanner opacity
  * The upper snapshot is the one inside the slit: the new Creative page going
  * out, the old Creative page coming back.
  */
@@ -41,10 +41,11 @@ export function paintScanner(root: HTMLElement) {
   const cx = width / 2;
   const { l, r } = slit();
   const f = scanFraction(p);
+  const aim = easeInOut(within(p, "aim"));
   const out = transition.direction === "to-creative";
   // Upper layer scale: the arriving Creative page settles from slightly large;
   // the departing Creative page is compressed into the closing slit.
-  const top = out ? lerp(1.035, 1, easeOut(clamp01((p - 0.2) / 0.75))) : lerp(1, 0.965, f);
+  const top = out ? lerp(1.035, 1, easeOut(clamp01((p - 0.2) / 0.7))) : lerp(1, 0.965, f);
   const local = (x: number) => cx + (x - cx) / top;
   const s = root.style;
   s.setProperty("--sc-l", `${l.toFixed(1)}px`);
@@ -52,11 +53,18 @@ export function paintScanner(root: HTMLElement) {
   s.setProperty("--sc-cl", `${local(l).toFixed(1)}px`);
   s.setProperty("--sc-cr", `${local(r).toFixed(1)}px`);
   s.setProperty("--sc-top-t", `scale(${top.toFixed(4)})`);
-  // Professional recedes a little as Creative opens; Creative drains of colour as it closes.
-  s.setProperty("--sc-top-f", out ? "none" : `saturate(${(1 - 0.6 * f).toFixed(3)})`);
-  s.setProperty("--sc-bottom-f", out ? `brightness(${(1 - 0.05 * f).toFixed(3)}) saturate(${(1 - 0.25 * f).toFixed(3)})` : "none");
-  const beam = out ? within(p, "scan") > 0 && f < 0.999 : p > 0.06 && p < 0.86;
-  s.setProperty("--sc-beam-o", beam ? "1" : "0");
+  // Light. Going out, Professional dims while the aperture forms, so the
+  // scanner reads as light and Creative arrives fully lit inside the slit.
+  // Coming back, Creative drains as it is gathered and compressed, and
+  // Professional appears at full light outside the closing slit.
+  if (out) {
+    s.setProperty("--sc-top-f", "none");
+    s.setProperty("--sc-bottom-f", `brightness(${(1 - 0.16 * aim).toFixed(3)}) saturate(${(1 - 0.3 * aim).toFixed(3)})`);
+  } else {
+    const drain = Math.max(0.5 * aim, f);
+    s.setProperty("--sc-top-f", `brightness(${(1 - 0.14 * drain).toFixed(3)}) saturate(${(1 - 0.6 * drain).toFixed(3)})`);
+    s.setProperty("--sc-bottom-f", "none");
+  }
 }
 
 /** The acknowledgement beat. It plays before the snapshot is taken. */

@@ -1,5 +1,5 @@
 "use client";
-import dynamic from "next/dynamic";
+import { lazyView } from "./lazy-view";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Pause, Play } from "lucide-react";
 import { useMode } from "@/components/mode";
@@ -9,10 +9,9 @@ import { SceneToolbar, useSceneControls } from "./scene-controls";
 import { useWebGL } from "./use-webgl";
 import { describeBay, steps, viewFor, type Mode } from "./smartpark-data";
 
-const GarageCanvas = dynamic(() => import("./three/garage-canvas"), {
-  ssr: false,
-  loading: () => <div className="s3-loading mono">Loading the 3D garage…</div>,
-});
+const GarageCanvas = lazyView(() => import("./three/garage-canvas"), () => <div className="s3-loading mono">Loading the 3D garage…</div>);
+/** Fetches the 3D canvas code early, so a scene built during a mode switch is ready at once. */
+export const preloadCanvas = () => GarageCanvas.preload();
 
 const nodes = ["Floor map UI", "FastAPI", "Allocation transaction", "Parking session", "Tariff billing"];
 

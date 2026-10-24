@@ -1,5 +1,5 @@
 "use client";
-import dynamic from "next/dynamic";
+import { lazyView } from "./lazy-view";
 import { useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, Truck } from "lucide-react";
 import { useMode } from "@/components/mode";
@@ -16,10 +16,9 @@ import LastMileFlat from "./flat/lastmile-scene";
 import { SceneToolbar, useSceneControls } from "./scene-controls";
 import { useWebGL } from "./use-webgl";
 
-const CityNetCanvas = dynamic(() => import("./three/citynet-canvas"), {
-  ssr: false,
-  loading: () => <div className="s3-loading mono">Loading the 3D district…</div>,
-});
+const CityNetCanvas = lazyView(() => import("./three/citynet-canvas"), () => <div className="s3-loading mono">Loading the 3D district…</div>);
+/** Fetches the 3D canvas code early, so a scene built during a mode switch is ready at once. */
+export const preloadCanvas = () => CityNetCanvas.preload();
 
 const CAPACITY = 22;
 const stages = ["Orders", "Fill the van", "Spanning tree", "Route"] as const;

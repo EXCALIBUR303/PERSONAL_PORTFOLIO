@@ -4,12 +4,12 @@ import { useShiftIntro } from "./shift-intro";
 import { ArrowDown, ArrowUpRight, Github } from "lucide-react";
 import { profile } from "@/data/profile";
 import { projects } from "@/data/projects";
-import HeroScenes from "./scenes/scene-stage";
+import HeroScenes, { heroMemory } from "./scenes/scene-stage";
 import { accentOf, type CategoryId } from "./scenes/catalog";
 
 /** Professional hero: copy on the left, the project scenes on the right. */
 export default function EngineeringDesk() {
-  const [category, setCategory] = useState<CategoryId>("systems");
+  const [category, setCategory] = useState<CategoryId>(() => heroMemory.category);
   const section = useRef<HTMLElement>(null);
   useShiftIntro(section, "pro");
   const github = profile.socials.find((s) => s.name === "GitHub")?.url;

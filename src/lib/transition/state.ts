@@ -20,20 +20,24 @@ export type Direction = "to-creative" | "to-pro";
 export type TransitionStyle = "scanner" | "portal" | "ring" | "none";
 
 /** The acknowledgement beat before the page is captured, in seconds. */
-export const CUE_SECONDS = 0.12;
-/** The transition itself, in seconds (the brief's range is 1.3 to 1.8 overall). */
-export const SCANNER_SECONDS = 1.45;
+export const CUE_SECONDS = 0.14;
+/** The transition itself, in seconds: about 2 s from click to rest with the cue and capture. */
+export const SCANNER_SECONDS = 1.8;
 
 /**
  * The beats of the transition as fractions of `progress`.
- *   aim     the aperture forms and alignment lines draw in toward it
- *   scan    the scanners cross the viewport; particles respond as they pass
- *   settle  forms resolve, backgrounds come to rest, the overlay clears
+ *   aim     going to Creative the aperture forms and the page's structure is
+ *           marked; coming back the two scanner halves enter and the particles
+ *           gather on the alignment axis
+ *   scan    the scanners cross the viewport; particles are released (or
+ *           placed) as a scanner passes them
+ *   settle  particles finish assembling and clear; coming back the aperture
+ *           locks; the overlay clears
  */
 export const PHASES = {
   aim: [0, 0.2],
-  scan: [0.2, 0.74],
-  settle: [0.74, 1],
+  scan: [0.2, 0.7],
+  settle: [0.7, 1],
 } as const;
 export type Phase = keyof typeof PHASES;
 
@@ -41,6 +45,31 @@ export const phaseOf = (progress: number): Phase =>
   (Object.keys(PHASES) as Phase[]).find((p) => progress < PHASES[p][1]) ?? "settle";
 
 export const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+
+/** A block of a page, in viewport pixels: centre, layout size, turn and corner radius. */
+export type Panel = {
+  cx: number;
+  cy: number;
+  w: number;
+  h: number;
+  /** Rotation in radians (a tilted sticky note, for example). */
+  rot: number;
+  r: number;
+  /** A strong colour taken from the block's fill, or null for a neutral block. */
+  colour: string | null;
+};
+/** A box particles keep clear of (text, buttons, the header). */
+export type Box = { x: number; y: number; w: number; h: number };
+/** What a page looks like to the particles: its blocks, and the boxes to keep clear of. */
+export type Layout = { panels: Panel[]; avoid: Box[] };
+const emptyLayout = (): Layout => ({ panels: [], avoid: [] });
+
+/**
+ * Radius of the aperture, in pixels: large enough to lead the transition
+ * (about three quarters of a laptop screen's height across), smaller on phones.
+ */
+export const apertureRadius = (width: number, height: number) =>
+  Math.round(Math.min(340, Math.max(110, Math.min(height * 0.38, width * (width < height ? 0.42 : 0.27)))));
 /** 0 to 1 across one phase. */
 export const within = (progress: number, phase: Phase) =>
   clamp01((progress - PHASES[phase][0]) / (PHASES[phase][1] - PHASES[phase][0]));
@@ -71,6 +100,13 @@ export const transition = {
    */
   oldOrigin: { x: 0, y: 0 },
   newOrigin: { x: 0, y: 0 },
+  /**
+   * The blocks of the page being left (measured at the click) and of the page
+   * arriving (measured once it has rendered, inside the transition). Particles
+   * lift off the first and assemble on the second.
+   */
+  oldLayout: emptyLayout(),
+  newLayout: emptyLayout(),
 };
 
 /** Extra distance past the edges, so a scanner fully leaves or enters the view. */

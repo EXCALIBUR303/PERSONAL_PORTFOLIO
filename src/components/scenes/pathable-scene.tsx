@@ -1,5 +1,5 @@
 "use client";
-import dynamic from "next/dynamic";
+import { lazyView } from "./lazy-view";
 import { useCallback, useMemo, useState } from "react";
 import { Footprints } from "lucide-react";
 import { useMode } from "@/components/mode";
@@ -8,10 +8,9 @@ import { SceneToolbar, useSceneControls } from "./scene-controls";
 import { useWebGL } from "./use-webgl";
 import { places, profiles, route, routeSamples, type Place, type Profile } from "./pathable-data";
 
-const CampusCanvas = dynamic(() => import("./three/campus-canvas"), {
-  ssr: false,
-  loading: () => <div className="s3-loading mono">Loading the 3D campus…</div>,
-});
+const CampusCanvas = lazyView(() => import("./three/campus-canvas"), () => <div className="s3-loading mono">Loading the 3D campus…</div>);
+/** Fetches the 3D canvas code early, so a scene built during a mode switch is ready at once. */
+export const preloadCanvas = () => CampusCanvas.preload();
 
 const destinations: Place[] = ["library", "lab", "hostel", "cafe", "carpark"];
 

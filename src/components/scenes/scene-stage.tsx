@@ -1,5 +1,4 @@
 "use client";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowUpRight, Box } from "lucide-react";
@@ -11,20 +10,7 @@ import {
   type CategoryId,
   type SceneId,
 } from "./catalog";
-
-const loading = () => <div className="s3-loading mono">Loading scene…</div>;
-// Each scene is its own chunk, so only the one on screen is downloaded.
-const views: Record<SceneId, React.ComponentType> = {
-  aura: dynamic(() => import("./aura-scene"), { loading }),
-  smartpark: dynamic(() => import("./smartpark-scene"), { loading }),
-  "private-ai": dynamic(() => import("./retrieval-scene"), { loading }),
-  mazera: dynamic(() => import("./maze-scene"), { loading }),
-  lastmile: dynamic(() => import("./lastmile-scene"), { loading }),
-  pathable: dynamic(() => import("./pathable-scene"), { loading }),
-  "robot-dog": dynamic(() => import("./dog-scene"), { loading }),
-  swarmmind: dynamic(() => import("./swarm-scene"), { loading }),
-  maintenance: dynamic(() => import("./maintenance-scene"), { loading }),
-};
+import { views } from "./registry";
 
 /** One scene with a plain statement of what it is and why it is here. */
 export function SceneStage({ id }: { id: SceneId }) {
@@ -57,18 +43,23 @@ export function SceneStage({ id }: { id: SceneId }) {
   );
 }
 
+/**
+ * The visitor's category and scene, kept while they look at the other mode: a
+ * mode switch rebuilds the hero, and it should come back where they left it.
+ */
+export const heroMemory: { category: CategoryId; chosen: Record<CategoryId, SceneId> } = {
+  category: "systems",
+  chosen: { systems: "aura", algorithms: "mazera", intelligence: "robot-dog" },
+};
+
 /** Category tabs, a scene picker inside each, and the chosen scene. */
 export default function HeroScenes({
   onCategoryChange,
 }: {
   onCategoryChange?: (category: CategoryId) => void;
 }) {
-  const [category, setCategory] = useState<CategoryId>("systems");
-  const [chosen, setChosen] = useState<Record<CategoryId, SceneId>>({
-    systems: "aura",
-    algorithms: "mazera",
-    intelligence: "robot-dog",
-  });
+  const [category, setCategory] = useState<CategoryId>(() => heroMemory.category);
+  const [chosen, setChosen] = useState<Record<CategoryId, SceneId>>(() => heroMemory.chosen);
   const id = chosen[category];
   return (
     <div className="lz-explorer">
@@ -80,6 +71,7 @@ export default function HeroScenes({
             aria-pressed={category === item.id}
             onClick={() => {
               setCategory(item.id);
+              heroMemory.category = item.id;
               onCategoryChange?.(item.id);
             }}
             style={{ "--lens-accent": item.accent } as React.CSSProperties}
@@ -96,7 +88,11 @@ export default function HeroScenes({
             key={scene.id}
             type="button"
             aria-pressed={id === scene.id}
-            onClick={() => setChosen({ ...chosen, [category]: scene.id })}
+            onClick={() => {
+              const next = { ...chosen, [category]: scene.id };
+              heroMemory.chosen = next;
+              setChosen(next);
+            }}
           >
             {scene.is3d && <Box size={13} aria-hidden="true" />}
             {scene.name}

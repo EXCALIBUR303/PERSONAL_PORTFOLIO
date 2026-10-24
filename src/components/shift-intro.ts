@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, type RefObject } from "react";
 import { animate as animeAnimate, createDrawable, createScope, stagger } from "animejs";
 import { animate, type AnimationPlaybackControls } from "motion/react";
 import { arrivalDelay, arrivedByScanner, arrivedByShift } from "@/lib/world-shift";
-import { SCANNER_SECONDS, passProgress, transition, whenStarted } from "@/lib/transition/state";
+import { PHASES, SCANNER_SECONDS, passProgress, transition, whenStarted } from "@/lib/transition/state";
 
 /**
  * Entrance for a mode's home after a World Shift (and, for Creative, on first
@@ -96,7 +96,11 @@ export function useShiftIntro(
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     if (!onLoad && !arrivedByShift(mode)) return;
     // After the scanner, the strokes draw once the new page is fully revealed.
-    const wait = arrivedByShift(mode) ? (arrivedByScanner() ? 1000 : arrivalDelay()) : 0;
+    const wait = arrivedByShift(mode)
+      ? arrivedByScanner()
+        ? Math.round(SCANNER_SECONDS * PHASES.scan[1] * 1000)
+        : arrivalDelay()
+      : 0;
     const scope = createScope({ root }).add(() => {
       if (mode === "creative") {
         animeAnimate(createDrawable(".c-draw path"), {

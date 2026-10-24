@@ -1,54 +1,59 @@
-import type { Direction } from "@/lib/transition/state";
+import type { Box, Direction, Layout, Panel } from "@/lib/transition/state";
 import { passProgress } from "@/lib/transition/state";
 
 /**
- * Where every particle starts and ends, worked out once per run. Positions are
- * screen pixels (x right, y down) with z toward the viewer, so the grid ends
- * line up exactly with the page's own background grid.
+ * Where every particle starts and ends, worked out per run from the two pages'
+ * real structure (lib/transition/layout.ts). Positions are screen pixels (x
+ * right, y down) with z toward the viewer.
  *
- * Going to Creative a particle starts as a small marker on the Professional
- * grid and flies to a place in one of the Creative forms (an asterisk, a
- * scribble, a sticker ring, or loose confetti). Coming back it starts in a form,
- * drifts toward the aperture, and is snapped onto the grid once a scanner
- * passes it.
+ * Going to Creative a particle starts as a small marker on Professional's
+ * structure: the border of a panel, or a node of the blueprint grid in open
+ * space. When a scanner passes, it is released and flies a short arc to a place
+ * on Creative's structure: the dashed edge of an island, the note, or a paper
+ * dot in open space, taking that block's colour.
+ *
+ * Coming back a particle starts on Creative's structure, is gathered onto the
+ * alignment axis above the column it will land in, and is placed onto
+ * Professional's structure (a panel border or a grid node) as a scanner passes.
+ *
+ * Particles never sit on text: open-space places avoid every heading, line of
+ * copy and control, and block borders surround text rather than cross it.
  */
 export const GRID = 48;
-export const KINDS = 4;
+/** Paper dot pitch on the Creative surface (every other dot is used). */
+const DOT = 22;
+/** Shapes: 0 cube, 1 octahedron, 2 ring. */
+export const KINDS = 3;
+
 const INK = "#17171d";
 const COBALT = "#2f4bf5";
-const FORM_COLOURS = {
-  asterisk: ["#ff6538", "#ff8fc0", "#ff6538", "#ffb38a"],
-  scribble: ["#c8f13b", "#2f4bf5", "#8edbff", "#c8f13b"],
-  ring: ["#ff8fc0", "#8edbff", "#c8f13b", "#cdbdff"],
-  confetti: ["#c8f13b", "#ff8fc0", "#ff6538", "#8edbff", "#2f4bf5", "#ffe27a"],
-};
-/** Which shapes each form prefers: 0 cube, 1 octahedron, 2 tetrahedron, 3 ring. */
-const FORM_KINDS: Record<keyof typeof FORM_COLOURS, number[]> = {
-  asterisk: [0, 2, 0, 1],
-  scribble: [1, 0, 1, 3],
-  ring: [3, 1, 3, 0],
-  confetti: [0, 1, 2, 3],
-};
+const ORANGE = "#ff6538";
+const CREATIVE = ["#c8f13b", "#ff8fc0", "#8edbff", "#ff6538", "#2f4bf5", "#ffd84d", "#b69cff"];
+/** The paper dots' own colours, for shapes that settle in open space on the Creative surface. */
+const PAPER = ["#c8f13b", "#ff8fc0", "#8edbff", "#17171d"];
 
 export type V3 = { x: number; y: number; z: number };
+type Point = { x: number; y: number; colour: string | null; onPanel: boolean };
+
 export type Particle = {
   kind: number;
-  /** Marker on the Professional grid. */
-  grid: V3;
-  /** Place in a Creative form. */
-  form: V3;
-  gridColour: string;
-  formColour: string;
-  gridSize: number;
-  formSize: number;
-  /** Tumble axis and amount. */
+  start: V3;
+  end: V3;
+  /** Coming back: where it waits on the alignment axis, above its column. */
+  slot: V3;
+  startColour: string;
+  endColour: string;
+  startSize: number;
+  endSize: number;
+  /** Tumble axis, and the turn it rests at in a Creative place. */
   axis: V3;
   spin: number;
-  /** How high the flight arcs, in pixels. */
+  /** How high a release arcs, in pixels. */
   lift: number;
-  /** Progress at which a scanner passes this particle. */
+  /** Progress at which a scanner passes it: release going out, placement coming back. */
   pass: number;
-  /** 0 to 1, for small per-particle offsets. */
+  /** 0 near the centre to 1 at the edges, for staggering appearance and clearing. */
+  order: number;
   seed: number;
 };
 
@@ -61,96 +66,115 @@ function rng(seed: number) {
   };
 }
 
-/** Particle count: clear and countable on a laptop, fewer on small screens. */
-export const countFor = (width: number) => (width >= 1000 ? 168 : width >= 640 ? 120 : 84);
+/** Particle count: each one clearly visible on a laptop, fewer on small screens. */
+export const countFor = (width: number) => (width >= 1000 ? 120 : width >= 640 ? 96 : 64);
 
-type Slot = { x: number; y: number; z: number; colour: string; size: number; kind: number };
+const inside = (x: number, y: number, b: Box, pad = 0) =>
+  x > b.x - pad && x < b.x + b.w + pad && y > b.y - pad && y < b.y + b.h + pad;
+const panelBox = (p: Panel): Box => {
+  // Axis-aligned bounds of a possibly turned block.
+  const c = Math.abs(Math.cos(p.rot));
+  const s = Math.abs(Math.sin(p.rot));
+  const w = p.w * c + p.h * s;
+  const h = p.w * s + p.h * c;
+  return { x: p.cx - w / 2, y: p.cy - h / 2, w, h };
+};
 
-/** The Creative forms, laid out for the viewport. */
-function formSlots(W: number, H: number, n: number, random: () => number): Slot[] {
-  const portrait = H > W * 1.15;
-  const m = Math.min(W, H);
-  const small = W < 640;
-  const k = small ? 0.8 : 1;
-  const slots: Slot[] = [];
-  const take = (share: number) => Math.round(n * share);
-  const pick = <T,>(list: T[], i: number) => list[i % list.length];
+/** Length of a block's rounded outline. */
+const perimeter = (p: Panel) => 2 * (p.w + p.h) - 8 * p.r + 2 * Math.PI * p.r;
 
-  // An asterisk, the studio's mark: six arms from a centre.
-  const aN = take(0.3);
-  const ac = portrait ? { x: W * 0.3, y: H * 0.27 } : { x: W * 0.23, y: H * 0.35 };
-  const ar = Math.max(72, m * (portrait ? 0.22 : 0.19));
-  for (let i = 0; i < aN; i++) {
-    // Spaced along six arms, starting clear of the centre, so the mark stays
-    // airy and text behind it stays readable.
-    const arm = i % 6;
-    const t = 0.24 + 0.76 * (Math.floor(i / 6) / Math.max(1, Math.ceil(aN / 6) - 1));
-    const a = -Math.PI / 2 + (arm * Math.PI) / 3;
-    slots.push({
-      x: ac.x + Math.cos(a) * ar * t,
-      y: ac.y + Math.sin(a) * ar * t,
-      z: 20 + 50 * (1 - t),
-      colour: pick(FORM_COLOURS.asterisk, i),
-      size: (10 + 7 * (1 - t)) * k,
-      kind: pick(FORM_KINDS.asterisk, i),
-    });
+/** The point a distance d along a block's rounded outline, clockwise from its top-left. */
+function along(p: Panel, d: number) {
+  const { w, h, r } = p;
+  const sx = w - 2 * r;
+  const sy = h - 2 * r;
+  const q = (Math.PI * r) / 2;
+  // Angle along a corner arc of length t.
+  const a = (t: number) => (r > 0 ? t / r : 0);
+  const segments: [number, (t: number) => [number, number]][] = [
+    [sx, (t) => [-w / 2 + r + t, -h / 2]],
+    [q, (t) => [w / 2 - r + r * Math.sin(a(t)), -h / 2 + r - r * Math.cos(a(t))]],
+    [sy, (t) => [w / 2, -h / 2 + r + t]],
+    [q, (t) => [w / 2 - r + r * Math.cos(a(t)), h / 2 - r + r * Math.sin(a(t))]],
+    [sx, (t) => [w / 2 - r - t, h / 2]],
+    [q, (t) => [-w / 2 + r - r * Math.sin(a(t)), h / 2 - r + r * Math.cos(a(t))]],
+    [sy, (t) => [-w / 2, h / 2 - r - t]],
+    [q, (t) => [-w / 2 + r - r * Math.cos(a(t)), -h / 2 + r - r * Math.sin(a(t))]],
+  ];
+  const total = perimeter(p);
+  let rest = ((d % total) + total) % total;
+  for (let k = 0; k < segments.length; k++) {
+    const [length, at] = segments[k];
+    if (rest <= length || k === segments.length - 1) {
+      const [lx, ly] = at(Math.min(rest, length));
+      const cos = Math.cos(p.rot);
+      const sin = Math.sin(p.rot);
+      return { x: p.cx + lx * cos - ly * sin, y: p.cy + lx * sin + ly * cos };
+    }
+    rest -= length;
   }
-  // A scribble across the lower part, like the hand-drawn underlines.
-  const sN = take(0.34);
-  const waves = portrait ? 2 : 3;
-  for (let i = 0; i < sN; i++) {
-    const t = i / Math.max(1, sN - 1);
-    const x = W * (0.08 + 0.84 * t);
-    const phase = t * waves * Math.PI * 2;
-    slots.push({
-      x,
-      y: H * (portrait ? 0.82 : 0.8) + Math.sin(phase) * H * (portrait ? 0.045 : 0.065),
-      z: Math.cos(phase) * 70,
-      colour: pick(FORM_COLOURS.scribble, i),
-      size: (11 + 5 * random()) * k,
-      kind: pick(FORM_KINDS.scribble, i),
-    });
-  }
-  // A sticker ring.
-  const rN = take(0.2);
-  const rc = portrait ? { x: W * 0.72, y: H * 0.53 } : { x: W * 0.78, y: H * 0.34 };
-  const rr = Math.max(52, m * (portrait ? 0.16 : 0.12));
-  for (let i = 0; i < rN; i++) {
-    const a = (i / rN) * Math.PI * 2;
-    slots.push({
-      x: rc.x + Math.cos(a) * rr,
-      y: rc.y + Math.sin(a) * rr,
-      z: 40 + Math.sin(a) * 50,
-      colour: pick(FORM_COLOURS.ring, i),
-      size: (13 + 4 * random()) * k,
-      kind: pick(FORM_KINDS.ring, i),
-    });
-  }
-  // Loose confetti for the rest.
-  while (slots.length < n) {
-    const i = slots.length;
-    slots.push({
-      x: W * (0.06 + 0.88 * random()),
-      y: H * (0.1 + 0.8 * random()),
-      z: (random() - 0.5) * 320,
-      colour: pick(FORM_COLOURS.confetti, i),
-      size: (10 + 12 * random()) * k,
-      kind: pick(FORM_KINDS.confetti, i),
-    });
-  }
-  return slots.slice(0, n);
+  return { x: p.cx, y: p.cy };
 }
 
-/** Grid intersections in view. Most sit on the major lines, so the field reads as the grid itself. */
-function gridNodes(W: number, H: number, origin: { x: number; y: number }, random: () => number) {
-  const major: { x: number; y: number }[] = [];
-  const minor: { x: number; y: number }[] = [];
-  const i0 = Math.ceil((16 - origin.x) / GRID);
-  const j0 = Math.ceil((16 - origin.y) / GRID);
-  for (let i = i0; origin.x + i * GRID < W - 16; i++)
-    for (let j = j0; origin.y + j * GRID < H - 16; j++) {
-      const node = { x: origin.x + i * GRID, y: origin.y + j * GRID };
-      (i % 5 === 0 || j % 5 === 0 ? major : minor).push(node);
+/**
+ * Exactly n places on a page: points along its blocks' outlines (most of them,
+ * never closer than `minGap`), then places in open space on the
+ * page's own surface pattern (`ground`), then, only if a dense page leaves too
+ * little open space, free places anywhere clear of text.
+ */
+function placesOn(
+  layout: Layout,
+  ground: "grid" | "dots",
+  origin: { x: number; y: number },
+  W: number,
+  H: number,
+  n: number,
+  random: () => number,
+): Point[] {
+  const margin = 10;
+  const visible = (x: number, y: number) => x > margin && x < W - margin && y > margin && y < H - margin;
+  // The header moves on its own (a shared element); nothing lands on it.
+  const header = layout.avoid.filter((b) => b.y < 120 && b.w > W * 0.5);
+  const clearOfHeader = (x: number, y: number) => !header.some((b) => inside(x, y, b));
+
+  const outlines: Point[] = [];
+  const total = layout.panels.reduce((sum, p) => sum + perimeter(p), 0);
+  const minGap = W < 640 ? 22 : 26;
+  // The Creative surface gets almost everything on its blocks' edges: loose
+  // shapes in open space would read as confetti. Professional keeps more on
+  // the blueprint grid, which is its structure too.
+  const budget = Math.round(n * (ground === "dots" ? 0.86 : 0.6));
+  if (total > 0) {
+    const gap = Math.max(minGap, total / budget);
+    for (const panel of layout.panels) {
+      const length = perimeter(panel);
+      const count = Math.max(1, Math.round(length / gap));
+      const offset = random() * (length / count);
+      for (let k = 0; k < count; k++) {
+        const { x, y } = along(panel, offset + (k * length) / count);
+        if (visible(x, y) && clearOfHeader(x, y)) outlines.push({ x, y, colour: panel.colour, onPanel: true });
+      }
+    }
+  }
+  // Too many on screen (large blocks): keep an even spread.
+  while (outlines.length > budget) outlines.splice(Math.floor(random() * outlines.length), 1);
+
+  const blocked = (x: number, y: number) =>
+    layout.panels.some((p) => inside(x, y, panelBox(p), 8)) || layout.avoid.some((b) => inside(x, y, b));
+  const open: Point[] = [];
+  const preferred: Point[] = [];
+  const step = ground === "grid" ? GRID : DOT * 2;
+  const ox = ground === "grid" ? origin.x : origin.x + DOT / 2;
+  const oy = ground === "grid" ? origin.y : origin.y + DOT / 2;
+  for (let i = Math.ceil((margin - ox) / step); ox + i * step < W - margin; i++)
+    for (let j = Math.ceil((margin - oy) / step); oy + j * step < H - margin; j++) {
+      const x = ox + i * step;
+      const y = oy + j * step;
+      if (blocked(x, y)) continue;
+      // On the blueprint grid, nodes on the major lines come first, so the
+      // markers read as the grid itself.
+      const major = ground === "grid" && (i % 5 === 0 || j % 5 === 0);
+      (major ? preferred : open).push({ x, y, colour: null, onPanel: false });
     }
   const shuffle = <T,>(list: T[]) => {
     for (let i = list.length - 1; i > 0; i--) {
@@ -159,92 +183,121 @@ function gridNodes(W: number, H: number, origin: { x: number; y: number }, rando
     }
     return list;
   };
-  return { major: shuffle(major), minor: shuffle(minor) };
+  const places = [...outlines, ...shuffle(preferred), ...shuffle(open)].slice(0, n);
+  for (let tries = 0; places.length < n && tries < n * 40; tries++) {
+    const x = margin + random() * (W - margin * 2);
+    const y = margin + random() * (H - margin * 2);
+    if (tries < n * 30 && blocked(x, y)) continue;
+    places.push({ x, y, colour: null, onPanel: false });
+  }
+  return places;
 }
 
-/** Screen x of a point at depth z, seen by the camera at rest. */
-export const projectX = (x: number, z: number, W: number, D: number) => W / 2 + ((x - W / 2) * D) / (D - z);
-export const projectY = (y: number, z: number, H: number, D: number) => H / 2 + ((y - H / 2) * D) / (D - z);
-
-/** How far a particle in a form drifts toward the aperture before the scan (to Professional). */
-export const DRIFT = 0.22;
-
-export function layoutRun({
-  W,
-  H,
-  D,
-  direction,
-  origin,
-}: {
+export type RunInput = {
   W: number;
   H: number;
-  D: number;
   direction: Direction;
-  /** Origin of the Professional page's grid: old page going out, new page coming back. */
-  origin: { x: number; y: number };
-}): Particle[] {
+  oldLayout: Layout;
+  oldOrigin: { x: number; y: number };
+};
+
+/**
+ * The run's particles with their starting places. Destinations need the new
+ * page, which only exists once the transition has captured the old one, so
+ * they are added later by `assignEnds`.
+ */
+export function startRun({ W, H, direction, oldLayout, oldOrigin }: RunInput): Particle[] {
   const n = countFor(W);
   const random = rng(20261024);
-  const slots = formSlots(W, H, n, random);
-  const nodes = gridNodes(W, H, origin, random);
-  const pool = [...nodes.major.slice(0, Math.round(n * 0.7)), ...nodes.minor].slice(0, n);
-  const gridSize = W < 640 ? 6 : 7;
-  const make = (slot: Slot, node: { x: number; y: number }, i: number): Particle => {
+  const out = direction === "to-creative";
+  const small = W < 640;
+  const places = placesOn(oldLayout, out ? "grid" : "dots", oldOrigin, W, H, n, random);
+  const C = { x: W / 2, y: H / 2 };
+  const maxDist = Math.hypot(C.x, C.y);
+  return places.map((place, i) => {
     const a = random() * Math.PI * 2;
     const b = Math.acos(2 * random() - 1);
+    const startColour = out
+      ? place.onPanel
+        ? INK
+        : i % 7 === 0
+          ? ORANGE
+          : COBALT
+      : (place.colour ?? CREATIVE[i % CREATIVE.length]);
     return {
-      kind: slot.kind,
-      grid: { x: node.x, y: node.y, z: 0 },
-      form: { x: slot.x, y: slot.y, z: slot.z },
-      gridColour: i % 5 < 3 ? INK : COBALT,
-      formColour: slot.colour,
-      gridSize,
-      formSize: slot.size,
+      // Going out the shape follows the destination (set later); coming back
+      // only cubes and diamonds, which read as precise marks once aligned.
+      kind: out ? 0 : i % 5 < 3 ? 0 : 1,
+      start: { x: place.x, y: place.y, z: 0 },
+      end: { x: place.x, y: place.y, z: 0 },
+      slot: { x: place.x, y: C.y, z: 0 },
+      startColour,
+      endColour: startColour,
+      startSize: out ? (small ? 6 : 7) : place.onPanel ? (small ? 9 : 11) : small ? 6 : 8,
+      endSize: out ? (small ? 9 : 12) : small ? 6 : 7,
       axis: { x: Math.sin(b) * Math.cos(a), y: Math.sin(b) * Math.sin(a), z: Math.cos(b) },
-      spin: 2.4 + random() * 3.2,
-      lift: 60 + random() * 150,
-      pass: 0,
+      spin: 1.6 + random() * 2.6,
+      lift: 50 + random() * 110,
+      pass: out ? passProgress(place.x, direction, W) : 1,
+      order: Math.hypot(place.x - C.x, place.y - C.y) / maxDist,
       seed: random(),
     };
-  };
+  });
+}
 
-  if (direction === "to-creative") {
-    // Pair grid markers with form places from left to right, so each one flies
-    // a short, readable path and the left scanner releases the left side.
-    const sortedNodes = [...pool].sort((p, q) => p.x - q.x);
-    const sortedSlots = [...slots].sort((p, q) => p.x - q.x);
-    return sortedSlots.map((slot, i) => {
-      const particle = make(slot, sortedNodes[i % sortedNodes.length], i);
-      particle.pass = passProgress(particle.grid.x, direction, W);
-      return particle;
-    });
-  }
-
-  // Back to Professional: each particle is caught where it has drifted to, and
-  // snapped onto the free grid node nearest that place.
-  const all = [...nodes.major, ...nodes.minor];
-  const taken = new Set<number>();
-  return slots.map((slot, i) => {
-    const cx = W / 2;
-    const cy = H / 2;
-    const dx = slot.x + (cx - slot.x) * DRIFT;
-    const dy = slot.y + (cy - slot.y) * DRIFT;
-    const dz = slot.z * (1 - DRIFT);
-    const sx = projectX(dx, dz, W, D);
-    const sy = projectY(dy, dz, H, D);
+/**
+ * Gives each particle a destination on the new page. Pairs are chosen greedily
+ * in the order the scanners reach the particles, preferring a destination in
+ * nearly the same column, so every path is short and runs with the scanner
+ * rather than across it.
+ */
+export function assignEnds(
+  parts: Particle[],
+  { W, H, direction, newLayout, newOrigin }: { W: number; H: number; direction: Direction; newLayout: Layout; newOrigin: { x: number; y: number } },
+) {
+  const out = direction === "to-creative";
+  const random = rng(19970311);
+  const small = W < 640;
+  const places = placesOn(newLayout, out ? "dots" : "grid", newOrigin, W, H, parts.length, random);
+  const taken = new Array<boolean>(places.length).fill(false);
+  const C = { x: W / 2, y: H / 2 };
+  const queue = parts
+    .map((part, i) => ({ part, i }))
+    .sort((a, b) =>
+      out ? a.part.pass - b.part.pass : Math.abs(b.part.start.x - C.x) - Math.abs(a.part.start.x - C.x),
+    );
+  for (const { part, i } of queue) {
     let best = -1;
-    let bestD = Infinity;
-    all.forEach((node, k) => {
-      if (taken.has(k)) return;
-      const d = (node.x - sx) ** 2 + (node.y - sy) ** 2;
-      if (d < bestD) {
-        bestD = d;
+    let bestCost = Infinity;
+    places.forEach((place, k) => {
+      if (taken[k]) return;
+      const dx = Math.abs(place.x - part.start.x);
+      const dy = Math.abs(place.y - part.start.y);
+      const cost = out ? 2 * dx + dy : 3 * dx + 0.5 * dy;
+      if (cost < bestCost) {
+        bestCost = cost;
         best = k;
       }
     });
-    taken.add(best);
-    const particle = make(slot, all[best] ?? { x: sx, y: sy }, i);
-    particle.pass = passProgress(sx, direction, W);
-    return particle;
-  });
+    taken[best] = true;
+    const place = places[best];
+    part.end = { x: place.x, y: place.y, z: 0 };
+    if (out) {
+      // On a block's edge it takes the block's colour; in open space it
+      // becomes a small ring in a paper-dot colour.
+      part.endColour = place.onPanel ? (place.colour ?? CREATIVE[i % CREATIVE.length]) : PAPER[i % PAPER.length];
+      part.endSize = place.onPanel ? (small ? 10 : 12) : small ? 6 : 7;
+      // Rings and diamonds along island edges, with a few cubes.
+      part.kind = place.onPanel ? [1, 2, 1, 0][i % 4] : 2;
+    } else {
+      part.endColour = place.onPanel ? INK : i % 9 === 0 ? ORANGE : COBALT;
+      part.endSize = place.onPanel ? (small ? 5 : 6) : small ? 6 : 7;
+      // Gathered onto the axis above its column, the page's structure squeezed
+      // toward the scanner's line, then spread back out as a scanner passes.
+      const offset = Math.max(-H * 0.2, Math.min(H * 0.2, (place.y - C.y) * 0.3));
+      part.slot = { x: place.x + (random() - 0.5) * 4, y: C.y + offset, z: 0 };
+      part.pass = passProgress(place.x, direction, W);
+      part.order = Math.abs(place.x - C.x) / C.x;
+    }
+  }
 }

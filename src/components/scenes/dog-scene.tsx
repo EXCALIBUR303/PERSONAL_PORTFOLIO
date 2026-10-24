@@ -1,15 +1,14 @@
 "use client";
-import dynamic from "next/dynamic";
+import { lazyView } from "./lazy-view";
 import { useEffect, useRef, useState } from "react";
 import { useMode } from "@/components/mode";
 import { dogCommands, matchCommand, pipeline, type DogCommand } from "./dog-data";
 import { SceneToolbar, useSceneControls } from "./scene-controls";
 import { useWebGL } from "./use-webgl";
 
-const DogCanvas = dynamic(() => import("./three/dog-canvas"), {
-  ssr: false,
-  loading: () => <div className="s3-loading mono">Loading the robot dog…</div>,
-});
+const DogCanvas = lazyView(() => import("./three/dog-canvas"), () => <div className="s3-loading mono">Loading the robot dog…</div>);
+/** Fetches the 3D canvas code early, so a scene built during a mode switch is ready at once. */
+export const preloadCanvas = () => DogCanvas.preload();
 
 /** Robot-dog simulation: a command travels the documented chain, then the 3D dog moves. */
 export default function DogScene() {

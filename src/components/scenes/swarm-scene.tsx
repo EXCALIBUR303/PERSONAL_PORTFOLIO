@@ -1,5 +1,5 @@
 "use client";
-import dynamic from "next/dynamic";
+import { lazyView } from "./lazy-view";
 import { useEffect, useMemo, useState } from "react";
 import { Pause, Play, RotateCcw, StepForward } from "lucide-react";
 import { useMode } from "@/components/mode";
@@ -9,10 +9,9 @@ import { SceneToolbar, useSceneControls } from "./scene-controls";
 import { STEPS, W, coverage, found, simulate, survivors, type Strategy } from "./swarm-data";
 import { useWebGL } from "./use-webgl";
 
-const SwarmCanvas = dynamic(() => import("./three/swarm-canvas"), {
-  ssr: false,
-  loading: () => <div className="s3-loading mono">Loading the 3D search area…</div>,
-});
+const SwarmCanvas = lazyView(() => import("./three/swarm-canvas"), () => <div className="s3-loading mono">Loading the 3D search area…</div>);
+/** Fetches the 3D canvas code early, so a scene built during a mode switch is ready at once. */
+export const preloadCanvas = () => SwarmCanvas.preload();
 const NAMES = ["orange", "blue", "pink", "green"];
 
 /**

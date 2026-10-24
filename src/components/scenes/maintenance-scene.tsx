@@ -1,5 +1,5 @@
 "use client";
-import dynamic from "next/dynamic";
+import { lazyView } from "./lazy-view";
 import { useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import { useMode } from "@/components/mode";
@@ -23,10 +23,9 @@ import {
 import { SceneToolbar, useSceneControls } from "./scene-controls";
 import { useWebGL } from "./use-webgl";
 
-const EngineCanvas = dynamic(() => import("./three/engine-canvas"), {
-  ssr: false,
-  loading: () => <div className="s3-loading mono">Loading the 3D engine…</div>,
-});
+const EngineCanvas = lazyView(() => import("./three/engine-canvas"), () => <div className="s3-loading mono">Loading the 3D engine…</div>);
+/** Fetches the 3D canvas code early, so a scene built during a mode switch is ready at once. */
+export const preloadCanvas = () => EngineCanvas.preload();
 
 const steps = [
   "Sensor data",

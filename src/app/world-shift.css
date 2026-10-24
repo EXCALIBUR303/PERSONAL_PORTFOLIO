@@ -268,27 +268,21 @@ html[data-scanner] .sc-layer {
 .sc-frame-svg:not([data-armed]) {
   opacity: 0;
 }
-.sc-frame-svg :is(.sc-frame, .sc-corner, .sc-cross, .sc-link, .sc-reticle-arm, .sc-dial, .sc-beam-line) {
+.sc-frame-svg :is(path, line, circle) {
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.sc-frame-svg .sc-frame {
-  stroke-width: 1;
-  stroke-opacity: 0.55;
-}
-.sc-frame-svg :is(.sc-corner, .sc-reticle-arm) {
-  stroke-width: 3;
-}
-.sc-frame-svg :is(.sc-cross, .sc-link) {
-  stroke-width: 1.5;
-}
-.sc-frame-svg .sc-dial {
-  stroke-width: 2.5;
-}
 .sc-frame-svg .sc-spin {
   transform-box: fill-box;
   transform-origin: center;
+}
+/* Each scanner carries its half of the aperture; GSAP paints where they are. */
+.sc-frame-svg .sc-rider-l {
+  transform: translateX(var(--sc-l, -1000px));
+}
+.sc-frame-svg .sc-rider-r {
+  transform: translateX(var(--sc-r, -1000px));
 }
 .sc-frame-svg text {
   font-family: var(--font-mono), ui-monospace, "SFMono-Regular", monospace;
@@ -299,15 +293,6 @@ html[data-scanner] .sc-layer {
   stroke: #fffdf6;
   stroke-width: 4px;
   stroke-linejoin: round;
-}
-.sc-frame-svg .sc-beam {
-  opacity: var(--sc-beam-o, 0);
-}
-.sc-frame-svg .sc-beam-l {
-  transform: translateX(var(--sc-l, -100px));
-}
-.sc-frame-svg .sc-beam-r {
-  transform: translateX(var(--sc-r, -100px));
 }
 @media (max-width: 560px) {
   .sc-frame-svg text {

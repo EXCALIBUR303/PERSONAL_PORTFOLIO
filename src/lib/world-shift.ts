@@ -10,6 +10,7 @@ import {
   scannerTimeline,
   writeMorphTimings,
 } from "./transition/scanner";
+import { measureLayout } from "./transition/layout";
 import {
   dropStarted,
   emitProgress,
@@ -148,7 +149,7 @@ const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const VARS = [
   "--ws-x", "--ws-y", "--ws-r", "--ws-w", "--ws-old", "--ws-ms",
   "--ws-cr", "--ws-cx", "--ws-cy", "--ws-in-t", "--ws-out-t",
-  "--sc-l", "--sc-r", "--sc-cl", "--sc-cr", "--sc-top-t", "--sc-top-f", "--sc-bottom-f", "--sc-beam-o",
+  "--sc-l", "--sc-r", "--sc-cl", "--sc-cr", "--sc-top-t", "--sc-top-f", "--sc-bottom-f",
 ];
 function clear(root: HTMLElement) {
   delete root.dataset.shift;
@@ -308,6 +309,8 @@ function scannerShift(
     height: innerHeight,
     oldOrigin: gridOrigin(),
     newOrigin: gridOrigin(),
+    oldLayout: measureLayout(),
+    newLayout: { panels: [], avoid: [] },
   });
   root.dataset.shift = next;
   root.dataset.scanner = direction;
@@ -330,6 +333,7 @@ function scannerShift(
       if (section) document.getElementById(section)?.scrollIntoView({ block: "start", behavior: "instant" });
       nameCards(slugsOf(cards));
       transition.newOrigin = gridOrigin();
+      transition.newLayout = measureLayout();
       settleFocus(next, keepFocus);
     };
     const vt = start(update);

@@ -1,5 +1,5 @@
 "use client";
-import dynamic from "next/dynamic";
+import { lazyView } from "./lazy-view";
 import { useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, RotateCcw } from "lucide-react";
 import { useMode } from "@/components/mode";
@@ -8,10 +8,9 @@ import { questions, scoreQuestion, steps } from "./retrieval-data";
 import { SceneToolbar, useSceneControls } from "./scene-controls";
 import { useWebGL } from "./use-webgl";
 
-const VaultCanvas = dynamic(() => import("./three/vault-canvas"), {
-  ssr: false,
-  loading: () => <div className="s3-loading mono">Loading the 3D vault…</div>,
-});
+const VaultCanvas = lazyView(() => import("./three/vault-canvas"), () => <div className="s3-loading mono">Loading the 3D vault…</div>);
+/** Fetches the 3D canvas code early, so a scene built during a mode switch is ready at once. */
+export const preloadCanvas = () => VaultCanvas.preload();
 
 const notes = [
   "The notes are cut into passages, each remembering its file and section or page.",

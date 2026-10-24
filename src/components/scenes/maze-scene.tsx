@@ -1,5 +1,5 @@
 "use client";
-import dynamic from "next/dynamic";
+import { lazyView } from "./lazy-view";
 import { useEffect, useMemo, useState } from "react";
 import { Pause, Play, RotateCcw, Shuffle, StepForward } from "lucide-react";
 import { useMode } from "@/components/mode";
@@ -16,10 +16,9 @@ import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { SceneToolbar, useSceneControls } from "./scene-controls";
 import { useWebGL } from "./use-webgl";
 
-const MazeCanvas = dynamic(() => import("./three/maze-canvas"), {
-  ssr: false,
-  loading: () => <div className="s3-loading mono">Loading the 3D maze…</div>,
-});
+const MazeCanvas = lazyView(() => import("./three/maze-canvas"), () => <div className="s3-loading mono">Loading the 3D maze…</div>);
+/** Fetches the 3D canvas code early, so a scene built during a mode switch is ready at once. */
+export const preloadCanvas = () => MazeCanvas.preload();
 
 const SPEEDS = [
   { label: "Slow", ms: 120 },

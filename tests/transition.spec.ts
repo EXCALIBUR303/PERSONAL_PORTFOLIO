@@ -51,6 +51,37 @@ test("the scanner runs in both directions, draws its frame and leaves nothing be
   await expect(page.locator(".pg-card")).toHaveCount(6);
 });
 
+test("the hero scene is rebuilt without a loading message, and keeps the chosen category", async ({ page }) => {
+  await prepare(page);
+  await page.locator(".hx-lenses").getByRole("button", { name: /Algorithms/ }).click();
+  await expect(page.locator(".s3-stage canvas")).toBeAttached({ timeout: 20_000 });
+  await page.getByRole("button", { name: "Creative" }).click();
+  await expect(html(page)).toHaveAttribute("data-mode", "creative");
+  await expect.poll(() => leftovers(page), { timeout: 12_000 }).toEqual([]);
+  // Record any loading message that is on screen while the scanner is running.
+  await page.evaluate(() => {
+    const w = window as Window & { __loadingSeen?: string[] };
+    w.__loadingSeen = [];
+    const look = () => {
+      if (!document.documentElement.dataset.scanner) return;
+      document.querySelectorAll(".s3-loading, .s3-wait").forEach((el) => w.__loadingSeen!.push(el.textContent ?? ""));
+    };
+    new MutationObserver(look).observe(document.documentElement, { childList: true, subtree: true, attributes: true });
+    const tick = () => {
+      look();
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  await page.getByRole("button", { name: "Professional" }).click();
+  await expect(html(page)).toHaveAttribute("data-mode", "pro");
+  await expect.poll(() => leftovers(page), { timeout: 12_000 }).toEqual([]);
+  expect(await page.evaluate(() => (window as Window & { __loadingSeen?: string[] }).__loadingSeen)).toEqual([]);
+  // The scene is there once the run has ended, in the category the visitor chose.
+  await expect(page.locator(".s3-stage canvas")).toBeAttached({ timeout: 20_000 });
+  await expect(page.locator(".hx-lenses").getByRole("button", { name: /Algorithms/ })).toHaveAttribute("aria-pressed", "true");
+});
+
 test("filters, search and scroll position survive the scanner", async ({ page }) => {
   await prepare(page, "/");
   await page.evaluate(() => document.getElementById("projects")!.scrollIntoView({ behavior: "instant" }));

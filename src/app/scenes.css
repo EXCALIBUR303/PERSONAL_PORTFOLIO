@@ -81,9 +81,28 @@ html[data-mode] .portfolio-root {
     color: var(--m-graphite);
     touch-action: auto;
   }
+  /* Shown only if the scene is not ready once any mode transition has ended. */
+  .s3-wait {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    color: var(--m-graphite);
+    pointer-events: none;
+  }
   .s3-stage canvas {
     display: block;
     cursor: grab;
+    transition: opacity 0.3s ease-out;
+  }
+  .s3-stage[data-warm="false"] canvas {
+    opacity: 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .s3-stage canvas {
+      transition: none;
+    }
   }
   .s3-stage canvas:active {
     cursor: grabbing;

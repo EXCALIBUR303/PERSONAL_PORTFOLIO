@@ -4,8 +4,10 @@ import { OrbitControls } from "@react-three/drei";
 import {
   Component,
   useEffect,
+  useCallback,
   useRef,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import * as THREE from "three";
@@ -93,25 +95,53 @@ function CameraRig({
   return null;
 }
 
+/** True while a mode transition is running. */
+function useTransitionRunning() {
+  return useSyncExternalStore(
+    subscribeTransition,
+    () => transition.running,
+    () => false,
+  );
+}
+
 /**
- * False while a mode transition is running, then true for good. A new WebGL
- * canvas compiles its shaders on the GPU, and the browser waits for that before
- * it can show the new page; created during a transition, it would hold the
- * transition up by about a second. So a scene that mounts mid-transition waits
- * until the transition has finished.
+ * Compiles the scene's shaders without blocking, then tells the stage it can
+ * start rendering. A new WebGL canvas that compiles on its first frame holds
+ * the browser up for about a second, which showed during a mode transition as
+ * a stalled run. The canvas mounts at once with its loop off; this waits for
+ * the programs to be ready (the browser links them in parallel), so the first
+ * frame is cheap. If compiling is not available, fails, or never reports back
+ * (a lost context, an odd driver), the stage renders anyway after a few
+ * seconds, as it always did, so a scene can never stay blank.
  */
-function useAfterTransition() {
-  const [ready, setReady] = useState(() => !transition.running);
+const WARMUP_LIMIT_MS = 4000;
+function Warmup({ onReady }: { onReady: () => void }) {
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
+  const camera = useThree((s) => s.camera);
   useEffect(() => {
-    if (ready) return;
-    const check = () => {
-      if (!transition.running) setReady(true);
+    let live = true;
+    const done = () => live && onReady();
+    const backstop = window.setTimeout(done, WARMUP_LIMIT_MS);
+    if (typeof gl.compileAsync === "function") gl.compileAsync(scene, camera).then(done, done);
+    else done();
+    return () => {
+      live = false;
+      window.clearTimeout(backstop);
     };
-    const off = subscribeTransition(check);
-    check();
-    return off;
-  }, [ready]);
-  return ready;
+  }, [gl, scene, camera, onReady]);
+  return null;
+}
+
+/** Draws the first frame once the loop is on, since an on-demand loop would wait for a change. */
+function FirstFrame({ ready }: { ready: boolean }) {
+  const invalidate = useThree((s) => s.invalidate);
+  useEffect(() => {
+    if (!ready) return;
+    const id = requestAnimationFrame(() => invalidate());
+    return () => cancelAnimationFrame(id);
+  }, [ready, invalidate]);
+  return null;
 }
 
 class Boundary extends Component<
@@ -173,47 +203,51 @@ export default function Stage3D({
     return () => observer.disconnect();
   }, []);
   const live = visible && (!paused || busy);
-  const ready = useAfterTransition();
+  // The canvas mounts at once, with its loop off, and starts once its shaders
+  // are compiled: a mode switch no longer waits on, or stalls for, a new scene.
+  const [warm, setWarm] = useState(false);
+  const onWarm = useCallback(() => setWarm(true), []);
+  const running = useTransitionRunning();
+  const go = warm;
   return (
-    <div ref={box} className="s3-stage" role="img" aria-label={label}>
-      {!ready ? (
-        <div className="s3-loading mono">Preparing the 3D view…</div>
-      ) : (
-        <Boundary fallback={fallback}>
-          <Canvas
-            frameloop={live ? "always" : "demand"}
-            dpr={[1, 1.75]}
-            shadows
-            gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
-            camera={{ fov: 38, near: 0.1, far: 120, position: [10, 10, 10] }}
-          >
-            <hemisphereLight args={["#ffffff", "#c9c3b4", 1.1]} />
-            <directionalLight
-              position={[6, 12, 5]}
-              intensity={1.6}
-              castShadow
-              shadow-mapSize={[1024, 1024]}
-              shadow-camera-left={-12}
-              shadow-camera-right={12}
-              shadow-camera-top={12}
-              shadow-camera-bottom={-12}
-            />
-            <OrbitControls
-              makeDefault
-              enablePan={false}
-              enableDamping
-              minDistance={distance[0]}
-              maxDistance={distance[1]}
-              maxPolarAngle={Math.PI * 0.47}
-              autoRotate={autoRotate && visible && !paused}
-              autoRotateSpeed={0.5}
-            />
-            <CameraRig framing={framing} mode={mode} resetKey={resetKey} follow={follow} />
-            {children}
-          </Canvas>
-          {overlay}
-        </Boundary>
-      )}
+    <div ref={box} className="s3-stage" data-warm={go} role="img" aria-label={label}>
+      <Boundary fallback={fallback}>
+        <Canvas
+          frameloop={!go ? "never" : live ? "always" : "demand"}
+          dpr={[1, 1.75]}
+          shadows
+          gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
+          camera={{ fov: 38, near: 0.1, far: 120, position: [10, 10, 10] }}
+        >
+          <hemisphereLight args={["#ffffff", "#c9c3b4", 1.1]} />
+          <directionalLight
+            position={[6, 12, 5]}
+            intensity={1.6}
+            castShadow
+            shadow-mapSize={[1024, 1024]}
+            shadow-camera-left={-12}
+            shadow-camera-right={12}
+            shadow-camera-top={12}
+            shadow-camera-bottom={-12}
+          />
+          <OrbitControls
+            makeDefault
+            enablePan={false}
+            enableDamping
+            minDistance={distance[0]}
+            maxDistance={distance[1]}
+            maxPolarAngle={Math.PI * 0.47}
+            autoRotate={autoRotate && visible && !paused}
+            autoRotateSpeed={0.5}
+          />
+          <CameraRig framing={framing} mode={mode} resetKey={resetKey} follow={follow} />
+          {children}
+          <Warmup onReady={onWarm} />
+          <FirstFrame ready={go} />
+        </Canvas>
+        {overlay}
+        {!warm && !running && <div className="s3-wait mono">Preparing the 3D view…</div>}
+      </Boundary>
     </div>
   );
 }
