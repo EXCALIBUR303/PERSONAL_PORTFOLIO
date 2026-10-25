@@ -1,13 +1,15 @@
 "use client";
-import { useEffect, useMemo, useRef } from "react";
-import { useFrame, useThree } from "@react-three/fiber";
+import { useMemo, useRef } from "react";
+import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { depot, orders, sequenceRoute, type Point } from "@/lib/lastmile";
 import { makeMaze, solveMaze } from "@/lib/maze";
+import { resolvePenalty } from "@/lib/penalty";
 import { COLS, potholes, ROWS, simulate, type Run } from "@/lib/swarm-sim";
 import { Kit, Model, useDisposal, type V3 } from "./kit";
 import { briefPad, exhibitPad, useOwn, type LandmarkProps } from "./landmark";
 import { along, smooth, span, useLevel, usePlay } from "./motion";
+import { Tiles } from "./tiles";
 
 /*
  * The Algorithms district's five landmarks. Each is modelled on what its
@@ -17,74 +19,6 @@ import { along, smooth, span, useLevel, usePlay } from "./motion";
  * adapted demonstration computes; the labels in the panel say which is which.
  * Under reduced motion every reaction jumps to its end state.
  */
-
-/** A grid of thin tiles drawn as one instanced mesh and recoloured from a function while a reaction runs. */
-function Tiles({
-  cells,
-  width,
-  height,
-  depth,
-  base,
-  t,
-  dim,
-  colour,
-}: {
-  cells: V3[];
-  width: number;
-  height: number;
-  depth: number;
-  base: string;
-  t: { current: number };
-  dim: boolean;
-  colour: (i: number, t: number, out: THREE.Color) => boolean;
-}) {
-  const mesh = useRef<THREE.InstancedMesh>(null);
-  const invalidate = useThree((s) => s.invalidate);
-  const geometry = useMemo(() => new THREE.BoxGeometry(width, height, depth), [width, height, depth]);
-  const material = useMemo(() => new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.92 }), []);
-  const last = useRef(-1);
-  useEffect(
-    () => () => {
-      geometry.dispose();
-      material.dispose();
-    },
-    [geometry, material],
-  );
-  const paint = useMemo(() => {
-    const baseColour = new THREE.Color(base);
-    const card = new THREE.Color("#fbf9f4");
-    const out = new THREE.Color();
-    return (m: THREE.InstancedMesh, now: number) => {
-      for (let i = 0; i < cells.length; i++) {
-        out.copy(dim ? card : baseColour);
-        if (!dim) colour(i, now, out);
-        m.setColorAt(i, out);
-      }
-      if (m.instanceColor) m.instanceColor.needsUpdate = true;
-    };
-  }, [cells, base, dim, colour]);
-  useEffect(() => {
-    const m = mesh.current;
-    if (!m) return;
-    const d = new THREE.Object3D();
-    cells.forEach((c, i) => {
-      d.position.set(c[0], c[1], c[2]);
-      d.updateMatrix();
-      m.setMatrixAt(i, d.matrix);
-    });
-    m.instanceMatrix.needsUpdate = true;
-    last.current = -1;
-    paint(m, t.current);
-    invalidate();
-  }, [cells, geometry, paint, t, invalidate]);
-  useFrame(() => {
-    const m = mesh.current;
-    if (!m || last.current === t.current) return;
-    last.current = t.current;
-    paint(m, t.current);
-  });
-  return <instancedMesh ref={mesh} args={[geometry, material, cells.length]} receiveShadow frustumCulled={false} />;
-}
 
 /* ---------- Mazera: a maze board, searched breadth-first ---------- */
 const MAZE_N = 9;
@@ -366,6 +300,9 @@ export function Penalty({ palette: p, active, dim, reduced }: LandmarkProps) {
     return k.build();
   }, [p, net]);
   useDisposal(model);
+  // One shot, resolved by the study's own deterministic rule: aim right at moderate power, first round.
+  const shot = useMemo(() => resolvePenalty("Right", 70, 0), []);
+  const dir = (side: string) => (side === "Left" ? -1 : side === "Right" ? 1 : 0);
   const run = usePlay(active, reduced, 2.2);
   const ball = useRef<THREE.Mesh>(null);
   const keeper = useRef<THREE.Group>(null);
@@ -375,16 +312,16 @@ export function Penalty({ palette: p, active, dim, reduced }: LandmarkProps) {
     const b = ball.current;
     if (b) {
       // From the spot to the top-right corner, in an arc.
-      b.position.set(0.3 * kick, 0.075 + 0.18 * kick + Math.sin(Math.PI * kick) * 0.16, 0.3 + (-0.9 - 0.3) * kick);
+      b.position.set(0.3 * dir("Right") * kick, 0.075 + 0.18 * kick + Math.sin(Math.PI * kick) * 0.16, 0.3 + (-0.9 - 0.3) * kick);
       b.rotation.x = -kick * 9;
     }
     const kp = keeper.current;
     if (kp) {
       const dive = smooth(span(t, 0.2, 0.6));
-      kp.position.set(-0.28 * dive, 0.06 + Math.sin(Math.PI * dive) * 0.06, -0.58);
-      kp.rotation.z = 1.2 * dive;
+      kp.position.set(0.28 * dir(shot.keeper) * dive, 0.06 + Math.sin(Math.PI * dive) * 0.06, -0.58);
+      kp.rotation.z = -1.2 * dir(shot.keeper) * dive;
     }
-    net.setValues({ emissive: "#c8f13b", emissiveIntensity: Math.sin(Math.PI * span(t, 0.5, 0.9)) * 0.6 });
+    net.setValues({ emissive: "#c8f13b", emissiveIntensity: shot.result === "Goal" ? Math.sin(Math.PI * span(t, 0.5, 0.9)) * 0.6 : 0 });
   });
   return (
     <group>

@@ -5,6 +5,7 @@ import { ALGORITHMS_PIER, ALGORITHMS_PLATES, BOWL, DISTRICTS, PLACEMENTS, type P
 import { circle, Kit, Model, useDisposal, type V3 } from "./kit";
 import { Placed, tree, type LandmarkProps } from "./landmark";
 import { LastMile, Mazera, ParkScan, PathAble, Penalty } from "./algorithms-landmarks";
+import { Aeris, Burnout, Maintenance, Resume, RobotDog, Sigsmith, Swarmmind } from "./intelligence-landmarks";
 import type { Palette } from "./palette";
 import { rect, terrace } from "./systems";
 
@@ -247,6 +248,13 @@ const DETAILED: Record<string, ComponentType<LandmarkProps>> = {
   "last-mile-daa": LastMile,
   "parkscan-swarm": ParkScan,
   "football-penalty-shootout": Penalty,
+  "predictive-maintenance": Maintenance,
+  "quadruped-rl": RobotDog,
+  swarmmind: Swarmmind,
+  aeris: Aeris,
+  "resume-screener": Resume,
+  "student-burnout-ai": Burnout,
+  sigsmith: Sigsmith,
 };
 
 function Massing({ slug, palette }: { slug: string; palette: Palette }) {
