@@ -139,7 +139,18 @@ export default function StudioMap() {
     [],
   );
 
+  /** On a phone the panel is a sheet over the bottom of the screen: bring the world to the top, above it. */
+  function showStage() {
+    if (layout !== "phone") return;
+    requestAnimationFrame(() => {
+      const stage = document.querySelector(".w-stage");
+      if (!stage) return;
+      const top = stage.getBoundingClientRect().top;
+      if (Math.abs(top - 84) > 6) window.scrollBy({ top: top - 84, behavior: reduced ? "auto" : "smooth" });
+    });
+  }
   function choose(station: Station) {
+    showStage();
     setEntering(null);
     update({
       slug: station.slug,
@@ -147,6 +158,7 @@ export default function StudioMap() {
     });
   }
   function openStudio() {
+    if (saved.slug !== "studio") showStage();
     setEntering(null);
     update({ slug: saved.slug === "studio" ? null : "studio" });
   }

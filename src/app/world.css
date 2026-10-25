@@ -580,7 +580,7 @@ html[data-mode="creative"] .portfolio-root {
       inset: auto 8px 8px 8px;
       z-index: 120;
       width: auto;
-      max-height: 44svh;
+      max-height: 40svh;
       margin: 0;
       overflow: auto;
       animation: w-sheet-in 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;

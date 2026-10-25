@@ -318,10 +318,14 @@ test("on a phone the station panel is a bottom sheet that stays inside the scree
   const sheet = page.locator(".c-brief");
   await expect(sheet).toBeVisible();
   await expect(sheet).toHaveCSS("position", "fixed");
-  await page.waitForTimeout(600); // the sheet slides in
+  await page.waitForTimeout(1400); // the sheet slides in and the page scrolls the world up
   const b = (await sheet.boundingBox())!;
   expect(b.y).toBeGreaterThanOrEqual(0);
   expect(b.y + b.height).toBeLessThanOrEqual(844 + 1);
+  // The world is brought up above the sheet, not left underneath it.
+  const stage = (await page.locator(".w-stage").boundingBox())!;
+  expect(stage.y).toBeGreaterThanOrEqual(0);
+  expect(stage.y + stage.height).toBeLessThanOrEqual(b.y + 2);
   await expect(sheet.getByRole("button", { name: /Enter exhibit/ })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.locator(".c-brief")).toHaveCount(0);
