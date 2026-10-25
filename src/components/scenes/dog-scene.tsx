@@ -91,6 +91,30 @@ export default function DogScene() {
       <p className="s3-fine">
         Simulation. A keyword matcher stands in for the language model, the speed and turn values are illustrative, and the trot is hand-written rather than the trained PPO policy.
       </p>
+      <aside className="checked-panel" aria-label="What was checked in the project">
+        <h4 className="mono">Checked in the project&apos;s own scripts (not run on this page)</h4>
+        <table>
+          <caption>Domain-randomisation benchmark, 5 seeds, mean tracking error (lower is better)</caption>
+          <thead>
+            <tr>
+              <th scope="col">Measure</th>
+              <th scope="col">Final model</th>
+              <th scope="col">Curriculum model</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Mean</th><td>0.191</td><td>0.174</td></tr>
+            <tr><th scope="row">Weak motors</th><td>0.304</td><td>0.240</td></tr>
+            <tr><th scope="row">Worst case</th><td>0.301</td><td>0.227</td></tr>
+          </tbody>
+        </table>
+        <p>
+          Final model by condition: nominal 0.083, ice 0.083, grippy 0.175, payload 0.143, weak motors 0.304, stiff 0.245; no falls (0%). These two columns match the project&apos;s README exactly. Its &ldquo;no domain randomisation&rdquo; column was not re-run, because that model is not shipped.
+        </p>
+        <p>
+          Evaluation script: 5 of 6 checks pass (stand still, walk slow, turn left, turn right, walk and turn). Walking fast fails the foot-slip check: measured slip 0.37 against a 0.25 limit. The README table lists 0.29, which did not reproduce.
+        </p>
+      </aside>
     </div>
   );
 }

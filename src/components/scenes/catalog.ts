@@ -54,7 +54,7 @@ export const scenes: SceneInfo[] = [
     is3d: true,
     seeing:
       "Two cars ask for the same free bay at the same moment. Switch between a plain check-then-write and a row-locked allocation to see why the database has to decide who gets it.",
-    why: "SmartPark DBMS keeps capacity, tariff and access rules in the relational database. Row-locked slot allocation is how it avoids two sessions on one bay.",
+    why: "SmartPark DBMS keeps capacity, tariff and access rules in the relational database. Row-locked slot allocation (FOR UPDATE SKIP LOCKED) is how it avoids two sessions on one bay: the second session is handed the next free bay, not refused. The check-then-write branch here is illustrative and is not code from the project, and nothing here talks to its database.",
     slug: "smart-parking-dbms",
     project: "SmartPark DBMS",
   },
@@ -80,7 +80,7 @@ export const scenes: SceneInfo[] = [
     is3d: true,
     seeing:
       "A real graph search running on a generated maze. Pick one of Mazera's six algorithms, then play, pause or step through the cells it explores before the path lights up.",
-    why: "Mazera compares six search algorithms on mazes. These are independent TypeScript re-implementations of the six algorithms, running live in your browser; they are not the original application's code.",
+    why: "Mazera compares six search algorithms on mazes. These are independent TypeScript re-implementations of the six algorithms, running live in your browser; they are not the original application's code. On 327 audited grids their path lengths matched the original for BFS, Dijkstra, A* and Bidirectional search. The number of cells explored differs from the original, and DFS and Greedy do not guarantee a shortest path.",
     slug: "mazera-ai-maze-solver",
     project: "Mazera AI Maze Solver",
   },
@@ -106,7 +106,7 @@ export const scenes: SceneInfo[] = [
     is3d: true,
     seeing:
       "A small made-up campus. Change the travel profile or report a blocked path, and the route is recomputed with only the paths that profile can use.",
-    why: "PathAble routes on a graph with accessibility constraints and reroutes after reviewed community reports. Its own campus examples are fictional too; this is a simplified re-implementation.",
+    why: "PathAble routes on a graph with accessibility constraints and reroutes after reviewed community reports. Its own campus examples are fictional too; this is a simplified re-implementation. In the audit, 22 of 504 route queries chose a different route under the project's own cost model, although both agreed on which places were reachable. The project's hazard inference is disabled.",
     slug: "pathable",
     project: "PathAble",
   },

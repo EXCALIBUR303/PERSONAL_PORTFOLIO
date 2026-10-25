@@ -587,6 +587,15 @@ export default function MaintenanceScene() {
               results/{subset}/model_comparison.csv{" "}
               <ArrowUpRight size={13} aria-hidden="true" />
             </a>
+            <aside className="checked-panel" aria-label="What was checked at this commit">
+              <h4 className="mono">Checked at commit 9bb3742</h4>
+              <ul>
+                <li>Every figure in these tables equals the repository&apos;s committed results (48 of 48 values compared).</li>
+                <li>A retrain of FD001 and FD004 at that commit reproduced the committed tracked result files byte for byte.</li>
+                <li>Four files in the project&apos;s outputs folder were not regenerated and remain unverified.</li>
+                <li>The engines in the earlier steps are synthetic, and the validation engines picked here differ from the project&apos;s (a different random generator).</li>
+              </ul>
+            </aside>
           </>
         )}
 

@@ -88,3 +88,45 @@
     min-width: 0;
   }
 }
+
+/* Small "what was checked" panel under a scene (Predictive Maintenance, Robot Dog). */
+.checked-panel {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border, #17171d33);
+  border-radius: 10px;
+  background: var(--surface, #ffffff80);
+  font-size: 13px;
+  line-height: 1.5;
+  color: inherit;
+}
+.checked-panel h4 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+.checked-panel ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.checked-panel p {
+  margin: 8px 0 0;
+}
+.checked-panel table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+.checked-panel caption {
+  padding-bottom: 4px;
+  text-align: left;
+  opacity: 0.85;
+}
+.checked-panel th,
+.checked-panel td {
+  padding: 3px 8px 3px 0;
+  text-align: left;
+  border-bottom: 1px solid var(--border, #17171d22);
+}

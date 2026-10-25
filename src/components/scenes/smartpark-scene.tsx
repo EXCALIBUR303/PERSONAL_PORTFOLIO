@@ -137,7 +137,7 @@ export default function SmartParkScene() {
         </button>
       </div>
       <p className="lz-note">
-        Illustration: the garage layout and the other cars are drawn for scale. The sequence is the documented idea of row-locked allocation, not a live view of the project&apos;s database.
+        Illustration: the garage layout and the other cars are drawn for scale. The sequence is the documented idea of row-locked allocation, not a live view of the project&apos;s database. The check-then-write branch is illustrative and is not code from the project; in the project the second session is handed the next free bay.
       </p>
     </div>
   );
