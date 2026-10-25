@@ -1,0 +1,306 @@
+import type { District } from "../identity";
+import { copyPose, deg, Projector, type Pose, type Vec3 } from "./camera";
+
+/*
+ * The studio world's composition, in world units (about a metre of model
+ * scale; y is up). The Studio stands at the origin and the three districts sit
+ * around it as floating islands: Systems upper left, Algorithms upper right,
+ * Intelligence in front, as on the 2D map. Landmarks are modelled to the
+ * footprints given here, so the HTML buttons laid over them (and the camera
+ * framings) come from the same numbers as the geometry.
+ */
+
+/** Overview turn: buildings show a lit left face (south) and a shaded right face (east). */
+export const AZ = deg(32);
+const R: [number, number] = [Math.cos(AZ), -Math.sin(AZ)];
+const F: [number, number] = [-Math.sin(AZ), -Math.cos(AZ)];
+/** A world point from overview screen directions: u to the right, v away from the viewer. */
+const view = (u: number, v: number, y = 0): Vec3 => [u * R[0] + v * F[0], y, u * R[1] + v * F[1]];
+
+export type DistrictFrame = {
+  id: District;
+  /** Centre of the island's top, in world units. */
+  centre: Vec3;
+  /** Half extents of the island in x and z (its radius twice, for a round one). */
+  half: [number, number];
+  round?: boolean;
+  /** Landmarks here are modelled at this scale. */
+  scale: number;
+  /** Lowest and highest y of what the camera should keep in view, relative to the centre. */
+  span: [number, number];
+  /** Where the bridge from the Studio lands, relative to the centre. */
+  landing: Vec3;
+  /** Small turn of the camera when this district is focused, so each gets its own angle. */
+  turn: number;
+};
+
+export const DISTRICTS: Record<District, DistrictFrame> = {
+  systems: {
+    id: "systems",
+    centre: view(-11.5, 4.2, 0),
+    half: [6.4, 5.3],
+    scale: 1.2,
+    span: [-0.6, 2.4],
+    landing: [6.25, 0.45, -0.35],
+    turn: deg(-7),
+  },
+  algorithms: {
+    id: "algorithms",
+    centre: view(11.5, 4.2, 0.35),
+    half: [5.1, 5.1],
+    scale: 1,
+    span: [-0.5, 1.9],
+    landing: [-3.95, 0, 5.0],
+    turn: deg(7),
+  },
+  intelligence: {
+    id: "intelligence",
+    centre: view(0, -11.2, -0.35),
+    half: [5.2, 5.2],
+    round: true,
+    scale: 1,
+    span: [-0.5, 2.0],
+    landing: [-2.76, 0, -4.41],
+    turn: deg(0),
+  },
+};
+export const DISTRICT_ORDER: District[] = ["systems", "algorithms", "intelligence"];
+
+/** The Studio: a round podium at the origin; its building faces the viewer. */
+export const STUDIO = {
+  /** Podium top. */
+  top: 0.62,
+  radius: 3.9,
+  /** The building is modelled at this scale on the podium. */
+  scale: 1.3,
+  /** The building's box, for framing and the button laid over it. */
+  min: [-2.7, 0.62, -2.2] as Vec3,
+  max: [2.7, 5.0, 2.1] as Vec3,
+  /** Where its name plate floats: above the roof and its sign. */
+  anchor: [0, 7.7, 0] as Vec3,
+};
+
+/** One landmark's footprint: centre of its base, its width, height and depth, and its model scale. */
+export type Placement = { slug: string; district: District; base: Vec3; size: Vec3; scale: number };
+
+/** Local footprints, relative to the district centre (x east, z south). */
+const local: Record<District, [slug: string, x: number, y: number, z: number, w: number, h: number, d: number][]> = {
+  systems: [
+    // Upper terrace: the three exhibits.
+    ["smart-parking-dbms", -3.75, 0.9, -3.15, 2.5, 1.5, 2.1],
+    ["aura", 0.15, 0.9, -3.2, 2.8, 1.2, 2.2],
+    ["private-local-ai", 3.95, 0.9, -3.2, 2.2, 1.4, 2.1],
+    // Middle terrace, either end of the boulevard.
+    ["lifeos", -4.55, 0.45, 0.05, 1.9, 1.05, 1.7],
+    ["burnout-backend", 4.15, 0.45, 1.05, 1.7, 1.1, 1.4],
+    // Lower terrace: the street.
+    ["uco-recovery-station", -3.85, 0, 3.55, 1.9, 1.0, 1.5],
+    ["green-mobility", 0.1, 0, 3.6, 2.7, 0.8, 1.5],
+    ["rupeerise", 3.95, 0, 3.5, 1.7, 1.0, 1.7],
+  ],
+  algorithms: [
+    ["mazera-ai-maze-solver", -2.55, 0.55, -2.55, 2.2, 0.7, 2.2],
+    ["pathable", 2.55, 0.3, -2.55, 2.2, 0.9, 2.2],
+    ["last-mile-daa", -2.55, 0.2, 2.55, 2.2, 0.8, 2.2],
+    ["football-penalty-shootout", 2.55, 0.6, 2.55, 2.2, 0.7, 2.2],
+    ["parkscan-swarm", 0, 0.1, 0, 2.0, 0.5, 2.0],
+  ],
+  intelligence: [
+    ["predictive-maintenance", -2.75, 0.25, -2.0, 1.9, 1.1, 1.7],
+    ["quadruped-rl", 2.75, 0.25, -2.0, 1.9, 0.9, 1.7],
+    ["aeris", -3.6, 0.25, 0.75, 1.7, 1.2, 1.7],
+    ["swarmmind", 3.6, 0.25, 0.75, 1.8, 0.6, 1.8],
+    ["sigsmith", -2.2, 0.25, 3.25, 1.6, 0.9, 1.4],
+    ["student-burnout-ai", 2.2, 0.25, 3.25, 1.6, 0.9, 1.4],
+    ["resume-screener", 0, 0.25, 3.85, 1.7, 0.9, 1.3],
+  ],
+};
+
+export const PLACEMENTS: Record<string, Placement> = Object.fromEntries(
+  (Object.keys(local) as District[]).flatMap((district) =>
+    local[district].map(([slug, x, y, z, w, h, d]) => {
+      const { centre: c, scale } = DISTRICTS[district];
+      return [
+        slug,
+        { slug, district, base: [c[0] + x, c[1] + y, c[2] + z] as Vec3, size: [w * scale, h * scale, d * scale] as Vec3, scale },
+      ];
+    }),
+  ),
+);
+
+export const boxOf = (p: Placement): [Vec3, Vec3] => [
+  [p.base[0] - p.size[0] / 2, p.base[1], p.base[2] - p.size[2] / 2],
+  [p.base[0] + p.size[0] / 2, p.base[1] + p.size[1], p.base[2] + p.size[2] / 2],
+];
+/** Where a station's marker floats: a little above the top of its landmark. */
+export const anchorOf = (p: Placement): Vec3 => [p.base[0], p.base[1] + p.size[1] + 0.32, p.base[2]];
+
+/** Where each district's name plate sits, and which way it reads from there: beside the island, never on it. */
+export const PLATES: Record<District, { at: Vec3; align: "left" | "right" | "below" }> = {
+  systems: {
+    at: [DISTRICTS.systems.centre[0] - 5.4, -1.8, DISTRICTS.systems.centre[2] + 6.8],
+    align: "below",
+  },
+  algorithms: {
+    at: [DISTRICTS.algorithms.centre[0] + 3.6, -0.9, DISTRICTS.algorithms.centre[2] + 5.7],
+    align: "below",
+  },
+  intelligence: {
+    at: [DISTRICTS.intelligence.centre[0] - 6.3, -0.6, DISTRICTS.intelligence.centre[2] + 0.6],
+    align: "left",
+  },
+};
+export const plateOf = (d: District): Vec3 => PLATES[d].at;
+
+/** The island's outline (eight points round a round one), top and bottom, for framing. */
+function districtPoints(d: District, pad = 0): Vec3[] {
+  const f = DISTRICTS[d];
+  const pts: Vec3[] = [];
+  const ring: [number, number][] = f.round
+    ? Array.from({ length: 8 }, (_, i) => [Math.cos((i * Math.PI) / 4), Math.sin((i * Math.PI) / 4)])
+    : [
+        [-1, -1],
+        [1, -1],
+        [1, 1],
+        [-1, 1],
+      ];
+  for (const [sx, sz] of ring)
+    for (const y of f.span)
+      pts.push([f.centre[0] + sx * (f.half[0] + pad), f.centre[1] + y, f.centre[2] + sz * (f.half[1] + pad)]);
+  return pts;
+}
+function boxPoints(min: Vec3, max: Vec3, pad = 0): Vec3[] {
+  const pts: Vec3[] = [];
+  for (const x of [min[0] - pad, max[0] + pad])
+    for (const y of [min[1], max[1]])
+      for (const z of [min[2] - pad, max[2] + pad]) pts.push([x, y, z]);
+  return pts;
+}
+const studioPoints = (pad = 0) => boxPoints([-STUDIO.radius, -0.6, -STUDIO.radius], [STUDIO.radius, STUDIO.max[1], STUDIO.radius], pad);
+
+/* ---------------- camera framings ---------------- */
+
+export type Stage = { width: number; height: number; /** Pixels on the right covered by the docked panel. */ insetRight: number };
+/** What the visitor is looking at; the camera pose follows from it. */
+export type Shot =
+  | { kind: "overview" }
+  | { kind: "district"; district: District }
+  | { kind: "station"; slug: string; within: "district" | "overview" }
+  | { kind: "studio" }
+  | { kind: "approach"; slug: string };
+
+const FOV = 26;
+const proj = new Projector();
+
+function measure(points: Vec3[], pose: Pose, W: number, H: number) {
+  proj.set(pose, W, H);
+  let l = Infinity;
+  let r = -Infinity;
+  let t = Infinity;
+  let b = -Infinity;
+  for (const p of points) {
+    const s = proj.project(p[0], p[1], p[2]);
+    l = Math.min(l, s.x);
+    r = Math.max(r, s.x);
+    t = Math.min(t, s.y);
+    b = Math.max(b, s.y);
+  }
+  return { l, r, t, b };
+}
+
+/**
+ * The closest pose at this turn and height angle that keeps every point inside
+ * the stage's free area (with margins), centred in it.
+ */
+function fit(points: Vec3[], base: Pose, stage: Stage, mx: number, my: number): Pose {
+  const pose = copyPose(base);
+  const W = stage.width;
+  const H = stage.height;
+  const left = mx * W;
+  const right = W - stage.insetRight - mx * W;
+  const top = my * H;
+  const bottom = H - my * H;
+  const cx = (left + right) / 2;
+  const cy = (top + bottom) / 2;
+  for (let pass = 0; pass < 4; pass++) {
+    let lo = 2;
+    let hi = 600;
+    for (let i = 0; i < 28; i++) {
+      pose.dist = (lo + hi) / 2;
+      const m = measure(points, pose, W, H);
+      if (m.r - m.l <= right - left && m.b - m.t <= bottom - top) hi = pose.dist;
+      else lo = pose.dist;
+    }
+    pose.dist = hi;
+    const m = measure(points, pose, W, H);
+    const wpp = (2 * pose.dist * Math.tan(deg(pose.fov) / 2)) / H;
+    const offX = ((m.l + m.r) / 2 - cx) * wpp;
+    const offY = (-((m.t + m.b) / 2 - cy) * wpp) / Math.sin(pose.el);
+    pose.target[0] += Math.cos(pose.az) * offX - Math.sin(pose.az) * offY;
+    pose.target[2] += -Math.sin(pose.az) * offX - Math.cos(pose.az) * offY;
+  }
+  return pose;
+}
+
+const WORLD_POINTS = [...studioPoints(), ...districtPoints("systems"), ...districtPoints("algorithms"), ...districtPoints("intelligence")];
+const centreOf = (pts: Vec3[]): Vec3 => {
+  const s = pts.reduce((a, p) => [a[0] + p[0], a[1] + p[1], a[2] + p[2]] as Vec3, [0, 0, 0] as Vec3);
+  return [s[0] / pts.length, 0.4, s[2] / pts.length];
+};
+
+export function poseFor(shot: Shot, stage: Stage): Pose {
+  const aspect = stage.width / stage.height;
+  const portrait = aspect < 0.95;
+  switch (shot.kind) {
+    case "overview": {
+      if (portrait) {
+        // A phone frames the Studio with the near edge of each district round it;
+        // the district buttons and the station strips below take the visitor further.
+        const hub = [...studioPoints(5.2)];
+        const base: Pose = { target: [0, 0.6, 0], dist: 40, az: AZ, el: deg(52), fov: FOV };
+        return fit(hub, base, { ...stage, insetRight: 0 }, 0.02, 0.04);
+      }
+      // Squarer stages look down a little more steeply, so the world uses their height.
+      const el = deg(48 + 12 * Math.min(1, Math.max(0, (1.6 - aspect) / 0.6)));
+      const base: Pose = { target: centreOf(WORLD_POINTS), dist: 60, az: AZ, el, fov: FOV };
+      return fit(WORLD_POINTS, base, { ...stage, insetRight: 0 }, 0.03, 0.045);
+    }
+    case "district": {
+      const f = DISTRICTS[shot.district];
+      const pts = districtPoints(shot.district, 0.4);
+      const base: Pose = { target: [...f.centre] as Vec3, dist: 30, az: AZ + f.turn, el: deg(44), fov: FOV };
+      return fit(pts, base, { ...stage, insetRight: 0 }, 0.035, 0.045);
+    }
+    case "station": {
+      const p = PLACEMENTS[shot.slug];
+      if (!p) return poseFor({ kind: "overview" }, stage);
+      const f = DISTRICTS[p.district];
+      const [min, max] = boxOf(p);
+      const pad = shot.within === "district" ? 2.4 : 4.6;
+      const base: Pose = {
+        target: [p.base[0], p.base[1] + p.size[1] / 2, p.base[2]],
+        dist: 20,
+        az: AZ + f.turn * (shot.within === "district" ? 1 : 0.5),
+        el: deg(shot.within === "district" ? 40 : 44),
+        fov: FOV,
+      };
+      return fit(boxPoints(min, max, pad), base, stage, 0.05, 0.08);
+    }
+    case "studio": {
+      const base: Pose = { target: [0, 1.9, 0], dist: 20, az: AZ, el: deg(31), fov: FOV };
+      return fit(studioPoints(1.0), base, stage, 0.05, 0.06);
+    }
+    case "approach": {
+      const p = PLACEMENTS[shot.slug];
+      const from = poseFor({ kind: "station", slug: shot.slug, within: "district" }, stage);
+      if (!p) return from;
+      return {
+        ...from,
+        target: [p.base[0], p.base[1] + p.size[1] * 0.45, p.base[2]],
+        dist: from.dist * 0.4,
+        el: from.el - deg(6),
+        fov: FOV + 6,
+      };
+    }
+  }
+}
