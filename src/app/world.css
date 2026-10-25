@@ -561,6 +561,7 @@ html[data-mode="creative"] .portfolio-root {
     .c-brief > .c-brief-actions {
       order: 4;
     }
+    .c-brief > .c-brief-facts,
     .c-brief > .c-brief-badges {
       order: 5;
     }

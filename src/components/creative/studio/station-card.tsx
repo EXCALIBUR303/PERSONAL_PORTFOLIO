@@ -66,18 +66,19 @@ export function StationCard({
       </p>
       <h2>{project.title}</h2>
       <p className="c-brief-tag">{station.purpose}</p>
-      <ul className="c-brief-badges">
-        <li>{project.collection} project</li>
-        <li>{project.status}</li>
+      <p className="c-brief-facts mono">
+        {project.collection} project · {project.status}
+      </p>
+      <ul className="c-brief-badges c-brief-evidence" aria-label="What the scene shows">
+        {item && (
+          <li className="evidence-chip">
+            {item.claimClass}
+            <span className="sr-only">. {claimClassNote[item.claimClass]}</span>
+          </li>
+        )}
         <li data-kind={demo.kind}>{sceneForSlug(project.slug)?.badge ?? demo.label}</li>
       </ul>
-      {item && (
-        <p className="c-brief-claim">
-          <strong className="evidence-chip">{item.claimClass}</strong>{" "}
-          <span>{item.caveat}</span>
-          <span className="sr-only"> {claimClassNote[item.claimClass]}</span>
-        </p>
-      )}
+      {item && <p className="c-brief-claim">{item.caveat}</p>}
       {station.note && <p className="c-brief-note">{station.note}</p>}
       {station.tier === "exhibit" && station.exhibit && (
         <p className="c-brief-exhibit mono">Exhibit: {station.exhibit}</p>

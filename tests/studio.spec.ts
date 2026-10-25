@@ -346,3 +346,26 @@ test("rapid district and station changes settle on the last choice with no error
   await expect(page.locator(".c-brief")).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+test("the station panel header: one facts line, then the evidence chips, then the caveat", async ({ page }) => {
+  await page.goto("/");
+  await page.locator('[data-station="smart-parking-dbms"]').click();
+  const card = page.locator(".c-brief").first();
+  await expect(card.locator(".c-brief-facts")).toContainText("College project");
+  const chips = card.locator(".c-brief-evidence li");
+  await expect(chips).toHaveCount(2);
+  await expect(chips.first()).toHaveClass(/evidence-chip/);
+  // The caveat is its own paragraph, not run on after a chip.
+  await expect(card.locator(".c-brief-claim")).not.toContainText("Simplified Simulation");
+});
+
+test("at 820px the search field is wide enough to read its placeholder", async ({ page }) => {
+  await page.setViewportSize({ width: 820, height: 900 });
+  await page.goto("/");
+  const input = page.locator(".c-find input");
+  await expect(input).toBeVisible();
+  const box = await input.boundingBox();
+  // "Find a station" at 13px needs about 90px beside its icon.
+  expect(box!.width).toBeGreaterThanOrEqual(100);
+  await expect(input).toHaveAttribute("placeholder", "Find a station");
+});

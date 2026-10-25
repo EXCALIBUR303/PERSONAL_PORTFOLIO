@@ -293,12 +293,9 @@ test.describe("Creative home: the studio map", () => {
       .locator(".c-map")
       .getByRole("button", { name: /Mazera/ })
       .click();
-    await expect(page.locator(".c-brief-badges")).toContainText(
-      "College project",
-    );
-    await expect(page.locator(".c-brief-badges")).not.toContainText(
-      "Personal project",
-    );
+    const facts = page.locator(".c-brief-facts");
+    await expect(facts).toContainText("College project");
+    await expect(facts).not.toContainText("Personal project");
   });
 
   test("an exhibit opens in place with the project's scene, and Escape returns to the map", async ({

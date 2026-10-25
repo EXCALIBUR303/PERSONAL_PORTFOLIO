@@ -241,6 +241,21 @@ html[data-mode="creative"] .portfolio-root {
       flex: none;
     }
   }
+  /* On the narrower tablets the district counts give way to the search field; screen readers still get them. */
+  @media (min-width: 768px) and (max-width: 979px) {
+    .c-tools-group button small {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    .c-find {
+      min-width: 150px;
+      flex: 1 1 150px;
+    }
+  }
 
   /* ---------- the stage frame (the 2D map is in map-2d.css, the 3D world in world.css) ---------- */
   .c-map {
@@ -315,6 +330,21 @@ html[data-mode="creative"] .portfolio-root {
   .c-brief .c-brief-badges li {
     font-size: 10px;
     padding: 2px 8px;
+  }
+  .c-brief .c-brief-facts {
+    margin: 8px 0 0;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    color: var(--c-graphite);
+  }
+  /* The chip row says what the scene is; its claim class leads it, in ink. */
+  .c-brief .c-brief-evidence {
+    margin-top: 6px;
+  }
+  .c-brief .c-brief-evidence li.evidence-chip {
+    background: var(--c-ink);
+    color: var(--c-paper);
+    font-size: 10px;
   }
   .c-brief-exhibit {
     margin: 10px 0 0;

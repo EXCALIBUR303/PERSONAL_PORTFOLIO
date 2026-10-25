@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { Kit, Model, useDisposal, type V3 } from "./kit";
 import { briefPad, car, exhibitPad, letterTexture, useOwn, type LandmarkProps } from "./landmark";
 import { along, smooth, span, tick, useLevel, usePlay } from "./motion";
+import { showTrail, useTrail, type Block } from "./trail";
 
 /*
  * The Systems district's eight landmarks. Each is modelled on what the project
@@ -44,6 +45,7 @@ const GARAGE_PATH_2: V3[] = [
 
 export function Garage({ palette: p, active, dim, reduced }: LandmarkProps) {
   const light = useOwn(p.lamp);
+  const beacon = useOwn(p.amber);
   const sign = useMemo(() => new THREE.MeshStandardMaterial({ map: letterTexture("P", "#2f4bff", "#ffffff"), roughness: 0.6 }), []);
   useEffect(
     () => () => {
@@ -142,6 +144,10 @@ export function Garage({ palette: p, active, dim, reduced }: LandmarkProps) {
   useFrame((_, delta) => {
     light.setValues({ emissiveIntensity: 0.12 + lit.current * 2.2 });
     const t = run.current;
+    // The barrier's light is amber while the cars ask for the one bay, then lime once the database has decided.
+    const deciding = active && t < 0.24;
+    const tone = active && !deciding ? "#c8f13b" : "#f2b544";
+    beacon.setValues({ color: tone, emissive: tone, emissiveIntensity: active ? 1.4 : 0.2 });
     const g = mover.current;
     if (g) {
       g.visible = active && t > 0;
@@ -174,6 +180,9 @@ export function Garage({ palette: p, active, dim, reduced }: LandmarkProps) {
           <boxGeometry args={[0.5, 0.025, 0.025]} />
         </mesh>
       </group>
+      <mesh position={[1.19, GL[0] + 0.265, 0.97]} material={dim ? p.card : beacon}>
+        <boxGeometry args={[0.095, 0.07, 0.095]} />
+      </mesh>
       <group ref={mover} visible={false}>
         <Model model={arrival} receive={false} />
       </group>
@@ -253,6 +262,13 @@ export function Aura({ palette: p, active, dim, reduced }: LandmarkProps) {
 
 /* ---------- Private Local AI: a document vault ---------- */
 const VAULT: V3 = [-0.3, 0.06, -0.05];
+/** The note's way in, over the vault's plinth, and the answer's way out to the reading desk (all on the island). */
+const NOTE_IN: Block[] = [0.5, 0.42, 0.34].map((x) => ({ size: [0.065, 0.014, 0.05], at: [x, 0.2, -0.3] }));
+const ANSWER_OUT: Block[] = [0.2, 0.3, 0.4, 0.5, 0.6].map((x) => ({ size: [0.085, 0.014, 0.05], at: [x, 0.08, 0.6] }));
+const NOTE_PATH: V3[] = [
+  [0.62, 0.27, -0.3],
+  [0.3, 0.27, -0.3],
+];
 export function Vault({ palette: p, active, dim, reduced }: LandmarkProps) {
   const status = useOwn(p.coral, (m) => m.emissive.set("#ee8466"));
   const card = useOwn(p.card, (m) => m.emissive.set("#f4ffd6"));
@@ -282,25 +298,48 @@ export function Vault({ palette: p, active, dim, reduced }: LandmarkProps) {
   }, [p]);
   useDisposal(model);
 
-  const open = useLevel(active, reduced, 0.5, 0.6);
+  const run = usePlay(active, reduced, 2.8);
   const wheel = useRef<THREE.Group>(null);
   const cite = useRef<THREE.Mesh>(null);
+  const tag = useRef<THREE.Mesh>(null);
+  const note = useRef<THREE.Mesh>(null);
+  const inTrail = useTrail(NOTE_IN);
+  const outTrail = useTrail(ANSWER_OUT);
+  const wire = useOwn(p.cyan);
   useFrame(() => {
-    // The door wheel turns, the light goes from coral to lime and a cited note lifts.
-    const t = smooth(open.current);
-    if (wheel.current) wheel.current.rotation.z = t * Math.PI;
+    const t = run.current;
+    // A note goes in over the plinth, the door wheel turns and the light goes from coral to lime,
+    // then the answer comes out to the desk with its source tag. Nothing leaves the island.
+    const door = smooth(span(t, 0.24, 0.44));
+    if (wheel.current) wheel.current.rotation.z = door * Math.PI;
     status.setValues({
-      color: t > 0.5 ? "#c8f13b" : "#ee8466",
-      emissive: t > 0.5 ? "#a6cf1f" : "#ee8466",
-      emissiveIntensity: 0.25 + t * 0.6,
+      color: door > 0.5 ? "#c8f13b" : "#ee8466",
+      emissive: door > 0.5 ? "#a6cf1f" : "#ee8466",
+      emissiveIntensity: 0.25 + door * 0.6,
     });
-    card.setValues({ emissiveIntensity: t * 0.55 });
-    if (cite.current) cite.current.position.y = 0.52 + t * 0.2;
+    const lift = smooth(span(t, 0.82, 1));
+    card.setValues({ emissiveIntensity: lift * 0.55 });
+    if (cite.current) cite.current.position.y = 0.52 + lift * 0.2;
+    if (tag.current) tag.current.visible = lift > 0.4;
+    if (note.current) {
+      const travel = span(t, 0, 0.24);
+      note.current.visible = active && travel > 0 && travel < 1;
+      const at = along(NOTE_PATH, smooth(travel));
+      note.current.position.set(at.x, at.y, at.z);
+    }
+    showTrail(inTrail, active ? span(t, 0, 0.24) * NOTE_IN.length + 0.001 : 0);
+    showTrail(outTrail, active ? span(t, 0.44, 0.8) * ANSWER_OUT.length + 0.001 : 0);
+    wire.setValues({ emissiveIntensity: 0.9 });
   });
   const [vx, , vz] = VAULT;
   return (
     <group>
       <Model model={model} swap={dim ? p.card : null} />
+      <mesh geometry={inTrail} material={dim ? p.card : wire} />
+      <mesh geometry={outTrail} material={dim ? p.card : wire} />
+      <mesh ref={note} visible={false} rotation={[-Math.PI / 2, 0, 0]} material={dim ? p.card : card}>
+        <planeGeometry args={[0.12, 0.09]} />
+      </mesh>
       <group ref={wheel} position={[vx, 0.6, vz + 0.66]}>
         <mesh material={dim ? p.card : p.brass}>
           <torusGeometry args={[0.13, 0.014, 6, 32]} />
@@ -317,11 +356,23 @@ export function Vault({ palette: p, active, dim, reduced }: LandmarkProps) {
       <mesh ref={cite} position={[0.78, 0.52, 0.55]} rotation={[-0.35, 0, 0]} material={dim ? p.card : card} castShadow>
         <boxGeometry args={[0.2, 0.26, 0.012]} />
       </mesh>
+      <mesh ref={tag} visible={false} position={[0.78, 0.66, 0.6]} rotation={[-0.35, 0, 0]} material={dim ? p.card : p.lime}>
+        <boxGeometry args={[0.1, 0.035, 0.014]} />
+      </mesh>
     </group>
   );
 }
 
 /* ---------- LifeOS: a personal workstation ---------- */
+/** Five desk tiles (tasks, habits, money, health, notes) and the one cable that joins them to the store under the desk. */
+const DESK_TILES: Block[] = [-0.56, -0.28, 0, 0.28, 0.56].map((x) => ({ size: [0.2, 0.012, 0.13], at: [x, 0.945, 0.38] }));
+const DESK_LINK: Block[] = [
+  ...[-0.42, -0.14, 0.14, 0.42].map((x): Block => ({ size: [0.28, 0.01, 0.025], at: [x, 0.94, 0.54] })),
+  { size: [0.36, 0.01, 0.025], at: [0.74, 0.94, 0.54] },
+  { size: [0.025, 0.84, 0.025], at: [0.9, 0.48, 0.54] },
+  { size: [0.025, 0.01, 0.26], at: [0.9, 0.08, 0.4] },
+  { size: [0.2, 0.01, 0.025], at: [0.78, 0.08, 0.3] },
+];
 export function Workstation({ palette: p, active, dim, reduced }: LandmarkProps) {
   const screens = useOwn(p.glassDark, (m) => m.emissive.set("#cfe6ff"));
   const shade = useOwn(p.lamp);
@@ -352,25 +403,43 @@ export function Workstation({ palette: p, active, dim, reduced }: LandmarkProps)
     k.cyl(shade, 0.06, 0.07, [0.39, 0.64, -0.17], { top: 0.02, seg: 14 });
     k.cyl(p.coral, 0.08, 0.13, [-0.7, 0.03, 0.45], { seg: 14 });
     k.sphere(p.sage, 0.13, [-0.7, 0.27, 0.45], { seg: 12 });
+    // The one local store, under the desk.
+    k.box(p.charcoal, [0.4, 0.22, 0.3], [0.45, 0.03, 0.3], { r: 0.015 });
     return k.build();
   }, [p, screens, shade]);
   useDisposal(model);
   const on = useLevel(active, reduced, 0.25, 0.6);
-  const move = usePlay(active, reduced, 1.2);
+  const move = usePlay(active, reduced, 2.4);
   const moving = useRef<THREE.Mesh>(null);
+  const tiles = useTrail(DESK_TILES);
+  const link = useTrail(DESK_LINK);
+  const tileLit = useOwn(p.lime, (m) => m.emissiveIntensity = 0.9);
+  const wire = useOwn(p.cyan);
+  const led = useOwn(p.lime);
   useFrame(() => {
     screens.setValues({ emissiveIntensity: on.current * 0.85 });
     shade.setValues({ emissiveIntensity: 0.2 + on.current * 1.2 });
+    // Tile by tile the desk lights, then the cable fills to the store and its light comes on.
+    const t = move.current;
+    showTrail(tiles, active ? span(t, 0.05, 0.5) * DESK_TILES.length + 0.001 : 0);
+    showTrail(link, active ? span(t, 0.5, 0.92) * DESK_LINK.length + 0.001 : 0);
+    led.setValues({ emissiveIntensity: active ? smooth(span(t, 0.9, 1)) * 1.6 + 0.1 : 0.05 });
+    wire.setValues({ emissiveIntensity: 0.9 });
     const m = moving.current;
     if (m) {
       // A task card moves from the first column to the last.
-      const t = smooth(move.current);
-      m.position.set(-0.45 + t * 0.9, 0.31 + Math.sin(t * Math.PI) * 0.09, -0.516);
+      const card = smooth(span(t, 0, 0.4));
+      m.position.set(-0.45 + card * 0.9, 0.31 + Math.sin(card * Math.PI) * 0.09, -0.516);
     }
   });
   return (
     <group>
       <Model model={model} swap={dim ? p.card : null} />
+      <mesh geometry={tiles} material={dim ? p.card : tileLit} />
+      <mesh geometry={link} material={dim ? p.card : wire} />
+      <mesh position={[0.45, 0.14, 0.455]} material={dim ? p.card : led}>
+        <boxGeometry args={[0.28, 0.018, 0.01]} />
+      </mesh>
       <mesh ref={moving} position={[-0.45, 0.31, -0.516]} material={dim ? p.card : p.coralSoft}>
         <boxGeometry args={[0.16, 0.1, 0.012]} />
       </mesh>
@@ -462,6 +531,17 @@ const DROP_PATH: V3[] = [
 ];
 export function Kiosk({ palette: p, active, dim, reduced }: LandmarkProps) {
   const screen = useOwn(p.glassDark, (m) => m.emissive.set("#e9ffd0"));
+  const gate = useOwn(p.amber);
+  // The ledger counter: a whole number of containers, nothing else. It is a plain readout, not a payment.
+  const ledger = useMemo(() => [letterTexture("0", "#1d1d1d", "#e9ffd0"), letterTexture("1", "#1d1d1d", "#e9ffd0")], []);
+  const counter = useMemo(() => new THREE.MeshBasicMaterial({ map: ledger[0] }), [ledger]);
+  useEffect(
+    () => () => {
+      ledger.forEach((t) => t.dispose());
+      counter.dispose();
+    },
+    [ledger, counter],
+  );
   const model = useMemo(() => {
     const k = new Kit();
     briefPad(k, p.sysPave, 1.9, 1.5);
@@ -484,13 +564,23 @@ export function Kiosk({ palette: p, active, dim, reduced }: LandmarkProps) {
   }, [p, screen]);
   useDisposal(model);
   const on = useLevel(active, reduced, 0.25, 0.6);
-  const run = usePlay(active, reduced, 1.8);
+  const run = usePlay(active, reduced, 2.6);
   const drop = useRef<THREE.Mesh>(null);
   const level = useRef<THREE.Mesh>(null);
+  const shown = useRef(0);
   useFrame(() => {
-    // The screen wakes, a drop runs down the pipe and the tank's level rises a little.
+    // The screen wakes, a drop runs down the pipe (the weighing), the rule gate shows accept,
+    // the counter ticks by one and the tank's level rises a little.
     screen.setValues({ emissiveIntensity: on.current * 0.8 });
     const t = run.current;
+    const accepted = active && t >= 0.6;
+    const tone = accepted ? "#c8f13b" : "#f2b544";
+    gate.setValues({ color: tone, emissive: tone, emissiveIntensity: active ? 1.2 : 0.2 });
+    const count = active && t >= 0.72 ? 1 : 0;
+    if (count !== shown.current) {
+      shown.current = count;
+      counter.setValues({ map: ledger[count] });
+    }
     if (drop.current) {
       drop.current.visible = active && !reduced && t > 0.05 && t < 0.7;
       const at = along(DROP_PATH, smooth(span(t, 0.05, 0.7)));
@@ -508,6 +598,12 @@ export function Kiosk({ palette: p, active, dim, reduced }: LandmarkProps) {
       <mesh ref={drop} visible={false} material={p.brass}>
         <sphereGeometry args={[0.035, 12, 8]} />
       </mesh>
+      <mesh position={[-0.17, 0.5, 0.234]} material={dim ? p.card : counter}>
+        <planeGeometry args={[0.09, 0.09]} />
+      </mesh>
+      <mesh position={[-0.17, 0.4, 0.236]} material={dim ? p.card : gate}>
+        <boxGeometry args={[0.07, 0.035, 0.012]} />
+      </mesh>
       <mesh ref={level} position={[0.6, 0.23, -0.022]} material={dim ? p.card : p.brass}>
         <boxGeometry args={[0.05, 1, 0.012]} />
       </mesh>
@@ -518,8 +614,21 @@ export function Kiosk({ palette: p, active, dim, reduced }: LandmarkProps) {
 /* ---------- Green Mobility: a shuttle stop and bike rack ---------- */
 /** The street's shuttle lane, in this landmark's own (unscaled) units. */
 const LANE_Z = 1.04;
+/** Six seat lights along the shuttle's window band, filling as it arrives. */
+const SEAT_LIGHTS: Block[] = [-0.35, -0.21, -0.07, 0.07, 0.21, 0.35].map((x) => ({ size: [0.07, 0.07, 0.012], at: [x, 0.275, 0.207] }));
+/** A small bar gauge for the emissions estimate: no figure, only a shape that grows. */
+const SAVED_BARS: Block[] = [
+  { size: [0.032, 0.05, 0.012], at: [1.1, 0.415, 0.325] },
+  { size: [0.032, 0.09, 0.012], at: [1.15, 0.435, 0.325] },
+  { size: [0.032, 0.13, 0.012], at: [1.2, 0.455, 0.325] },
+];
 export function Mobility({ palette: p, active, dim, reduced }: LandmarkProps) {
   const light = useOwn(p.lamp);
+  const seatLit = useOwn(p.lime, (m) => (m.emissiveIntensity = 1.1));
+  const booking = useOwn(p.lime);
+  const gaugeMat = useOwn(p.sage, (m) => (m.emissiveIntensity = 0.4));
+  const seats = useTrail(SEAT_LIGHTS);
+  const gauge = useTrail(SAVED_BARS);
   const model = useMemo(() => {
     const k = new Kit();
     briefPad(k, p.sysPave, 2.7, 1.5);
@@ -542,7 +651,6 @@ export function Mobility({ palette: p, active, dim, reduced }: LandmarkProps) {
     });
     k.box(p.charcoal, [0.62, 0.02, 0.02], [0.75, 0.16, -0.42]);
     k.box(p.sage, [0.13, 0.36, 0.1], [1.15, 0.03, 0.32], { r: 0.02 });
-    k.box(p.lime, [0.06, 0.03, 0.012], [1.15, 0.3, 0.375]);
     return k.build();
   }, [p, light]);
   useDisposal(model);
@@ -562,13 +670,24 @@ export function Mobility({ palette: p, active, dim, reduced }: LandmarkProps) {
   const bus = useRef<THREE.Group>(null);
   useFrame(() => {
     light.setValues({ emissiveIntensity: 0.12 + lit.current * 1.3 });
-    if (bus.current) bus.current.position.x = 1.05 - smooth(go.current) * 1.6;
+    const arrive = smooth(go.current);
+    if (bus.current) bus.current.position.x = 1.05 - arrive * 1.6;
+    // Seat lights fill as the shuttle pulls in; when it is full the booking light turns amber and the estimate shows.
+    showTrail(seats, active || go.current > 0 ? span(go.current, 0.5, 1) * SEAT_LIGHTS.length + 0.001 : 0);
+    const full = go.current > 0.985;
+    booking.setValues({ color: full ? "#f2b544" : "#c8f13b", emissive: full ? "#f2b544" : "#a6cf1f", emissiveIntensity: full ? 1.3 : 0.3 });
+    showTrail(gauge, full ? SAVED_BARS.length : 0);
   });
   return (
     <group>
       <Model model={model} swap={dim ? p.card : null} />
+      <mesh position={[1.15, 0.315, 0.381]} material={dim ? p.card : booking}>
+        <boxGeometry args={[0.06, 0.03, 0.012]} />
+      </mesh>
+      <mesh geometry={gauge} material={dim ? p.card : gaugeMat} />
       <group ref={bus} position={[1.05, 0.012, LANE_Z]}>
         <Model model={shuttle} swap={dim ? p.card : null} />
+        <mesh geometry={seats} material={dim ? p.card : seatLit} />
       </group>
     </group>
   );
@@ -593,8 +712,15 @@ const TOKEN_PATH: V3[] = [
   [0.5, 0.16, 0.58],
   [0.5, 0.16, 0.33],
 ];
+/** The squares the coin passes over light as it goes. */
+const PATH_TILES: Block[] = [...[-0.5, -0.25, 0, 0.25, 0.5].map((x) => [x, 0.58]), [0.5, 0.33]].map(([x, z]) => ({
+  size: [0.17, 0.008, 0.17] as V3,
+  at: [x, 0.122, z] as V3,
+}));
 export function CoinBoard({ palette: p, active, dim, reduced }: LandmarkProps) {
   const tall = useOwn(p.coral, (m) => m.emissive.set("#ee8466"));
+  const lit = useOwn(p.lime, (m) => (m.emissiveIntensity = 0.8));
+  const path = useTrail(PATH_TILES);
   const model = useMemo(() => {
     const k = new Kit();
     briefPad(k, p.sysPave, 1.7, 1.7);
@@ -619,7 +745,9 @@ export function CoinBoard({ palette: p, active, dim, reduced }: LandmarkProps) {
       const at = along(TOKEN_PATH, active ? smooth(run.current) : 0);
       const hop = active && !reduced ? Math.abs(Math.sin(run.current * Math.PI * 5)) * 0.06 : 0;
       token.current.position.set(at.x, at.y + hop, at.z);
+      token.current.rotation.y = active && !reduced ? run.current * Math.PI * 8 : 0;
     }
+    showTrail(path, active ? smooth(run.current) * PATH_TILES.length + 0.001 : 0);
   });
   return (
     <group>
@@ -632,8 +760,9 @@ export function CoinBoard({ palette: p, active, dim, reduced }: LandmarkProps) {
           <torusGeometry args={[0.19, 0.012, 6, 40]} />
         </mesh>
       </group>
-      <mesh ref={token} position={[-0.5, 0.16, 0.58]} material={dim ? p.card : p.lime} castShadow>
-        <sphereGeometry args={[0.05, 14, 10]} />
+      <mesh geometry={path} material={dim ? p.card : lit} />
+      <mesh ref={token} position={[-0.5, 0.16, 0.58]} material={dim ? p.card : p.brass} castShadow>
+        <cylinderGeometry args={[0.065, 0.065, 0.025, 20]} />
       </mesh>
     </group>
   );

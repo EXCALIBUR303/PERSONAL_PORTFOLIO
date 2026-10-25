@@ -77,7 +77,7 @@ export const STUDIO = {
   min: [-2.7, 1.05, -2.1] as Vec3,
   max: [2.7, 4.75, 2.3] as Vec3,
   /** Where its name plate floats: above the prow and its oculus. */
-  anchor: [0, 6.3, 0] as Vec3,
+  anchor: [0, 7.2, 0] as Vec3,
 };
 
 /** One landmark's footprint: centre of its base, its width, height and depth, and its model scale. */
@@ -394,8 +394,11 @@ export function poseFor(shot: Shot, stage: Stage): Pose {
       return first!;
     }
     case "studio": {
-      const base: Pose = { target: [0, 1.9, 0], dist: 20, az: AZ, el: deg(31), fov: FOV };
-      return fit(studioPoints(1.0), base, stage, 0.05, 0.06);
+      // Turned toward the west prow, so its oculus (the brand's spark) faces the visitor; the courtyard stays in view.
+      const base: Pose = { target: [-0.5, 1.9, 0.3], dist: 20, az: AZ - deg(16), el: deg(30), fov: FOV };
+      // The name plate floats above the roof, so it is part of what must fit.
+      const plate: Vec3 = [0, STUDIO.anchor[1] + 1.4, 0];
+      return fit([...studioPoints(1.0), plate], base, stage, 0.05, 0.06);
     }
     case "approach": {
       const p = PLACEMENTS[shot.slug];
