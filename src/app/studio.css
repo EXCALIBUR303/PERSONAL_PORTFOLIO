@@ -628,6 +628,7 @@ html[data-mode="creative"] .portfolio-root {
     position: absolute;
     inset: 0 0 auto 0;
     height: 9px;
+    border-radius: 16px 16px 0 0;
     background: var(--tone, var(--c-lime));
     border-bottom: 2px solid var(--c-ink);
   }
@@ -721,7 +722,7 @@ html[data-mode="creative"] .portfolio-root {
     display: block;
     width: 100%;
     height: auto;
-    aspect-ratio: 16 / 7;
+    aspect-ratio: 16 / 5.5;
   }
   .c-brief-sketch figcaption {
     margin: 0;
@@ -950,16 +951,16 @@ html[data-mode="creative"] .portfolio-root {
     .c-island[data-dim] {
       display: none;
     }
+    /* Below the full-campus width the preview is an ordinary block under its district. */
     .c-brief {
-      position: fixed;
-      z-index: 120;
-      left: 10px !important;
-      right: 10px !important;
+      position: relative;
+      left: auto !important;
+      right: auto !important;
       top: auto !important;
-      bottom: 10px !important;
+      bottom: auto !important;
       width: auto;
-      max-height: 66vh;
-      box-shadow: 4px 4px 0 var(--c-ink), 0 0 0 100vmax rgb(23 23 29 / 0.18);
+      max-height: none;
+      overflow: visible;
     }
   }
 

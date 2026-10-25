@@ -210,3 +210,28 @@ test("Creative About is a notebook reachable from ordinary navigation, with no m
   // The "How I verify" row belongs to Professional About only.
   await expect(about).not.toContainText("How I verify");
 });
+
+test("arrow keys move between stations in a district and Tab moves between districts", async ({ page }) => {
+  await page.goto("/");
+  const first = page.locator('.c-island[data-district="systems"] .c-pin[tabindex="0"]');
+  await expect(first).toHaveCount(1);
+  await first.focus();
+  const start = await page.evaluate(() => (document.activeElement as HTMLElement).dataset.station);
+  await page.keyboard.press("ArrowDown");
+  const moved = await page.evaluate(() => (document.activeElement as HTMLElement).dataset.station);
+  expect(moved).toBeTruthy();
+  expect(moved).not.toBe(start);
+  await page.keyboard.press("End");
+  await page.keyboard.press("Home");
+  expect(await page.evaluate(() => (document.activeElement as HTMLElement).dataset.station)).toBe(start);
+  // Tab leaves the district rather than visiting every station in it.
+  await page.keyboard.press("Tab");
+  const next = await page.evaluate(() => (document.activeElement as HTMLElement).closest(".c-island")?.getAttribute("data-district") ?? "outside");
+  expect(next).not.toBe("systems");
+  // Escape closes a preview and leaves focus on its station.
+  await page.locator('[data-station="aura"]').click();
+  await expect(page.locator(".c-brief")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".c-brief")).toHaveCount(0);
+  await expect(page.locator('[data-station="aura"]')).toBeFocused();
+});

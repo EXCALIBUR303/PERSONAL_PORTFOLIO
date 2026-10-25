@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type KeyboardEvent } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { m } from "motion/react";
@@ -16,6 +16,20 @@ import { landmarkArt, Pad } from "./landmarks";
 import { StationCard } from "./station-card";
 import { stationFor, stations, tierWords, type Station } from "./stations";
 import { useChallenges, useExhibitParam, useSaved } from "./studio-state";
+
+/** True from the width at which the whole campus fits in one stage. Below it the districts stack. */
+const WIDE = "(min-width: 1000px)";
+function useWide() {
+  return useSyncExternalStore(
+    (notify) => {
+      const query = window.matchMedia(WIDE);
+      query.addEventListener("change", notify);
+      return () => query.removeEventListener("change", notify);
+    },
+    () => window.matchMedia(WIDE).matches,
+    () => true,
+  );
+}
 
 const ExhibitStage = dynamic(() => import("./exhibit-stage"), { ssr: false });
 
@@ -73,6 +87,7 @@ const KEY_DIR: Record<string, "left" | "right" | "up" | "down"> = {
  */
 export default function StudioMap() {
   const reduced = useReducedMotion();
+  const wide = useWide();
   const { visited, stepsFor, markStep, markProject, reset } = useExploration();
   const { done: challenges } = useChallenges();
   const { filtered, gallery, setGallery } = useGalleryFilter();
@@ -96,6 +111,13 @@ export default function StudioMap() {
       slug: station.slug,
       focus: saved.focus !== "all" && saved.focus !== station.district ? station.district : saved.focus,
     });
+    // Stacked layouts show the preview under the district; make sure the visitor sees it.
+    if (!window.matchMedia(WIDE).matches)
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() =>
+          document.querySelector(".c-brief")?.scrollIntoView({ block: "nearest", behavior: reduced ? "auto" : "smooth" }),
+        ),
+      );
   }
   function enter(station: Station) {
     opener.current = station.slug;
@@ -162,6 +184,28 @@ export default function StudioMap() {
     "--ztx": `${cam ? cam.tx : 0}%`,
     "--zty": `${cam ? cam.ty : 0}%`,
   } as CSSProperties;
+
+  const card =
+    selected && placement ? (
+      <StationCard
+        key={selected.slug}
+        station={selected}
+        project={projectOf(selected.slug)}
+        number={number(selected.slug)}
+        placement={placement}
+        doneSteps={stepsFor(selected.slug)}
+        challengeDone={challenges.includes(selected.slug)}
+        onClose={() => {
+          const slug = selected.slug;
+          update({ slug: null });
+          requestAnimationFrame(() =>
+            stage.current?.querySelector<HTMLElement>(`[data-station="${slug}"]`)?.focus({ preventScroll: true }),
+          );
+        }}
+        onEnter={() => enter(selected)}
+        onStep={(step: MissionStep) => markStep(selected.slug, step)}
+      />
+    ) : null;
 
   return (
     <>
@@ -260,8 +304,8 @@ export default function StudioMap() {
               {byDistrict.map((d) => {
                 const box = islands[d.id];
                 return (
+                  <Fragment key={d.id}>
                   <section
-                    key={d.id}
                     className="c-island"
                     data-district={d.id}
                     data-dim={saved.focus !== "all" && saved.focus !== d.id ? "" : undefined}
@@ -349,29 +393,12 @@ export default function StudioMap() {
                       })}
                     </ul>
                   </section>
+                  {!wide && selected?.district === d.id && card}
+                  </Fragment>
                 );
               })}
             </div>
-            {selected && placement && (
-              <StationCard
-                key={selected.slug}
-                station={selected}
-                project={projectOf(selected.slug)}
-                number={number(selected.slug)}
-                placement={placement}
-                doneSteps={stepsFor(selected.slug)}
-                challengeDone={challenges.includes(selected.slug)}
-                onClose={() => {
-                  const slug = selected.slug;
-                  update({ slug: null });
-                  requestAnimationFrame(() =>
-                    stage.current?.querySelector<HTMLElement>(`[data-station="${slug}"]`)?.focus({ preventScroll: true }),
-                  );
-                }}
-                onEnter={() => enter(selected)}
-                onStep={(step: MissionStep) => markStep(selected.slug, step)}
-              />
-            )}
+            {wide && card}
           </div>
           <ul className="c-keys" aria-label="How to read the map">
             {(["exhibit", "briefing", "blueprint"] as const).map((tier) => (
