@@ -363,6 +363,7 @@ export default function WorldStage({
             hot={hover}
             selected={selected}
             matching={matching}
+            visited={visited}
             reduced={reduced}
             paused={paused}
             onReady={onReady}

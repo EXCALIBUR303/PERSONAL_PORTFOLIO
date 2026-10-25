@@ -7,7 +7,7 @@ import { eye } from "./camera";
 import { SETTINGS, type Tier } from "./quality";
 import type { Rig } from "./rig";
 import { Bridges } from "./scene/bridges";
-import { Distant, Sheet, SUN } from "./scene/ground";
+import { CHART, Grounding, Sheet, SUN } from "./scene/ground";
 import { StudyDistrict } from "./scene/massing";
 import { markShadows, takeShadows } from "./scene/motion";
 import { disposePalette, makePalette } from "./scene/palette";
@@ -27,6 +27,7 @@ export type WorldCanvasProps = {
   hot: string | null;
   selected: string | null;
   matching: Set<string>;
+  visited: string[];
   reduced: boolean;
   paused: boolean;
   onReady: () => void;
@@ -34,7 +35,7 @@ export type WorldCanvasProps = {
 };
 
 /** The haze the far world fades into; the page behind the canvas uses the same colour. */
-export const HAZE = "#e7e9e4";
+export const HAZE = CHART.edge;
 
 /** Copies the rig's pose into the camera every frame; the rig is the camera's only owner. */
 function CameraMirror({ rig }: { rig: Rig }) {
@@ -66,10 +67,10 @@ function CameraMirror({ rig }: { rig: Rig }) {
   return null;
 }
 
-/** Warm key light from the upper left, a cool fill and a rim from behind. */
+/** Late-afternoon key light from the upper left (40 degrees up), a cool fill from the right and a rim from behind. */
 function Lights({ shadows }: { shadows: false | 1024 | 2048 }) {
   const key = useMemo(() => {
-    const light = new THREE.DirectionalLight("#ffead0", 3.3);
+    const light = new THREE.DirectionalLight("#ffe4c4", 3.6);
     light.position.copy(SUN).multiplyScalar(70);
     light.castShadow = !!shadows;
     if (shadows) {
@@ -92,9 +93,9 @@ function Lights({ shadows }: { shadows: false | 1024 | 2048 }) {
   return (
     <>
       <primitive object={key} />
-      <hemisphereLight args={["#eef3f8", "#e4d4bf", 0.44]} />
-      <directionalLight position={[35, 20, 22]} intensity={0.28} color="#d9e3ff" />
-      <directionalLight position={[8, 26, -46]} intensity={0.72} color="#fff0dc" />
+      <hemisphereLight args={["#e6edf3", "#b9a993", 0.3]} />
+      <directionalLight position={[35, 20, 22]} intensity={0.32} color="#cfdcf0" />
+      <directionalLight position={[8, 26, -46]} intensity={0.6} color="#fff0dc" />
     </>
   );
 }
@@ -210,7 +211,7 @@ function Probe({ tier }: { tier: Tier }) {
 }
 
 /** Steps of the build: the world is assembled over several idle moments, not in one long task. */
-const BUILD_STEPS = 5;
+const BUILD_STEPS = 4;
 function useBuildSteps() {
   const [built, setBuilt] = useState(1);
   useEffect(() => {
@@ -248,7 +249,7 @@ function Adapt({ floor }: { floor: number }) {
   return null;
 }
 
-export default function WorldCanvas({ rig, tier, hot, selected, matching, reduced, paused, onReady, onLost }: WorldCanvasProps) {
+export default function WorldCanvas({ rig, tier, hot, selected, matching, visited, reduced, paused, onReady, onLost }: WorldCanvasProps) {
   const settings = SETTINGS[tier];
   const palette = useMemo(() => makePalette(), []);
   useEffect(() => () => disposePalette(palette), [palette]);
@@ -268,7 +269,7 @@ export default function WorldCanvas({ rig, tier, hot, selected, matching, reduce
       camera={{ fov: 26, near: 0.5, far: 520, position: [0, 40, 60] }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.NeutralToneMapping;
-        gl.toneMappingExposure = 1.0;
+        gl.toneMappingExposure = 0.95;
         gl.shadowMap.autoUpdate = false;
         gl.shadowMap.needsUpdate = true;
       }}
@@ -280,12 +281,12 @@ export default function WorldCanvas({ rig, tier, hot, selected, matching, reduce
       <Lights shadows={settings.shadows} />
       {settings.reflections && <Reflections />}
       <Sheet />
-      <Studio palette={palette} active={hot === "studio" || selected === "studio"} reduced={reduced} />
+      <Grounding />
+      <Studio palette={palette} active={hot === "studio" || selected === "studio"} reduced={reduced} visited={visited} />
       <Bridges palette={palette} />
       {built > 1 && <Systems palette={palette} hot={hot} selected={selected} matching={matching} reduced={reduced} />}
       {built > 2 && <StudyDistrict id="algorithms" palette={palette} hot={hot} selected={selected} reduced={reduced} />}
       {built > 3 && <StudyDistrict id="intelligence" palette={palette} hot={hot} selected={selected} reduced={reduced} />}
-      {built > 4 && <Distant palette={palette} />}
       <Redraw keys={[hot, selected, matching, paused, built]} />
       <ShadowUpdates />
       <ContextWatch onLost={onLost} />

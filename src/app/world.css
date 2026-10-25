@@ -11,8 +11,8 @@
  * the world, as the 2D map did.
  */
 html[data-mode="creative"] .portfolio-root {
-  --w-haze: #e7e9e4;
-  --w-paper: #f3eee4;
+  --w-haze: #b4bbbd;
+  --w-paper: #d9d6cd;
 }
 
 html[data-mode="creative"] .portfolio-root {
@@ -30,13 +30,7 @@ html[data-mode="creative"] .portfolio-root {
     .w-backdrop {
       position: absolute;
       inset: 0;
-      background:
-        radial-gradient(ellipse 34% 30% at 24% 40%, rgb(247 214 198 / 0.55), transparent 70%),
-        radial-gradient(ellipse 30% 28% at 76% 30%, rgb(206 223 243 / 0.6), transparent 70%),
-        radial-gradient(ellipse 36% 30% at 54% 80%, rgb(226 216 244 / 0.6), transparent 70%),
-        linear-gradient(rgb(43 48 57 / 0.04) 1px, transparent 1px) 0 0 / 30px 30px,
-        linear-gradient(90deg, rgb(43 48 57 / 0.04) 1px, transparent 1px) 0 0 / 30px 30px,
-        linear-gradient(180deg, var(--w-haze) 0%, var(--w-paper) 58%);
+      background: radial-gradient(ellipse 72% 68% at 48% 52%, #ebe5d9 0%, #d9d6cd 52%, #b4bbbd 100%);
     }
     .w-canvas {
       position: absolute !important;
@@ -51,7 +45,7 @@ html[data-mode="creative"] .portfolio-root {
       position: absolute;
       inset: 0;
       pointer-events: none;
-      background: radial-gradient(ellipse 80% 75% at 50% 48%, transparent 64%, rgb(43 48 57 / 0.08));
+      background: radial-gradient(ellipse 80% 75% at 50% 48%, transparent 58%, rgb(38 44 52 / 0.14));
     }
     .w-wait {
       position: absolute;

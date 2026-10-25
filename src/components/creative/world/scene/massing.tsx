@@ -1,7 +1,7 @@
 "use client";
 import { useMemo } from "react";
 import * as THREE from "three";
-import { DISTRICTS, PLACEMENTS, type Placement } from "../layout";
+import { ALGORITHMS_PIER, ALGORITHMS_PLATES, BOWL, DISTRICTS, PLACEMENTS, type Placement } from "../layout";
 import { circle, Kit, Model, useDisposal, type V3 } from "./kit";
 import { Placed, tree } from "./landmark";
 import type { Palette } from "./palette";
@@ -32,15 +32,32 @@ function edge(k: Kit, m: THREE.Material, a: V3, b: V3, width = 0.34) {
   });
 }
 
+/** A beam from the edge of one plate to the edge of another: a graph edge, kept clear of the landmarks. */
+function link(k: Kit, m: THREE.Material, a: V3, ah: number, b: V3, bh: number) {
+  const dx = b[0] - a[0];
+  const dz = b[2] - a[2];
+  const run = Math.hypot(dx, dz);
+  const ux = dx / run;
+  const uz = dz / run;
+  const out = (h: number) => h / Math.max(Math.abs(ux), Math.abs(uz)) - 0.04;
+  const s0 = out(ah);
+  const s1 = run - out(bh);
+  edge(k, m, [a[0] + ux * s0, a[1] + 0.01, a[2] + uz * s0], [a[0] + ux * s1, b[1] + 0.01, a[2] + uz * s1]);
+}
+
+/*
+ * Algorithms is a graph: five separate plates at different heights, one per
+ * project, joined by slender beams (the edges), with a small landing pier where
+ * the Studio's bridge arrives. The plates float; nothing joins them but the
+ * beams.
+ */
 function buildAlgorithms(p: Palette) {
   const k = new Kit(DISTRICTS.algorithms.centre);
   const g = { top: p.algTop, wall: p.algWall };
-  terrace(k, rect(-5.1, -5.1, 5.1, 5.1, 0.8), -0.5, 0, g, p.charcoal);
-  k.slab(p.algBand, rect(-4.5, -4.5, 4.5, 4.5, 0.6), -0.9, 0.4);
-  k.slab(p.algDeep, rect(-3.6, -3.6, 3.6, 3.6, 0.5), -1.25, 0.35);
-  const slugs = ["mazera-ai-maze-solver", "pathable", "last-mile-daa", "football-penalty-shootout", "parkscan-swarm"];
+  const slugs = Object.keys(ALGORITHMS_PLATES);
   const nodes = Object.fromEntries(slugs.map((s) => [s, local(PLACEMENTS[s], "algorithms")]));
-  // Graph edges first, so the node plinths sit on top of their ends.
+  const pier: V3 = [ALGORITHMS_PIER.x, 0, ALGORITHMS_PIER.z];
+  // Edges first, so the plates sit on top of their ends.
   const pairs: [string, string][] = [
     ["mazera-ai-maze-solver", "pathable"],
     ["mazera-ai-maze-solver", "last-mile-daa"],
@@ -49,48 +66,64 @@ function buildAlgorithms(p: Palette) {
     ["parkscan-swarm", "mazera-ai-maze-solver"],
     ["parkscan-swarm", "football-penalty-shootout"],
   ];
-  for (const [a, b] of pairs) edge(k, p.card, [nodes[a][0], nodes[a][1] + 0.01, nodes[a][2]], [nodes[b][0], nodes[b][1] + 0.01, nodes[b][2]]);
+  for (const [a, b] of pairs) link(k, p.card, nodes[a], ALGORITHMS_PLATES[a], nodes[b], ALGORITHMS_PLATES[b]);
+  // The pier: a small landing joined to the nearest plate.
+  link(k, p.card, pier, ALGORITHMS_PIER.half, nodes["last-mile-daa"], ALGORITHMS_PLATES["last-mile-daa"]);
+  terrace(k, rect(pier[0] - ALGORITHMS_PIER.half, pier[2] - ALGORITHMS_PIER.half, pier[0] + ALGORITHMS_PIER.half, pier[2] + ALGORITHMS_PIER.half, 0.2), -0.5, 0, g, p.charcoal);
+  k.slab(p.algBand, rect(pier[0] - 0.5, pier[2] - 0.5, pier[0] + 0.5, pier[2] + 0.5, 0.15), -0.95, 0.45);
   for (const s of slugs) {
     const [x, y, z] = nodes[s];
-    const w = s === "parkscan-swarm" ? 2.0 : 2.4;
-    if (y > 0.02) terrace(k, rect(x - w / 2, z - w / 2, x + w / 2, z + w / 2, 0.16), 0, y, g, p.charcoal);
+    const h = ALGORITHMS_PLATES[s];
+    terrace(k, rect(x - h, z - h, x + h, z + h, 0.25), -0.5, y, g, p.charcoal);
+    k.slab(p.algBand, rect(x - h + 0.4, z - h + 0.4, x + h - 0.4, z + h - 0.4, 0.2), -1.0, 0.5);
+    k.slab(p.algDeep, rect(x - h + 0.85, z - h + 0.85, x + h - 0.85, z + h - 0.85, 0.15), -1.4, 0.4);
+    // A fine grid etched into each plate: the atlas.
+    for (let i = -2; i <= 2; i++) {
+      k.box(p.algWall, [h * 2 - 0.5, 0.004, 0.014], [x, y + 0.002, z + i * (h / 2.6)]);
+      k.box(p.algWall, [0.014, 0.004, h * 2 - 0.5], [x + i * (h / 2.6), y + 0.002, z]);
+    }
   }
-  // A fine grid etched into the base: the atlas.
-  for (let i = -4; i <= 4; i++) {
-    k.box(p.algWall, [9.4, 0.004, 0.018], [0, 0.002, i]);
-    k.box(p.algWall, [0.018, 0.004, 9.4], [i, 0.002, 0]);
+  for (const [s, dx, dz] of [
+    ["mazera-ai-maze-solver", -1.35, 1.35],
+    ["pathable", 1.15, -1.15],
+    ["football-penalty-shootout", 1.15, 1.15],
+  ] as [string, number, number][]) {
+    const [x, y, z] = nodes[s];
+    tree(k, p, x + dx, y, z + dz, 0.8, p.olive);
   }
-  for (const [x, z] of [
-    [-4.4, 0.1],
-    [4.4, 0.1],
-    [0.1, -4.4],
-  ])
-    tree(k, p, x, 0, z, 0.85, p.olive);
   return k.build();
 }
 
+/*
+ * Intelligence is a bowl: a low rim, the terrace the stations stand on, and a
+ * sunken court at the centre, so the district looks inward at its subject.
+ */
 function buildIntelligence(p: Palette) {
   const k = new Kit(DISTRICTS.intelligence.centre);
   const g = { top: p.intTop, wall: p.intWall };
-  const R = DISTRICTS.intelligence.half[0];
-  terrace(k, circle(0, 0, R, 72), -0.5, 0, g, p.charcoal);
-  // The ring promenade, raised a step above the courtyard.
-  terrace(k, circle(0, 0, R, 72), 0, 0.25, g, p.charcoal, { holes: [circle(0, 0, R - 0.95, 72).reverse()] });
-  k.slab(p.intBand, circle(0, 0, R - 0.55, 64), -0.9, 0.4);
-  k.slab(p.intDeep, circle(0, 0, R - 1.5, 56), -1.3, 0.4);
-  // The courtyard's test field.
-  k.slab(p.lavender, circle(0, -0.3, 1.8, 56), 0, 0.012);
-  k.torus(p.violet, 1.8, 0.012, [0, 0.012, -0.3], { seg: 72 });
-  for (const r of [0.7, 1.25]) k.torus(p.intWall, r, 0.008, [0, 0.014, -0.3], { seg: 56 });
-  // Pavilion pads on the promenade.
+  const { rim, terrace: step, court } = BOWL;
+  // Strata under the whole island, then the court floor, the terrace and the rim over them.
+  k.slab(p.intBand, circle(0, 0, rim.outer - 0.55, 64), -1.0, 0.5);
+  k.slab(p.intDeep, circle(0, 0, rim.outer - 1.5, 56), -1.4, 0.4);
+  terrace(k, circle(0, 0, step.inner + 0.1, 64), -0.5, court.top, g, p.charcoal);
+  terrace(k, circle(0, 0, rim.inner + 0.1, 72), -0.5, step.top, g, p.charcoal, { holes: [circle(0, 0, step.inner, 64).reverse()] });
+  terrace(k, circle(0, 0, rim.outer, 72), -0.5, rim.top, g, p.charcoal, { holes: [circle(0, 0, rim.inner, 72).reverse()] });
+  k.torus(p.violet, (rim.inner + rim.outer) / 2, 0.012, [0, rim.top + 0.012, 0], { seg: 96 });
+  // The court's test field: lavender disc, a violet ring and two finer ones.
+  const cy = court.top + 0.004;
+  k.slab(p.lavender, circle(0, 0, 1.9, 56), cy, 0.012);
+  k.torus(p.violet, 1.9, 0.012, [0, cy + 0.014, 0], { seg: 72 });
+  for (const r of [0.7, 1.3]) k.torus(p.intWall, r, 0.008, [0, cy + 0.016, 0], { seg: 56 });
+  k.cyl(p.intTop, 0.45, 0.1, [0, court.top, 0], { seg: 32 });
+  // Pavilion pads on the terrace.
   for (const s of ["predictive-maintenance", "quadruped-rl", "aeris", "swarmmind", "sigsmith", "student-burnout-ai", "resume-screener"]) {
     const [x, , z] = local(PLACEMENTS[s], "intelligence");
     const [w, , d] = PLACEMENTS[s].size;
-    k.box(p.intTop, [w + 0.2, 0.25, d + 0.2], [x, 0, z], { r: 0.08 });
+    k.box(p.intTop, [w + 0.2, 0.03, d + 0.2], [x, step.top, z], { r: 0.02 });
   }
   for (const a of [10, 100, 170, 250, 330]) {
     const r = (a * Math.PI) / 180;
-    tree(k, p, Math.cos(r) * (R - 0.5), 0.25, Math.sin(r) * (R - 0.5), 0.8, a % 20 ? p.sage : p.olive);
+    tree(k, p, Math.cos(r) * (rim.inner + 0.45), rim.top, Math.sin(r) * (rim.inner + 0.45), 0.8, a % 20 ? p.sage : p.olive);
   }
   return k.build();
 }

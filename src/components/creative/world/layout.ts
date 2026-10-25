@@ -47,9 +47,9 @@ export const DISTRICTS: Record<District, DistrictFrame> = {
   algorithms: {
     id: "algorithms",
     centre: view(11.5, 4.2, 0.35),
-    half: [5.1, 5.1],
+    half: [5.1, 5.85],
     scale: 1,
-    span: [-0.5, 1.9],
+    span: [-1.0, 1.9],
     landing: [-3.95, 0, 5.0],
     turn: deg(7),
   },
@@ -68,16 +68,16 @@ export const DISTRICT_ORDER: District[] = ["systems", "algorithms", "intelligenc
 
 /** The Studio: a round podium at the origin; its building faces the viewer. */
 export const STUDIO = {
-  /** Podium top. */
-  top: 0.62,
+  /** Podium top. The Studio stands higher than the districts, so it reads as the anchor. */
+  top: 1.05,
   radius: 3.9,
   /** The building is modelled at this scale on the podium. */
   scale: 1.3,
   /** The building's box, for framing and the button laid over it. */
-  min: [-2.7, 0.62, -2.2] as Vec3,
-  max: [2.7, 5.0, 2.1] as Vec3,
-  /** Where its name plate floats: above the roof and its sign. */
-  anchor: [0, 7.7, 0] as Vec3,
+  min: [-2.7, 1.05, -2.1] as Vec3,
+  max: [2.7, 4.75, 2.3] as Vec3,
+  /** Where its name plate floats: above the prow and its oculus. */
+  anchor: [0, 6.3, 0] as Vec3,
 };
 
 /** One landmark's footprint: centre of its base, its width, height and depth, and its model scale. */
@@ -99,11 +99,11 @@ const local: Record<District, [slug: string, x: number, y: number, z: number, w:
     ["rupeerise", 3.95, 0, 3.5, 1.7, 1.0, 1.7],
   ],
   algorithms: [
-    ["mazera-ai-maze-solver", -2.55, 0.55, -2.55, 2.2, 0.7, 2.2],
-    ["pathable", 2.55, 0.3, -2.55, 2.2, 0.9, 2.2],
+    ["mazera-ai-maze-solver", -2.55, 0.8, -2.55, 2.2, 0.7, 2.2],
+    ["pathable", 2.55, 0.35, -2.55, 2.2, 0.9, 2.2],
     ["last-mile-daa", -2.55, 0.2, 2.55, 2.2, 0.8, 2.2],
     ["football-penalty-shootout", 2.55, 0.6, 2.55, 2.2, 0.7, 2.2],
-    ["parkscan-swarm", 0, 0.1, 0, 2.0, 0.5, 2.0],
+    ["parkscan-swarm", 0, 0.5, 0, 2.0, 0.5, 2.0],
   ],
   intelligence: [
     ["predictive-maintenance", -2.75, 0.25, -2.0, 1.9, 1.1, 1.7],
@@ -127,6 +127,42 @@ export const PLACEMENTS: Record<string, Placement> = Object.fromEntries(
     }),
   ),
 );
+
+
+/* ---------------- district terrain, shared by the scene and the chart ---------------- */
+
+/** Algorithms is a graph: one plate per project (half-width, local to the island) and a landing pier for the Studio's bridge. */
+export const ALGORITHMS_PLATES: Record<string, number> = {
+  "mazera-ai-maze-solver": 1.65,
+  pathable: 1.4,
+  "last-mile-daa": 1.4,
+  "football-penalty-shootout": 1.4,
+  "parkscan-swarm": 1.2,
+};
+export const ALGORITHMS_PIER = { x: -3.95, z: 5.0, half: 0.85 };
+
+/** Intelligence is a bowl: a low rim, the terrace the stations stand on, and a sunken court (radii and top heights). */
+export const BOWL = {
+  rim: { inner: 4.3, outer: 5.2, top: 0.45 },
+  terrace: { inner: 2.6, top: 0.25 },
+  court: { top: -0.5 },
+};
+
+/** Island outlines on the ground, in world units: centre, half extents and corner radius. The chart's contours follow them. */
+export const CHART_SHAPES: [cx: number, cz: number, hx: number, hz: number, r: number][] = (() => {
+  const shapes: [number, number, number, number, number][] = [[0, 0, STUDIO.radius, STUDIO.radius, STUDIO.radius]];
+  const s = DISTRICTS.systems.centre;
+  shapes.push([s[0], s[2], 6.1, 5.25, 0.75]);
+  const a = DISTRICTS.algorithms.centre;
+  for (const [slug, half] of Object.entries(ALGORITHMS_PLATES)) {
+    const p = local.algorithms.find((l) => l[0] === slug)!;
+    shapes.push([a[0] + p[1], a[2] + p[3], half, half, 0.25]);
+  }
+  shapes.push([a[0] + ALGORITHMS_PIER.x, a[2] + ALGORITHMS_PIER.z, ALGORITHMS_PIER.half, ALGORITHMS_PIER.half, 0.2]);
+  const i = DISTRICTS.intelligence.centre;
+  shapes.push([i[0], i[2], BOWL.rim.outer, BOWL.rim.outer, BOWL.rim.outer]);
+  return shapes;
+})();
 
 export const boxOf = (p: Placement): [Vec3, Vec3] => [
   [p.base[0] - p.size[0] / 2, p.base[1], p.base[2] - p.size[2] / 2],

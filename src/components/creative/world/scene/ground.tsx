@@ -1,21 +1,27 @@
 "use client";
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
-import { DISTRICTS } from "../layout";
-import { circle, Kit, Model, useDisposal } from "./kit";
-import type { Palette } from "./palette";
+import { CHART_SHAPES, DISTRICTS, PLACEMENTS } from "../layout";
+import { bridgeAngle } from "./studio";
 
 /*
- * The table the archipelago floats over: a drafting sheet far below the
- * islands. It carries the technical texture (a survey grid, drawn in the
- * shader so it stays crisp at any distance), a soft colour field under each
- * island, and each island's shadow, thrown well away from it by the low sun so
- * the height reads. Fog fades the sheet from warm paper near the viewer to a
- * cool haze far away.
+ * The chart table the archipelago floats over: a survey chart far below the
+ * islands, drawn in one shader so it costs a single draw call and stays crisp
+ * at any distance. A pool of warm light sits under the world and falls off to a
+ * cool slate at the edges; contour lines follow each island's real outline and
+ * widen with distance; sparse survey crosses and the bridges' own axes, run on
+ * across the chart, tie it to the architecture. Each island's shadow is thrown
+ * well away from it by the low sun, so the height reads. Fog fades the sheet
+ * into the slate at the edge (the stage's own haze colour).
  */
 export const SHEET_Y = -10;
-/** Direction towards the key light (the same light that casts the real shadows). */
-export const SUN = new THREE.Vector3(-0.45, 0.8, 0.4).normalize();
+/** Direction towards the key light (the same light that casts the real shadows): azimuth as before, 40 degrees up. */
+export const SUN = new THREE.Vector3(-0.572, 0.643, 0.509).normalize();
+
+/** The chart's three tones, from the pool under the world out to the cool edge. */
+export const CHART = { pool: "#ebe5d9", mid: "#d9d6cd", edge: "#b4bbbd" };
+
+const MAX_SHAPES = 12;
 
 const vertex = /* glsl */ `
   #include <fog_pars_vertex>
@@ -31,40 +37,75 @@ const vertex = /* glsl */ `
 const fragment = /* glsl */ `
   #include <common>
   #include <fog_pars_fragment>
-  uniform vec3 uPaper;
+  uniform vec3 uPool;
+  uniform vec3 uMid;
+  uniform vec3 uEdge;
   uniform vec3 uInk;
+  uniform vec3 uLight;
+  uniform vec4 uShape[${MAX_SHAPES}];
+  uniform float uRound[${MAX_SHAPES}];
   uniform vec4 uShadow[4];
-  uniform vec4 uField[4];
-  uniform vec3 uTint[4];
+  uniform vec2 uAxis[3];
+  uniform vec4 uShoal[3];
   varying vec3 vWorld;
 
-  float grid(vec2 p, float spacing, float width) {
-    vec2 q = p / spacing;
-    vec2 w = max(fwidth(q), vec2(1e-4));
-    vec2 d = abs(fract(q - 0.5) - 0.5) / w;
-    return 1.0 - clamp(min(d.x, d.y) / width, 0.0, 1.0);
+  float sdRound(vec2 p, vec4 s, float r) {
+    vec2 q = abs(p - s.xy) - s.zw + r;
+    return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
   }
+  float aa(float v, float w) { return 1.0 - smoothstep(0.0, w, v); }
 
   void main() {
     vec2 p = vWorld.xz;
-    vec3 col = uPaper;
-    for (int i = 0; i < 4; i++) {
-      float d = length(p - uField[i].xy);
-      float f = 1.0 - smoothstep(0.0, uField[i].z, d);
-      col = mix(col, uTint[i], f * f * uField[i].w);
-      // Survey contours in a band around each field.
-      float r = d / 1.35;
-      float ring = 1.0 - clamp(abs(fract(r) - 0.5) / max(fwidth(r), 1e-4) / 1.2, 0.0, 1.0);
-      float band = smoothstep(uField[i].z * 0.42, uField[i].z * 0.6, d) * (1.0 - smoothstep(uField[i].z * 0.8, uField[i].z * 1.05, d));
-      col = mix(col, uInk, ring * band * 0.05);
+    // The pool of light: warm under the world, cool slate at the edge.
+    float rr = length(p - uLight.xy);
+    float R = uLight.z;
+    vec3 col = mix(uPool, uMid, smoothstep(0.0, R * 0.55, rr));
+    col = mix(col, uEdge, smoothstep(R * 0.5, R * 1.15, rr));
+    float pool = 1.0 - smoothstep(R * 0.35, R * 0.8, rr);
+
+    // Contours follow the islands' outlines and widen with distance.
+    float d = 1e3;
+    for (int i = 0; i < ${MAX_SHAPES}; i++) {
+      if (uShape[i].z > 0.0) d = min(d, sdRound(p, uShape[i], uRound[i]));
     }
-    // Fine lines fade where they would crowd into a moire.
-    float fine = clamp(1.6 - length(fwidth(p)) * 2.2, 0.0, 1.0);
-    col = mix(col, uInk, grid(p, 1.0, 0.9) * 0.05 * fine + grid(p, 5.0, 1.1) * 0.085);
+    float s = sqrt(max(d, 0.0)) * 1.5;
+    float line = aa(abs(fract(s - 0.5) - 0.5) / max(fwidth(s), 1e-4), 1.1);
+    float reach = 1.0 - smoothstep(7.0, 15.0, d);
+    col *= 1.0 - 0.014 * min(floor(s), 5.0) * reach;
+    col = mix(col, uInk, line * reach * 0.06 * step(0.0, d));
+
+    // Far shoals: contour clusters with no geometry, unbuilt sites further off.
+    for (int i = 0; i < 3; i++) {
+      float ds = length(p - uShoal[i].xy);
+      float rs = ds / 0.9;
+      float rl = aa(abs(fract(rs) - 0.5) / max(fwidth(rs), 1e-4), 1.0);
+      float within = 1.0 - smoothstep(uShoal[i].z * 0.6, uShoal[i].z, ds);
+      col = mix(col, uInk, rl * within * uShoal[i].w);
+    }
+
+    // Survey crosses, only inside the pool.
+    vec2 q = (fract(p / 10.0 + 0.5) - 0.5) * 10.0;
+    float w = max(fwidth(p.x), 1e-3);
+    float cx = (1.0 - smoothstep(0.03, 0.03 + w, abs(q.y))) * (1.0 - smoothstep(0.35, 0.35 + w, abs(q.x)));
+    float cy = (1.0 - smoothstep(0.03, 0.03 + w, abs(q.x))) * (1.0 - smoothstep(0.35, 0.35 + w, abs(q.y)));
+    col = mix(col, uInk, max(cx, cy) * pool * 0.07);
+
+    // The bridges' axes, run on across the chart as dashed construction lines.
+    for (int i = 0; i < 3; i++) {
+      vec2 dir = uAxis[i];
+      float along = dot(p, dir);
+      float perp = abs(p.x * dir.y - p.y * dir.x);
+      float onAxis = aa(perp / max(fwidth(perp), 1e-4), 1.0) * step(5.0, along) * step(along, R * 1.1);
+      float dash = step(fract(along * 0.55), 0.5);
+      col = mix(col, uInk, onAxis * dash * (1.0 - smoothstep(R * 0.35, R * 0.9, along)) * 0.07);
+    }
+
+    // Island shadows, cool, thrown away from the key light.
     for (int i = 0; i < 4; i++) {
-      float d = length(p - uShadow[i].xy);
-      float s = 1.0 - smoothstep(uShadow[i].z * 0.2, uShadow[i].z, d);
-      col *= 1.0 - s * s * uShadow[i].w;
+      float ds = length(p - uShadow[i].xy);
+      float sh = 1.0 - smoothstep(uShadow[i].z * 0.2, uShadow[i].z, ds);
+      col = mix(col, col * vec3(0.62, 0.68, 0.78), min(1.0, sh * sh * uShadow[i].w * 1.3));
     }
     gl_FragColor = vec4(col, 1.0);
     #include <tonemapping_fragment>
@@ -85,28 +126,41 @@ export function Sheet() {
     const a = DISTRICTS.algorithms.centre;
     const i = DISTRICTS.intelligence.centre;
     const shadows = [
-      [...shadowAt(0, 0.3, 0), 6.2, 0.15],
-      [...shadowAt(s[0], s[1], s[2]), 10, 0.16],
-      [...shadowAt(a[0], a[1], a[2]), 8.6, 0.15],
-      [...shadowAt(i[0], i[1], i[2]), 8.8, 0.16],
+      [...shadowAt(0, 0.4, 0), 6.4, 0.18],
+      [...shadowAt(s[0], s[1], s[2]), 10.5, 0.2],
+      [...shadowAt(a[0], a[1], a[2]), 8.8, 0.18],
+      [...shadowAt(i[0], i[1], i[2]), 9, 0.2],
     ].map(([x, z, r, k]) => new THREE.Vector4(x, z, r, k));
-    const fields = [
-      [0, 0, 9, 0.5],
-      [s[0], s[2], 15, 0.55],
-      [a[0], a[2], 13.5, 0.55],
-      [i[0], i[2], 14.5, 0.55],
+    const shapes = Array.from({ length: MAX_SHAPES }, (_, n) => {
+      const c = CHART_SHAPES[n];
+      return c ? new THREE.Vector4(c[0], c[1], c[2], c[3]) : new THREE.Vector4(0, 0, 0, 0);
+    });
+    const rounds = Array.from({ length: MAX_SHAPES }, (_, n) => (CHART_SHAPES[n] ? CHART_SHAPES[n][4] : 0));
+    const axes = [DISTRICTS.systems.id, DISTRICTS.algorithms.id, DISTRICTS.intelligence.id].map((id) => {
+      const a2 = bridgeAngle(id);
+      return new THREE.Vector2(Math.cos(a2), Math.sin(a2));
+    });
+    // Shoals sit well out in the empty corners of the overview.
+    const shoals = [
+      [-14.6, 16.2, 6.2, 0.05],
+      [21.3, -7.5, 6.8, 0.05],
+      [-16.1, -18.3, 6.0, 0.045],
     ].map(([x, z, r, k]) => new THREE.Vector4(x, z, r, k));
-    const tints = ["#e9f2c8", "#f7d9c9", "#d3e2f3", "#e3d9f3"].map((c) => new THREE.Color(c));
     return new THREE.ShaderMaterial({
       fog: true,
       uniforms: THREE.UniformsUtils.merge([
         THREE.UniformsLib.fog,
         {
-          uPaper: { value: new THREE.Color("#f3eee4") },
+          uPool: { value: new THREE.Color(CHART.pool) },
+          uMid: { value: new THREE.Color(CHART.mid) },
+          uEdge: { value: new THREE.Color(CHART.edge) },
           uInk: { value: new THREE.Color("#2b3039") },
+          uLight: { value: new THREE.Vector3(-1.5, 0.5, 30) },
+          uShape: { value: shapes },
+          uRound: { value: rounds },
           uShadow: { value: shadows },
-          uField: { value: fields },
-          uTint: { value: tints },
+          uAxis: { value: axes },
+          uShoal: { value: shoals },
         },
       ]),
       vertexShader: vertex,
@@ -124,31 +178,72 @@ export function Sheet() {
   return <mesh geometry={geometry} material={material} position={[0, SHEET_Y, 0]} renderOrder={-1} />;
 }
 
-/** A few far, small platforms: they give the world a scale beyond its edges. */
-export function Distant({ palette }: { palette: Palette }) {
-  const model = useMemo(() => {
-    const k = new Kit();
-    // In the overview's empty corners, low and small, so they read as models further off.
-    const spots: [number, number, number, number][] = [
-      [-9.7, -5.2, 16.6, 1.6],
-      [17.8, -5.4, -1.7, 1.4],
-      [-18.2, -6.2, -2.8, 1.3],
-      [5.8, -6.4, -19.0, 1.5],
-    ];
-    spots.forEach(([x, y, z, r], n) => {
-      k.slab(palette.plaster, circle(x, z, r, 28), y - 0.5, 0.5);
-      k.cyl(palette.concrete, r * 0.8, 0.7, [x, y - 1.2, z], { top: r * 0.98, seg: 28 });
-      k.cyl(palette.concrete, r * 0.45, 0.6, [x, y - 1.8, z], { top: r * 0.78, seg: 24 });
-      if (n % 2 === 0) {
-        k.box(palette.card, [r * 0.7, r * 0.55, r * 0.6], [x - r * 0.2, y, z], { r: 0.06 });
-        k.box(palette.card, [r * 0.35, r * 0.9, r * 0.35], [x + r * 0.35, y, z - r * 0.2], { r: 0.05 });
-      } else {
-        k.cyl(palette.trunk, 0.06, 0.4, [x, y, z]);
-        k.sphere(palette.sage, r * 0.32, [x, y + 0.55 + r * 0.2, z]);
-      }
-    });
-    return k.build();
-  }, [palette]);
-  useDisposal(model);
-  return <Model model={model} cast={false} receive={false} />;
+/** A soft dark pool, drawn once and shared by every footprint. */
+function groundingTexture() {
+  const size = 64;
+  const c = document.createElement("canvas");
+  c.width = c.height = size;
+  const g = c.getContext("2d")!;
+  const grad = g.createRadialGradient(size / 2, size / 2, size * 0.18, size / 2, size / 2, size / 2);
+  grad.addColorStop(0, "rgba(52,44,40,0.26)");
+  grad.addColorStop(0.55, "rgba(52,44,40,0.12)");
+  grad.addColorStop(1, "rgba(40,34,30,0)");
+  g.fillStyle = grad;
+  g.fillRect(0, 0, size, size);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+/**
+ * Contact grounding: a faint shadow pool under each landmark's footprint, where
+ * walls meet the ground. It is ambient occlusion without a post-processing pass:
+ * one texture, one draw call for all twenty.
+ */
+export function Grounding() {
+  const texture = useMemo(() => groundingTexture(), []);
+  const material = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        map: texture,
+        transparent: true,
+        depthWrite: false,
+        polygonOffset: true,
+        polygonOffsetFactor: -2,
+        polygonOffsetUnits: -2,
+        fog: false,
+      }),
+    [texture],
+  );
+  const geometry = useMemo(() => {
+    const parts: THREE.BufferGeometry[] = [];
+    for (const p of Object.values(PLACEMENTS)) {
+      const w = p.size[0] * 1.3;
+      const d = p.size[2] * 1.3;
+      const g = new THREE.PlaneGeometry(w, d).rotateX(-Math.PI / 2).translate(p.base[0], p.base[1] + 0.012, p.base[2]);
+      parts.push(g);
+    }
+    const merged = new THREE.BufferGeometry();
+    const pos: number[] = [];
+    const uv: number[] = [];
+    for (const g of parts) {
+      const ng = g.toNonIndexed();
+      pos.push(...(ng.attributes.position.array as Float32Array));
+      uv.push(...(ng.attributes.uv.array as Float32Array));
+      g.dispose();
+      ng.dispose();
+    }
+    merged.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    merged.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+    return merged;
+  }, []);
+  useEffect(
+    () => () => {
+      texture.dispose();
+      material.dispose();
+      geometry.dispose();
+    },
+    [texture, material, geometry],
+  );
+  return <mesh geometry={geometry} material={material} renderOrder={1} />;
 }

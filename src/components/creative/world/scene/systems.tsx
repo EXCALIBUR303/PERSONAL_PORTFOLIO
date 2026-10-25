@@ -58,8 +58,13 @@ function buildGround(p: Palette) {
   k.slab(p.sysBand, rect(5.0, -1.25, 6.7, 0.5, 0.2), -0.32, 0.32);
   terrace(k, rect(-5.75, -5.25, 5.6, -1.45, 0.65), 0.45, 0.9, g, p.charcoal);
   // Below: stepped plinths taper away, so the island floats.
-  k.slab(p.sysBand, rect(-5.5, -4.7, 5.5, 4.7, 0.6), -0.95, 0.4);
-  k.slab(p.sysDeep, rect(-4.6, -3.85, 4.6, 3.85, 0.5), -1.35, 0.4);
+  // Strata: three darker bands, each cut off from the one above by a dark line.
+  k.slab(p.sysBand, rect(-5.7, -4.9, 5.7, 4.9, 0.65), -0.95, 0.45);
+  k.slab(p.charcoal, rect(-5.7, -4.9, 5.7, 4.9, 0.65), -0.5, 0.02);
+  k.slab(p.sysDeep, rect(-4.9, -4.1, 4.9, 4.1, 0.55), -1.4, 0.45);
+  k.slab(p.charcoal, rect(-4.9, -4.1, 4.9, 4.1, 0.55), -0.95, 0.02);
+  k.slab(p.sysBand, rect(-3.6, -3.0, 3.6, 3.0, 0.45), -1.8, 0.4);
+  k.slab(p.charcoal, rect(-3.6, -3.0, 3.6, 3.0, 0.45), -1.4, 0.02);
 
   // Panel seams across the terraces, as on a workshop floor.
   const seam = (x0: number, x1: number, z0: number, z1: number, y: number) => {
@@ -82,10 +87,17 @@ function buildGround(p: Palette) {
   k.torus(p.brass, 0.14, 0.014, [5.55, 0.74, 0.28], { rx: 0.4, seg: 32 });
   k.torus(p.brass, 0.1, 0.012, [5.55, 0.74, 0.28], { rx: -0.6, ry: 0.8, seg: 28 });
 
-  // The street along the front, with the shuttle lane.
-  k.slab(p.road, rect(-5.4, 4.6, 5.4, 5.1, 0.12), 0, 0.012);
-  for (const z of [4.64, 5.06]) k.box(p.marking, [10.5, 0.004, 0.022], [0, 0.012, z]);
-  for (let x = -5.0; x <= 5.0; x += 0.5) k.box(p.marking, [0.22, 0.004, 0.03], [x, 0.012, 4.85]);
+  // The street along the front, with the shuttle lane, and the loop that carries it up the east side to the plaza.
+  k.slab(p.road, rect(-5.4, 4.6, 5.85, 5.1, 0.12), 0, 0.012);
+  for (const z of [4.64, 5.06]) k.box(p.marking, [10.8, 0.004, 0.022], [0.2, 0.012, z]);
+  for (let x = -5.0; x <= 5.2; x += 0.5) k.box(p.marking, [0.22, 0.004, 0.03], [x, 0.012, 4.85]);
+  k.slab(p.road, rect(5.45, 2.3, 5.85, 5.1, 0.05), 0, 0.012);
+  k.box(p.road, [0.4, 0.02, 1.15], [5.65, 0.215, 2.42], { rx: Math.atan2(0.45, 1.0) });
+  k.slab(p.road, rect(5.45, 0.5, 5.85, 1.95, 0.04), 0.45, 0.012);
+  for (let z = 2.6; z <= 4.4; z += 0.5) k.box(p.marking, [0.03, 0.004, 0.22], [5.65, 0.012, z]);
+  // Service conduit along the upper terrace's front: a trench with cyan data dashes (it never leaves the island).
+  k.box(p.charcoal, [8.6, 0.01, 0.1], [0.3, 0.9, -1.72]);
+  for (let x = -3.9; x <= 4.4; x += 0.42) k.box(p.cyan, [0.18, 0.006, 0.036], [x, 0.91, -1.72]);
 
   // Stairs between the terraces, and railings along their edges.
   stairs(k, p, -1.75, 0, 2.85, 0.225);
@@ -96,7 +108,7 @@ function buildGround(p: Palette) {
   railing(k, p, -5.75, 5.75, 0.45, 1.9, [-1.75, 2.05]);
 
   // Planting, lamps and a couple of parked cars.
-  for (const x of [-2.4, -0.9, 0.7, 2.6]) tree(k, p, x, 0.45, 0.38, 0.85, x > 0 ? p.olive : p.sage);
+  for (const x of [-2.4, 0.7]) tree(k, p, x, 0.45, 0.38, 0.85, x > 0 ? p.olive : p.sage);
   for (const [x, z] of [
     [-5.45, -1.8],
     [5.3, -1.8],
@@ -104,12 +116,10 @@ function buildGround(p: Palette) {
     [6.45, 0.35],
   ])
     tree(k, p, x, z < -1.45 ? 0.9 : 0.45, z, 0.95);
-  for (const x of [-4.6, -2.3, 0, 2.3, 4.6]) tree(k, p, x, 0.9, -4.78, 0.8, x === 0 ? p.olive : p.sage);
+  for (const x of [-4.6, 0, 4.6]) tree(k, p, x, 0.9, -4.78, 0.8, x === 0 ? p.olive : p.sage);
   for (const [x, z] of [
     [-5.6, 2.45],
-    [5.55, 2.45],
     [-5.6, 3.7],
-    [5.6, 3.75],
   ])
     tree(k, p, x, 0, z, 0.9, z > 3 ? p.olive : p.sage);
   for (const x of [-2.6, -0.6, 1.4, 3.4]) lamp(k, p, x, 0.458, -0.82);
