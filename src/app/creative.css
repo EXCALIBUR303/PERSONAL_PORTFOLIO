@@ -649,40 +649,7 @@ html[data-mode="creative"] .portfolio-root {
     }
   }
 
-  /* map + briefing */
-  .c-map-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: clamp(18px, 2.4vw, 30px);
-    align-items: start;
-  }
-  @media (min-width: 900px) {
-    .c-map-layout {
-      grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.95fr);
-    }
-    .c-map {
-      order: 1;
-    }
-    .c-brief {
-      order: 2;
-      position: sticky;
-      top: 92px;
-    }
-  }
-  .c-map {
-    position: relative;
-    display: grid;
-    gap: 14px;
-    min-width: 0;
-  }
-  @media (min-width: 640px) {
-    .c-map {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-    .c-island[data-district="intelligence"] {
-      grid-column: 1 / -1;
-    }
-  }
+  /* map filter notice, station preview text and missions (the map itself is in studio.css) */
   .c-map-filter {
     grid-column: 1 / -1;
     margin: 0;
@@ -692,108 +659,6 @@ html[data-mode="creative"] .portfolio-root {
     border-radius: 10px;
     font-size: 12px;
   }
-  .c-island {
-    position: relative;
-    padding: 16px 16px 18px;
-    border: 2px dashed var(--c-ink);
-    border-radius: 22px;
-    background-color: var(--island, var(--c-paper-2));
-  }
-  .c-island[data-district="systems"] {
-    --island: #ffe3d6;
-  }
-  .c-island[data-district="algorithms"] {
-    --island: #dff3ff;
-  }
-  .c-island[data-district="intelligence"] {
-    --island: #ece4ff;
-  }
-  .c-island header {
-    margin-bottom: 12px;
-  }
-  .c-island h3 {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: 28px;
-    line-height: 1;
-    letter-spacing: -0.01em;
-  }
-  .c-island header p {
-    margin: 4px 0 0;
-    font-size: 13px;
-    color: var(--c-graphite);
-  }
-  .c-pins {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-  .c-pin {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    max-width: 100%;
-    min-height: 40px;
-    padding: 6px 12px 6px 6px;
-    background: var(--c-card);
-    border: 2px solid var(--c-ink);
-    border-radius: 999px;
-    box-shadow: 2px 2px 0 var(--c-ink);
-    color: var(--c-ink);
-    font: inherit;
-    font-size: 13.5px;
-    font-weight: 600;
-    text-align: left;
-    cursor: pointer;
-    transition:
-      transform 0.14s ease,
-      box-shadow 0.14s ease,
-      opacity 0.2s ease;
-  }
-  .c-pin:hover {
-    transform: translate(-1px, -2px);
-    box-shadow: 3px 4px 0 var(--c-ink);
-  }
-  .c-pin-no {
-    display: grid;
-    place-items: center;
-    flex: none;
-    width: 28px;
-    height: 28px;
-    border: 1.5px solid var(--c-ink);
-    border-radius: 50%;
-    background: var(--tone, var(--c-sky));
-    color: var(--c-ink);
-    font-size: 10.5px;
-    font-weight: 700;
-  }
-  .c-pin-title {
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
-  .c-pin-check {
-    flex: none;
-    color: #17703e;
-  }
-  .c-pin[aria-pressed="true"] {
-    background: var(--c-ink);
-    color: #fff;
-    box-shadow: 3px 3px 0 var(--tone, var(--c-lime));
-  }
-  .c-pin .c-pin-no,
-  .c-pin[aria-pressed="true"] .c-pin-no {
-    color: var(--c-ink);
-  }
-  .c-pin[aria-pressed="true"] .c-pin-check {
-    color: var(--c-lime);
-  }
-  .c-pin[data-match="false"] {
-    opacity: 0.38;
-  }
-  .c-pin:focus-visible,
   .c-surprise:focus-visible,
   .c-link-btn:focus-visible,
   .c-missions a:focus-visible {
@@ -818,32 +683,6 @@ html[data-mode="creative"] .portfolio-root {
   }
   .c-surprise:hover {
     background: var(--c-lime);
-  }
-
-  /* briefing card */
-  .c-brief {
-    position: relative;
-    min-width: 0;
-    padding: 22px 20px 20px;
-    background: var(--c-card);
-    border: 2px solid var(--c-ink);
-    border-radius: 18px;
-    box-shadow: var(--c-shadow);
-  }
-  @media (min-width: 900px) {
-    .c-brief {
-      max-height: calc(100vh - 110px);
-      overflow: auto;
-    }
-  }
-  .c-brief::before {
-    content: "";
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 10px;
-    border-radius: 16px 16px 0 0;
-    background: var(--tone, var(--c-lime));
-    border-bottom: 2px solid var(--c-ink);
   }
   .c-brief-no {
     margin: 8px 0 6px;
@@ -936,12 +775,6 @@ html[data-mode="creative"] .portfolio-root {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-  }
-  .c-peek {
-    margin-top: 16px;
-    border: 2px solid var(--c-ink);
-    border-radius: 14px;
-    background: var(--c-paper);
   }
 
   /* ---------- gallery: pinboard ---------- */
@@ -2245,7 +2078,6 @@ html[data-mode="creative"] .portfolio-root {
 }
 
 /* Press feedback shared with the Professional page (see micro.css). */
-html[data-mode="creative"] .portfolio-root .c-pin:active,
 html[data-mode="creative"] .portfolio-root .c-surprise:active,
 html[data-mode="creative"] .portfolio-root .c-btn:active,
 html[data-mode="creative"] .portfolio-root .c-open:active,
@@ -2459,8 +2291,6 @@ html[data-mode="creative"] .portfolio-root .c-ab-lessons a {
     .c-next-card:hover,
     .c-open,
     .c-open:hover,
-    .c-pin,
-    .c-pin:hover,
     .c-tabs button,
     .c-tabs button:hover,
     .c-missions a,

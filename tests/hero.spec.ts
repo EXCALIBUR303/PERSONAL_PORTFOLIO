@@ -263,7 +263,7 @@ test.describe("Creative home: the studio map", () => {
     await page.goto("/");
   });
 
-  test("every project is a station and choosing one opens a briefing with four missions", async ({
+  test("every project is a station and selecting one opens a preview with four missions", async ({
     page,
   }) => {
     await expect(page.locator(".c-pin")).toHaveCount(20);
@@ -275,6 +275,7 @@ test.describe("Creative home: the studio map", () => {
     const brief = page.locator(".c-brief");
     await expect(brief.locator("h2")).toHaveText("SmartPark DBMS");
     await expect(brief).toContainText("College project");
+    await brief.locator(".c-brief-route summary").click();
     const missions = brief.locator(".c-missions a");
     await expect(missions).toHaveCount(4);
     await expect(missions.nth(1)).toHaveAttribute(
@@ -300,25 +301,33 @@ test.describe("Creative home: the studio map", () => {
     );
   });
 
-  test("quick peek shows the project's scene where one exists", async ({
+  test("an exhibit opens in place with the project's scene, and Escape returns to the map", async ({
     page,
   }) => {
     await page
       .locator(".c-map")
       .getByRole("button", { name: /Mazera/ })
       .click();
-    await page.getByRole("button", { name: "Quick peek" }).click();
-    await expect(page.locator('.c-peek [data-scene="mazera"]')).toBeVisible();
-    await expect(page.locator(".c-peek .lz-chips button")).toHaveCount(6);
-    await page.getByRole("button", { name: "Hide quick peek" }).click();
-    await expect(page.locator(".c-peek")).toHaveCount(0);
+    await page.getByRole("button", { name: /Enter exhibit/ }).click();
+    await expect(page.locator(".ex")).toBeVisible();
+    await expect(page.locator('.ex .lz[data-scene="mazera"]')).toBeVisible();
+    await expect(page.locator(".ex .lz-chips button")).toHaveCount(6);
+    await expect(page).toHaveURL(/\?exhibit=mazera-ai-maze-solver/);
+    await page.keyboard.press("Escape");
+    await expect(page.locator(".ex")).toHaveCount(0);
+    await expect(page).not.toHaveURL(/exhibit=/);
+    await expect(page.locator(".c-map")).toBeVisible();
+    await expect(
+      page.locator('[data-station="mazera-ai-maze-solver"]'),
+    ).toHaveAttribute("aria-pressed", "true");
+    // A station with no exhibit offers none.
     await page
       .locator(".c-map")
       .getByRole("button", { name: "Student Burnout AI" })
       .click();
-    await expect(page.getByRole("button", { name: /Quick peek/ })).toHaveCount(
-      0,
-    );
+    await expect(
+      page.getByRole("button", { name: /Enter exhibit/ }),
+    ).toHaveCount(0);
   });
 
   test("progress counts only what this tab opened, and can be cleared", async ({
@@ -329,6 +338,7 @@ test.describe("Creative home: the studio map", () => {
       .locator(".c-map")
       .getByRole("button", { name: /Mazera/ })
       .click();
+    await page.locator(".c-brief-route summary").click();
     await page
       .locator(".c-brief")
       .getByRole("link", { name: "Try the demonstration" })
