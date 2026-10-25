@@ -17,7 +17,7 @@ const questions = [
   { q: "Can a robot's chain from command to movement be explained one step at a time?", slug: "quadruped-rl" },
 ];
 /** Builds that are not finished, with the honest status the project data gives them. */
-const bench = ["aura", "aeris", "sigsmith"];
+export const bench = ["aura", "aeris", "sigsmith"];
 const tones = ["lime", "pink", "sky"] as const;
 /**
  * Open questions, each taken from a limit the project documents (and the audit

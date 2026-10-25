@@ -1,0 +1,552 @@
+/*
+ * The illustrated 2D studio map from Stage C. It is the fallback when WebGL
+ * is unavailable or the 3D world fails, and can be asked for with ?world=2d.
+ * Everything here is scoped to that engine, so the 3D world's stage (world.css)
+ * shares only the class names the tests and the arrival animation rely on.
+ */
+html[data-mode="creative"] .portfolio-root .c-map[data-engine="2d"] {
+  & {
+    container-type: inline-size;
+    aspect-ratio: 1200 / 716;
+    /* Paper, three soft colour fields (one per district) and a dotted survey grid. */
+    background:
+      radial-gradient(circle at 18% 24%, rgb(232 83 42 / 0.12), transparent 40%),
+      radial-gradient(circle at 84% 22%, rgb(47 75 255 / 0.1), transparent 40%),
+      radial-gradient(circle at 50% 92%, rgb(122 78 230 / 0.12), transparent 44%),
+      radial-gradient(rgb(23 23 29 / 0.17) 1px, transparent 1.3px) 0 0 / 22px 22px,
+      var(--c-paper);
+  }
+  .c-stage-inner {
+    position: absolute;
+    inset: 0;
+    transform-origin: 0 0;
+    transform: translate(var(--ztx, 0%), var(--zty, 0%)) scale(var(--zs, 1));
+    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .c-connect {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+  .cn-edge,
+  .cn-line {
+    fill: none;
+    stroke-linecap: round;
+  }
+  .cn-edge {
+    stroke: var(--c-ink);
+    stroke-width: 15;
+  }
+  .cn-line {
+    stroke: var(--c-paper);
+    stroke-width: 11;
+  }
+
+  /* ---------- districts ---------- */
+  .c-island {
+    position: absolute;
+    left: var(--ix);
+    top: var(--iy);
+    width: var(--iw);
+    aspect-ratio: 640 / 440;
+    container-type: inline-size;
+    pointer-events: none;
+    transition:
+      opacity 0.35s ease,
+      filter 0.35s ease;
+  }
+  .c-island[data-district="systems"] {
+    --ground: var(--g-systems);
+    --dc: var(--d-systems);
+  }
+  .c-island[data-district="algorithms"] {
+    --ground: var(--g-algorithms);
+    --dc: var(--d-algorithms);
+  }
+  .c-island[data-district="intelligence"] {
+    --ground: var(--g-intelligence);
+    --dc: var(--d-intelligence);
+  }
+  .c-island[data-dim] {
+    opacity: 0.3;
+    filter: saturate(0.5);
+  }
+  .c-plate {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .pl-top {
+    fill: var(--ground);
+    stroke: var(--c-ink);
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+  .pl-left,
+  .pl-right {
+    stroke: var(--c-ink);
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+  .pl-left {
+    fill: color-mix(in srgb, var(--ground) 72%, var(--iso-shade));
+  }
+  .pl-right {
+    fill: color-mix(in srgb, var(--ground) 54%, var(--iso-shade));
+  }
+  .pl-grid {
+    fill: none;
+    stroke: rgb(23 23 29 / 0.09);
+    stroke-width: 0.9;
+  }
+  .pl-seam {
+    fill: none;
+    stroke: rgb(23 23 29 / 0.18);
+    stroke-width: 1.6;
+  }
+  .pl-rivet {
+    fill: rgb(23 23 29 / 0.28);
+  }
+  .pl-cable {
+    fill: none;
+    stroke: var(--d-systems);
+    stroke-width: 2.4;
+    stroke-linejoin: round;
+    opacity: 0.45;
+  }
+  .pl-contour {
+    fill: none;
+    stroke: var(--d-algorithms);
+    stroke-width: 1.2;
+    opacity: 0.32;
+  }
+  .pl-tick {
+    fill: var(--d-algorithms);
+    font-family: var(--font-mono-set);
+    font-size: 9px;
+    font-weight: 700;
+    opacity: 0.55;
+  }
+  .pl-dot {
+    fill: rgb(23 23 29 / 0.22);
+  }
+  .pl-trace {
+    fill: none;
+    stroke: var(--d-intelligence);
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+    opacity: 0.45;
+  }
+  .pl-via {
+    fill: var(--c-card);
+    stroke: var(--d-intelligence);
+    stroke-width: 1.6;
+    opacity: 0.7;
+  }
+  .pl-road-edge,
+  .pl-road,
+  .pl-road-mid,
+  .pl-road-hot {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .pl-road-edge {
+    stroke: var(--c-ink);
+    stroke-width: 15;
+  }
+  .pl-road {
+    stroke: var(--c-paper);
+    stroke-width: 11;
+  }
+  .pl-road-mid {
+    stroke: rgb(23 23 29 / 0.3);
+    stroke-width: 1.2;
+    stroke-dasharray: 5 6;
+  }
+  .pl-road-hot {
+    stroke: var(--dc);
+    stroke-width: 6;
+    transition: stroke-dashoffset 0.45s ease;
+  }
+
+  .c-island header {
+    position: absolute;
+    left: 3.4cqw;
+    top: 2.6cqw;
+    max-width: 38cqw;
+    pointer-events: auto;
+  }
+  .c-island[data-district="intelligence"] header {
+    left: auto;
+    top: auto;
+    right: 3.4cqw;
+    bottom: 2.4cqw;
+    text-align: right;
+  }
+  .c-island[data-district="intelligence"] header p {
+    margin-left: auto;
+  }
+  .c-island h3 {
+    display: inline-block;
+    margin: 0;
+    padding: 0 0.2em;
+    background: linear-gradient(transparent 56%, color-mix(in srgb, var(--dc) 38%, transparent) 56% 94%, transparent 94%);
+    font-family: var(--font-display);
+    font-size: clamp(17px, 4.2cqw, 30px);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+  }
+  .c-island header p {
+    margin: 4px 0 0;
+    max-width: 30ch;
+    font-size: clamp(11px, 2.1cqw, 13.5px);
+    line-height: 1.3;
+    color: var(--c-graphite);
+  }
+
+  /* ---------- stations ---------- */
+  .c-pins {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .c-slot {
+    position: absolute;
+    width: 19.5cqw;
+    transform: translate(-50%, -85.7%);
+    transition: opacity 0.2s ease;
+  }
+  .c-slot:has(.c-pin[data-match="false"]) {
+    opacity: 0.35;
+  }
+  .c-pin {
+    position: relative;
+    display: block;
+    width: 100%;
+    aspect-ratio: 128 / 112;
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: 14px;
+    color: var(--c-ink);
+    font: inherit;
+    cursor: pointer;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .c-pin:focus-visible {
+    outline: 3px solid var(--c-cobalt);
+    outline-offset: 2px;
+  }
+  .c-glyph {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .c-art {
+    transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .c-sel {
+    fill: none;
+    stroke: var(--dc, var(--c-orange));
+    stroke-width: 3;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  .c-pin:hover .c-art,
+  .c-pin:focus-visible .c-art {
+    transform: translateY(-4px);
+  }
+  .c-pin[aria-pressed="true"] .c-art {
+    transform: translateY(-5px);
+  }
+  .c-pin:active .c-art {
+    transform: translateY(-1px) scale(1, 0.96);
+    transition-duration: 0.07s;
+  }
+  .c-pin:hover .c-sel,
+  .c-pin:focus-visible .c-sel {
+    opacity: 0.45;
+  }
+  .c-pin[aria-pressed="true"] .c-sel {
+    opacity: 1;
+  }
+  .c-pin:focus-visible .c-sel {
+    stroke: var(--c-cobalt);
+    opacity: 1;
+  }
+  .c-pin-label {
+    position: absolute;
+    left: 50%;
+    top: 106%;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: 17cqw;
+    padding: 1px 0.6em 2px;
+    background: var(--c-card);
+    border: 1.5px solid var(--c-ink);
+    border-radius: 7px;
+    box-shadow: 2px 2px 0 var(--c-ink);
+    font-size: clamp(10.5px, 2.15cqw, 13.5px);
+    font-weight: 700;
+    line-height: 1.18;
+    text-align: center;
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease;
+  }
+  .c-pin[aria-pressed="true"] .c-pin-label {
+    background: var(--c-ink);
+    color: #fff;
+  }
+  .c-pin:hover .c-pin-label {
+    background: var(--c-lime);
+    color: var(--c-ink);
+  }
+  .c-pin[aria-pressed="true"]:hover .c-pin-label {
+    background: var(--c-ink);
+    color: #fff;
+  }
+  .c-pin-check-pop {
+    position: absolute;
+    right: 14%;
+    top: 4%;
+    display: grid;
+    place-items: center;
+    width: 21px;
+    height: 21px;
+    background: var(--c-lime);
+    border: 2px solid var(--c-ink);
+    border-radius: 50%;
+  }
+  .c-pin-check {
+    color: var(--c-ink);
+  }
+
+  /* The Studio and the entrance gate */
+  .c-studio-bldg {
+    position: absolute;
+    width: 11%;
+    transform: translate(-50%, -78%);
+    color: var(--c-ink);
+    text-decoration: none;
+    border-radius: 14px;
+  }
+  .c-studio-bldg .c-glyph {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+  .c-studio-bldg .c-art {
+    transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .c-studio-bldg:hover .c-glyph,
+  .c-studio-bldg:focus-visible .c-glyph {
+    transform: translateY(-4px);
+  }
+  .c-studio-bldg:focus-visible {
+    outline: 3px solid var(--c-cobalt);
+    outline-offset: 2px;
+  }
+  .c-studio-bldg .c-pin-label {
+    top: 78%;
+    display: grid;
+    max-width: none;
+  }
+  .c-studio-bldg .c-pin-label small {
+    font-family: var(--font-mono-set);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--c-graphite);
+  }
+  .c-studio-bldg:hover .c-pin-label {
+    background: var(--c-lime);
+  }
+  .c-gate {
+    position: absolute;
+    width: 8%;
+    transform: translate(-50%, -83%);
+    pointer-events: none;
+  }
+  .c-gate .c-glyph {
+    height: auto;
+    aspect-ratio: 4 / 3;
+  }
+  .c-here {
+    position: absolute;
+    left: 50%;
+    top: 92%;
+    transform: translateX(-50%);
+    padding: 2px 9px;
+    background: var(--c-orange);
+    border: 1.5px solid var(--c-ink);
+    border-radius: 999px;
+    color: var(--c-ink);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* The preview opens beside its landmark. */
+  .c-brief[data-side="right"] {
+    left: calc(var(--ax) * 1% + 5cqw);
+  }
+  .c-brief[data-side="left"] {
+    right: calc((100 - var(--ax)) * 1% + 5cqw);
+  }
+  .c-brief[data-vert="down"] {
+    top: max(10px, calc(var(--ay) * 1% - 8cqw));
+  }
+  .c-brief[data-vert="up"] {
+    bottom: max(10px, calc((100 - var(--ay)) * 1% - 5cqw));
+  }
+
+  /* ---------- below the full campus width: stacked districts ---------- */
+  @media (max-width: 999px) {
+    & {
+      aspect-ratio: auto;
+      overflow: visible;
+      container-type: normal;
+      background: none;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+    .c-stage-inner {
+      position: relative;
+      display: grid;
+      gap: 16px;
+      transform: none !important;
+      transition: none;
+    }
+    .c-connect,
+    .c-gate {
+      display: none;
+    }
+    .c-studio-bldg {
+      position: relative;
+      left: auto !important;
+      top: auto !important;
+      width: auto;
+      order: 4;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transform: none;
+      padding: 10px 14px;
+      background: var(--c-butter);
+      border: 2px solid var(--c-ink);
+      border-radius: 16px;
+      box-shadow: 3px 3px 0 var(--c-ink);
+    }
+    .c-studio-bldg .c-glyph {
+      width: 74px;
+      flex: none;
+    }
+    .c-studio-bldg .c-pin-label {
+      position: static;
+      transform: none;
+      border: 0;
+      box-shadow: none;
+      background: none;
+      text-align: left;
+      font-size: 15px;
+    }
+    .c-island {
+      position: relative;
+      left: auto;
+      top: auto;
+      width: 100%;
+      pointer-events: auto;
+      border: 2px solid var(--c-ink);
+      border-radius: 22px;
+      box-shadow: var(--c-shadow);
+      background:
+        radial-gradient(var(--dot-ink, rgb(23 23 29 / 0.17)) 1px, transparent 1.3px) 0 0 / 22px 22px,
+        var(--c-paper);
+    }
+    .c-island[data-dim] {
+      display: none;
+    }
+    /* Below the full-campus width the preview is an ordinary block under its district. */
+    .c-brief {
+      position: relative;
+      left: auto !important;
+      right: auto !important;
+      top: auto !important;
+      bottom: auto !important;
+      width: auto;
+      max-height: none;
+      overflow: visible;
+    }
+  }
+
+  /* ---------- phones: each district becomes a row of station cards ---------- */
+  @media (max-width: 639px) {
+    .c-island {
+      aspect-ratio: auto;
+      padding: 14px 0 6px;
+      overflow: hidden;
+    }
+    .c-plate {
+      display: none;
+    }
+    .c-island header,
+    .c-island[data-district="intelligence"] header {
+      position: static;
+      max-width: none;
+      padding: 0 16px 8px;
+      text-align: left;
+    }
+    .c-island h3 {
+      font-size: 24px;
+    }
+    .c-island header p {
+      max-width: none;
+      font-size: 13px;
+    }
+    .c-pins {
+      position: static;
+      display: flex;
+      gap: 10px;
+      padding: 6px 16px 14px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scroll-padding-inline: 16px;
+      overscroll-behavior-x: contain;
+    }
+    .c-slot {
+      position: static;
+      flex: none;
+      width: 148px;
+      transform: none;
+      scroll-snap-align: start;
+      padding: 8px 8px 10px;
+      background: var(--ground);
+      border: 2px solid var(--c-ink);
+      border-radius: 16px;
+    }
+    .c-pin {
+      width: 100%;
+    }
+    .c-pin-label {
+      position: static;
+      transform: none;
+      width: auto;
+      max-width: none;
+      margin-top: 4px;
+      font-size: 13px;
+    }
+  }
+}

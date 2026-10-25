@@ -23,6 +23,8 @@ import "./backdrop.css";
 import "./pro-about.css";
 import "./evidence.css";
 import "./studio.css";
+import "./map-2d.css";
+import "./world.css";
 import AppFrame from "@/components/app-frame";
 import ScannerLayer from "@/components/scanner/scanner-layer";
 import PortalLayer from "@/components/portal/portal-layer";

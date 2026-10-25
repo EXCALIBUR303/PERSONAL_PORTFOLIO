@@ -1,0 +1,703 @@
+/*
+ * The 3D studio world's stage. The canvas draws architecture, light and
+ * atmosphere; everything a visitor reads or operates is HTML over it.
+ * Layers, back to front:
+ *   1-3  paper, survey texture and colour fields (.w-backdrop, seen until the
+ *        canvas has drawn, and matched by the canvas so the hand-over is quiet)
+ *   4-5  the distant platforms and the world (the canvas)
+ *   6    a light vignette, the station buttons and plaques, the docked panel
+ * Wide screens dock the station panel inside the stage; tablets show it under
+ * the stage; phones list each district's stations as a swipeable strip under
+ * the world, as the 2D map did.
+ */
+html[data-mode="creative"] .portfolio-root {
+  --w-haze: #e7e9e4;
+  --w-paper: #f3eee4;
+}
+
+html[data-mode="creative"] .portfolio-root {
+  .c-map[data-engine="3d"] {
+    & {
+      height: clamp(520px, min(56vw, 100svh - 150px), 840px);
+      overflow: clip;
+      background: var(--w-paper);
+      isolation: isolate;
+    }
+    .w-stage {
+      position: absolute;
+      inset: 0;
+    }
+    .w-backdrop {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 34% 30% at 24% 40%, rgb(247 214 198 / 0.55), transparent 70%),
+        radial-gradient(ellipse 30% 28% at 76% 30%, rgb(206 223 243 / 0.6), transparent 70%),
+        radial-gradient(ellipse 36% 30% at 54% 80%, rgb(226 216 244 / 0.6), transparent 70%),
+        linear-gradient(rgb(43 48 57 / 0.04) 1px, transparent 1px) 0 0 / 30px 30px,
+        linear-gradient(90deg, rgb(43 48 57 / 0.04) 1px, transparent 1px) 0 0 / 30px 30px,
+        linear-gradient(180deg, var(--w-haze) 0%, var(--w-paper) 58%);
+    }
+    .w-canvas {
+      position: absolute !important;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.7s ease;
+    }
+    .w-stage[data-ready] .w-canvas {
+      opacity: 1;
+    }
+    .w-vignette {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse 80% 75% at 50% 48%, transparent 64%, rgb(43 48 57 / 0.08));
+    }
+    .w-wait {
+      position: absolute;
+      left: 16px;
+      bottom: 14px;
+      margin: 0;
+      padding: 4px 11px;
+      font-size: 11px;
+      background: rgb(255 253 247 / 0.86);
+      border: 1.5px solid var(--c-ink);
+      border-radius: 999px;
+      animation: w-wait-in 0.3s 0.6s both;
+    }
+
+    /* ---------- interface over the world ---------- */
+    .w-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      transition: opacity 0.28s ease;
+    }
+    /* Entering an exhibit: the interface steps aside while the camera moves in. */
+    &[data-entering] .w-overlay,
+    &[data-entering] .w-back,
+    &[data-entering] .w-stage > .c-brief {
+      opacity: 0;
+      transition: opacity 0.24s ease;
+    }
+    .w-island {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .w-island[data-district="systems"] {
+      --dc: var(--d-systems);
+    }
+    .w-island[data-district="algorithms"] {
+      --dc: var(--d-algorithms);
+    }
+    .w-island[data-district="intelligence"] {
+      --dc: var(--d-intelligence);
+    }
+    .c-pins {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .w-slot,
+    .w-studio-slot {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 0;
+      height: 0;
+    }
+    .w-slot[data-off],
+    .w-studio-slot[data-off] {
+      visibility: hidden;
+    }
+    .w-slot:has(.w-pin:hover),
+    .w-slot:has(.w-pin:focus-visible) {
+      z-index: 4000 !important;
+    }
+    /* A station's button covers its landmark, so pointing at the building selects it. */
+    .w-pin {
+      position: absolute;
+      left: var(--hx, -20px);
+      top: var(--hy, -20px);
+      width: var(--hw, 40px);
+      height: var(--hh, 40px);
+      min-width: 28px;
+      min-height: 28px;
+      padding: 0;
+      margin: 0;
+      background: none;
+      border: 0;
+      border-radius: 14px;
+      color: var(--c-ink);
+      font: inherit;
+      cursor: pointer;
+      pointer-events: auto;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .w-pin:focus-visible {
+      outline: 3px solid var(--c-cobalt);
+      outline-offset: 3px;
+    }
+    .w-pin[data-match="false"] {
+      opacity: 0.45;
+    }
+    .w-island[data-dim] .w-pin {
+      opacity: 0.55;
+    }
+    /* The marker at the landmark's foot: shape says the tier, not colour alone. */
+    .w-dot {
+      position: absolute;
+      left: calc(-1 * var(--hx, -20px));
+      top: calc(-1 * var(--hy, -20px));
+      width: 12px;
+      height: 12px;
+      margin: -6px 0 0 -6px;
+      background: var(--c-card);
+      border: 2px solid var(--c-ink);
+      border-radius: 50%;
+      box-shadow: 0 1px 0 rgb(23 23 29 / 0.3);
+      transition:
+        transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 0.18s ease;
+    }
+    .w-pin[data-tier="exhibit"] .w-dot {
+      background: var(--c-lime);
+    }
+    .w-pin[data-tier="blueprint"] .w-dot {
+      background: #f3f7ff;
+      border: 2px dashed var(--c-cobalt);
+    }
+    .w-pin:hover .w-dot,
+    .w-pin:focus-visible .w-dot {
+      transform: scale(1.3);
+    }
+    .w-pin[aria-pressed="true"] .w-dot {
+      transform: scale(1.35);
+      box-shadow:
+        0 0 0 4px rgb(200 241 59 / 0.6),
+        0 1px 0 rgb(23 23 29 / 0.3);
+    }
+    .w-pin:active .w-dot {
+      transform: scale(1.1);
+      transition-duration: 0.06s;
+    }
+    /* The plaque: a name at the landmark's foot, with its tier on hover, focus and selection. */
+    .w-plaque {
+      position: absolute;
+      left: calc(-1 * var(--hx, -20px) + var(--lx, 0px));
+      top: calc(-1 * var(--hy, -20px) + var(--ly, 9px));
+      translate: -50% 0;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      width: max-content;
+      max-width: 230px;
+      padding: 2px 8px 3px;
+      background: rgb(255 253 247 / 0.95);
+      border: 1.5px solid var(--c-ink);
+      border-radius: 7px;
+      box-shadow: 2px 2px 0 var(--c-ink);
+      font-size: 12.5px;
+      font-weight: 700;
+      line-height: 1.2;
+      white-space: nowrap;
+      pointer-events: none;
+      visibility: hidden;
+      opacity: 0;
+      transform: translateY(3px);
+      transition:
+        opacity 0.16s ease,
+        transform 0.16s ease,
+        visibility 0s linear 0.16s;
+    }
+    .w-plaque small {
+      display: none;
+      font-family: var(--font-mono-set);
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--c-graphite);
+    }
+    .w-slot[data-label="on"] .w-plaque,
+    .w-pin:hover .w-plaque,
+    .w-pin:focus-visible .w-plaque,
+    .w-pin[aria-pressed="true"] .w-plaque {
+      visibility: visible;
+      opacity: 1;
+      transform: none;
+      transition:
+        opacity 0.16s ease,
+        transform 0.16s ease,
+        visibility 0s;
+    }
+    .w-pin:hover .w-plaque small,
+    .w-pin:focus-visible .w-plaque small,
+    .w-pin[aria-pressed="true"] .w-plaque small {
+      display: inline;
+    }
+    .w-pin:hover .w-plaque {
+      background: var(--c-lime);
+    }
+    .w-pin[aria-pressed="true"] .w-plaque {
+      background: var(--c-ink);
+      color: #fff;
+    }
+    .w-pin[aria-pressed="true"] .w-plaque small {
+      color: var(--c-lime);
+    }
+    .w-check {
+      position: absolute;
+      left: calc(-1 * var(--hx, -20px) + 4px);
+      top: calc(-1 * var(--hy, -20px) - 17px);
+      display: grid;
+      place-items: center;
+      width: 15px;
+      height: 15px;
+      background: var(--c-lime);
+      border: 1.5px solid var(--c-ink);
+      border-radius: 50%;
+    }
+    .w-check svg {
+      width: 9px;
+      height: 9px;
+    }
+
+    /* The Studio's own plaque stays in view: it is the way to About and the passport. */
+    .w-studio .w-dot {
+      width: 14px;
+      height: 14px;
+      margin: -7px 0 0 -7px;
+      background: var(--c-lime);
+    }
+    .w-plaque-studio {
+      top: calc(-1 * var(--hy, -20px) - 12px);
+      translate: -50% -100%;
+      display: grid;
+      gap: 1px;
+      visibility: visible;
+      opacity: 1;
+      transform: none;
+      padding: 4px 11px 5px;
+      text-align: center;
+      font-size: 13.5px;
+    }
+    .w-studio:hover .w-plaque-studio {
+      background: var(--c-lime);
+    }
+    .w-studio[aria-pressed="true"] .w-plaque-studio {
+      background: var(--c-ink);
+      color: #fff;
+    }
+    .w-plaque-studio small {
+      display: block;
+      font-size: 9px;
+    }
+
+    /* District name plates, set on each island's front edge. */
+    .w-plate {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: max-content;
+      max-width: 230px;
+      padding: 6px 11px 7px;
+      background: rgb(255 253 247 / 0.92);
+      border: 1.5px solid var(--c-ink);
+      border-radius: 10px;
+      box-shadow: 3px 3px 0 var(--c-ink);
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .w-plate[data-off] {
+      visibility: hidden;
+      opacity: 0;
+    }
+    .w-plate h3 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 17px;
+      line-height: 1.05;
+    }
+    .w-plate h3::before {
+      content: "";
+      flex: none;
+      width: 10px;
+      height: 10px;
+      background: var(--dc);
+      border: 1.5px solid var(--c-ink);
+      border-radius: 3px;
+    }
+    .w-plate p {
+      margin: 3px 0 0;
+      font-size: 11.5px;
+      line-height: 1.3;
+      white-space: normal;
+      color: var(--c-graphite);
+    }
+    .w-plate p .mono {
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--c-ink);
+    }
+    .w-plate[data-zoomed] .w-plate-blurb {
+      display: none;
+    }
+
+    .w-back {
+      position: absolute;
+      z-index: 6;
+      left: 14px;
+      top: 14px;
+      padding: 6px 13px 6px 10px;
+      font-size: 13px;
+      transition: opacity 0.28s ease;
+    }
+
+    /* The station panel docks to the right of the stage; the camera frames the station beside it. */
+    .w-stage > .c-brief {
+      position: absolute;
+      z-index: 8;
+      top: 14px;
+      right: 14px;
+      bottom: auto;
+      left: auto;
+      width: 372px;
+      max-height: calc(100% - 28px);
+      overflow: auto;
+      overscroll-behavior: contain;
+    }
+  }
+
+  /* The Studio panel: welcome, the bench, the passport and the ways to each district. */
+  .w-studio-card .w-sc-section {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1.5px dashed rgb(23 23 29 / 0.25);
+  }
+  .w-studio-card h3 {
+    margin: 0 0 6px;
+    font-size: 11px;
+    font-family: var(--font-mono-set);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--c-graphite);
+  }
+  .w-bench {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .w-bench a {
+    display: grid;
+    gap: 1px;
+    padding: 6px 10px;
+    background: var(--c-paper);
+    border: 1.5px solid var(--c-ink);
+    border-radius: 10px;
+    color: var(--c-ink);
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 700;
+  }
+  .w-bench a:hover {
+    background: var(--c-lime);
+  }
+  .w-bench a span {
+    font-family: var(--font-mono-set);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--c-graphite);
+  }
+  .w-passport {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 4px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .w-passport li {
+    aspect-ratio: 1;
+    border: 1.5px solid var(--c-ink);
+    border-radius: 50%;
+    background: var(--c-card);
+  }
+  .w-passport li[data-district="systems"] {
+    --dc: var(--d-systems);
+  }
+  .w-passport li[data-district="algorithms"] {
+    --dc: var(--d-algorithms);
+  }
+  .w-passport li[data-district="intelligence"] {
+    --dc: var(--d-intelligence);
+  }
+  .w-passport li[data-done] {
+    background: var(--dc);
+  }
+  .w-passport li[data-challenge] {
+    box-shadow: 0 0 0 2px var(--c-lime);
+  }
+  .w-sc-note {
+    margin: 6px 0 0;
+    font-size: 12.5px;
+    color: var(--c-graphite);
+  }
+  .w-goto {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .w-goto button {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 11px;
+    background: var(--c-card);
+    border: 2px solid var(--c-ink);
+    border-radius: 999px;
+    color: var(--c-ink);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .w-goto button::before {
+    content: "";
+    width: 9px;
+    height: 9px;
+    border: 1.5px solid var(--c-ink);
+    border-radius: 3px;
+    background: var(--dc);
+  }
+  .w-goto button[data-district="systems"] {
+    --dc: var(--d-systems);
+  }
+  .w-goto button[data-district="algorithms"] {
+    --dc: var(--d-algorithms);
+  }
+  .w-goto button[data-district="intelligence"] {
+    --dc: var(--d-intelligence);
+  }
+  .w-goto button:hover {
+    background: var(--c-lime);
+  }
+  .w-goto button:focus-visible {
+    outline: 3px solid var(--c-cobalt);
+    outline-offset: 2px;
+  }
+
+  /* ---------- tablets: the panel opens under the stage ---------- */
+  @media (max-width: 999px) {
+    .c-map[data-engine="3d"] {
+      & {
+        height: clamp(420px, min(68vw, 100svh - 170px), 640px);
+      }
+      .w-plate {
+        max-width: 200px;
+        padding: 4px 9px 5px;
+      }
+      .w-plate h3 {
+        font-size: 16px;
+      }
+      .w-plate-blurb {
+        display: none;
+      }
+    }
+    .w-after > .c-brief {
+      position: relative;
+      inset: auto;
+      width: auto;
+      max-height: none;
+      margin-top: 14px;
+      overflow: visible;
+    }
+  }
+
+  /* ---------- phones: the world above, each district's stations as a strip below ---------- */
+  @media (max-width: 639px) {
+    .c-map[data-engine="3d"] {
+      & {
+        height: auto;
+        overflow: visible;
+        background: none;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      .w-stage {
+        position: relative;
+        height: clamp(320px, 100vw, 460px);
+        overflow: clip;
+        border: 2px solid var(--c-ink);
+        border-radius: 20px;
+        box-shadow: var(--c-shadow);
+      }
+      .w-overlay {
+        position: static;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+        margin-top: 16px;
+        pointer-events: auto;
+      }
+      .w-overlay > * {
+        min-width: 0;
+      }
+      .w-studio-slot,
+      .w-studio-slot[data-off],
+      .w-slot,
+      .w-slot[data-off] {
+        position: static;
+        width: auto;
+        height: auto;
+        transform: none !important;
+        visibility: visible;
+      }
+      .w-studio-slot {
+        order: 4;
+      }
+      .w-island {
+        position: relative;
+        inset: auto;
+        padding: 12px 0 4px;
+        background: var(--c-card);
+        border: 2px solid var(--c-ink);
+        border-radius: 20px;
+        pointer-events: auto;
+      }
+      .w-island[data-dim] {
+        display: none;
+      }
+      .w-plate,
+      .w-plate[data-off] {
+        position: static;
+        transform: none !important;
+        width: auto;
+        max-width: none;
+        margin: 0 14px 6px;
+        padding: 0;
+        background: none;
+        border: 0;
+        box-shadow: none;
+        visibility: visible;
+        opacity: 1;
+      }
+      .w-plate h3 {
+        font-size: 22px;
+      }
+      .w-plate-blurb {
+        display: inline;
+      }
+      .c-pins {
+        display: flex;
+        gap: 8px;
+        padding: 6px 14px 12px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-padding-inline: 14px;
+        overscroll-behavior-x: contain;
+      }
+      .w-slot {
+        flex: none;
+        scroll-snap-align: start;
+      }
+      .w-pin,
+      .w-studio {
+        position: relative;
+        left: auto;
+        top: auto;
+        width: auto;
+        height: auto;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: var(--c-paper);
+        border: 2px solid var(--c-ink);
+        border-radius: 14px;
+      }
+      .w-studio {
+        width: 100%;
+        background: var(--c-butter);
+      }
+      .w-dot {
+        position: static;
+        flex: none;
+        margin: 0;
+      }
+      .w-plaque,
+      .w-plaque-studio {
+        position: static;
+        translate: none;
+        visibility: visible;
+        opacity: 1;
+        transform: none;
+        padding: 0;
+        background: none;
+        border: 0;
+        box-shadow: none;
+        font-size: 14px;
+        text-align: left;
+      }
+      .w-plaque small {
+        display: inline;
+      }
+      .w-pin:hover .w-plaque,
+      .w-pin[aria-pressed="true"] .w-plaque {
+        background: none;
+        color: inherit;
+      }
+      .w-pin[aria-pressed="true"] {
+        background: var(--c-ink);
+        color: #fff;
+      }
+      .w-pin[aria-pressed="true"] .w-plaque small {
+        color: var(--c-lime);
+      }
+      .w-check {
+        position: static;
+        flex: none;
+      }
+      .w-back {
+        left: 10px;
+        top: 10px;
+      }
+      .c-brief {
+        position: relative;
+        inset: auto;
+        width: auto;
+        max-height: none;
+        margin: 0 10px 12px;
+        overflow: visible;
+      }
+    }
+  }
+}
+
+/* Over a landmark the cursor's ring stays hollow, so the building it points at stays in view. */
+html.has-cursor:has(.w-pin:hover) .cursor-ring > span.is-grown {
+  width: 46px;
+  height: 46px;
+  margin: -23px 0 0 -23px;
+  background: transparent;
+  box-shadow: 0 0 0 3px rgb(200 241 59 / 0.85);
+}
+
+@keyframes w-wait-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

@@ -30,7 +30,8 @@ export function StationCard({
   station: Station;
   project: Project;
   number: number;
-  placement: { x: number; y: number; side: "left" | "right"; vert: "up" | "down" };
+  /** Where it opens beside its landmark on the 2D map; the 3D world docks it instead. */
+  placement?: { x: number; y: number; side: "left" | "right"; vert: "up" | "down" };
   doneSteps: MissionStep[];
   challengeDone: boolean;
   onClose: () => void;
@@ -48,13 +49,12 @@ export function StationCard({
       aria-live="polite"
       data-tone={toneFor(project.slug)}
       data-tier={station.tier}
-      data-side={placement.side}
-      data-vert={placement.vert}
+      data-side={placement?.side}
+      data-vert={placement?.vert}
       style={
         {
           "--world-accent": project.accent,
-          "--ax": placement.x,
-          "--ay": placement.y,
+          ...(placement ? { "--ax": placement.x, "--ay": placement.y } : {}),
         } as CSSProperties
       }
     >
