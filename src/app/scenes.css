@@ -854,3 +854,41 @@ html[data-mode] .portfolio-root {
 .lz .fl-table tr[data-top] {
   background: #ffd9c7;
 }
+
+/* Parts disclosure: the part buttons stay available, closed by default. */
+.s3-parts-disclosure > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1.5px solid #17171d55;
+  border-radius: 6px;
+  background: var(--m-card, #fff);
+  color: var(--m-ink, #17171d);
+  font-size: 12.5px;
+  cursor: pointer;
+  list-style: none;
+}
+.s3-parts-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+.s3-parts-disclosure > summary::after {
+  content: "+";
+  font-weight: 700;
+}
+.s3-parts-disclosure[open] > summary::after {
+  content: "\2212";
+}
+.s3-parts-disclosure > summary:focus-visible {
+  outline: 3px solid var(--m-cobalt, #2f4bf5);
+  outline-offset: 2px;
+}
+.s3-parts-disclosure > .s3-parts {
+  margin-top: 8px;
+}
+@media (pointer: coarse) {
+  .s3-parts-disclosure > summary {
+    min-height: 44px;
+  }
+}

@@ -39,6 +39,10 @@ export default function EngineeringDesk() {
             make them <em className="hero-underlined">explorable</em>.
           </h1>
           <p className="hx-lede">{profile.introduction}</p>
+          <p className="hx-proof">
+            Twenty projects. Each page says whether you are seeing a working app,
+            a simulation, a sample walkthrough or an architecture walkthrough.
+          </p>
           <div className="hx-actions">
             <a href="#projects" className="button button-lime">
               Explore my work <ArrowDown size={17} />

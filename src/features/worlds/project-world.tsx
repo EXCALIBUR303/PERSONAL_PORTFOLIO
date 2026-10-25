@@ -16,6 +16,7 @@ import {
   TryBody,
 } from "./project-sections";
 import { hasDedicatedDemo } from "./world-playground";
+import { EvidenceStrip } from "@/components/evidence-strip";
 
 /**
  * Professional project page, organised as a story: the problem and the
@@ -108,6 +109,8 @@ export default function ProjectWorld({
           <a href="#decisions">Decisions</a>
           <a href="#limits">Limits &amp; status</a>
         </nav>
+
+        <EvidenceStrip project={project} />
 
         <section id="problem" className="pr-section pr-story">
           <div>

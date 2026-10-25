@@ -2,11 +2,31 @@
 import { useState } from "react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { Search, X, ArrowUpRight, CircuitBoard } from "lucide-react";
-import { projects, categories } from "@/data/projects";
+import { projects, categories, type Project } from "@/data/projects";
 import { useGalleryFilter } from "./use-gallery-filter";
 import { ProjectCard, ProjectRow, Segmented } from "./project-components";
 import { micro, motionTokens } from "./motion-config";
 import { SectionLabel } from "./ui";
+import { evidence } from "@/data/evidence";
+
+const districtOrder = { systems: 0, algorithms: 1, intelligence: 2 } as const;
+
+/** Projects with something executed rank before link-out and design-stage entries. */
+function evidenceRank(slug: string) {
+  const item = evidence[slug];
+  if (!item || item.claimClass === "design-stage") return 2;
+  if (item.claimClass === "link-out only") return 1;
+  return item.ran.length > 0 ? 0 : 1;
+}
+
+/** District first, then evidence strength; registry order breaks ties (the sort is stable). */
+function byDistrictAndEvidence(list: Project[]) {
+  return [...list].sort(
+    (a, b) =>
+      districtOrder[a.district] - districtOrder[b.district] ||
+      evidenceRank(a.slug) - evidenceRank(b.slug),
+  );
+}
 
 /**
  * Professional project gallery. A few featured projects come first, each with
@@ -17,8 +37,8 @@ export default function ProjectGallery() {
   const { gallery, setGallery, filtered, reset } = useGalleryFilter();
   const [openSlug, setOpenSlug] = useState<string | null>(null);
   const reduced = useReducedMotion();
-  const featured = filtered.filter((p) => p.featured);
-  const more = filtered.filter((p) => !p.featured);
+  const featured = byDistrictAndEvidence(filtered.filter((p) => p.featured));
+  const more = byDistrictAndEvidence(filtered.filter((p) => !p.featured));
   const featuredTotal = projects.filter((p) => p.featured).length;
   const count = (collection: string) =>
     projects.filter((p) => collection === "All" || p.collection === collection).length;

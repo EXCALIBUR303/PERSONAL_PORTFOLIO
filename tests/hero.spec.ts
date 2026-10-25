@@ -47,8 +47,13 @@ test.describe("Professional hero: project scenes in three categories", () => {
   test("AURA: a request crosses the bridge hop by hop, and services cannot send", async ({
     page,
   }) => {
+    // The part buttons live behind a "Parts" disclosure, closed by default.
+    await expect(page.locator(".s3-parts-disclosure")).not.toHaveAttribute("open", "");
+    await page.locator(".s3-parts-disclosure > summary").click();
+    await expect(page.locator(".s3-parts-disclosure")).toHaveAttribute("open", "");
     await page.locator(".s3-parts").getByRole("button", { name: "AI lab" }).click();
-    await expect(page.locator(".s3-panel")).toContainText("still mocked");
+    await expect(page.locator(".s3-panel")).toContainText("provider-neutral");
+    await expect(page.locator(".s3-panel")).not.toContainText("mocked");
     // The selected part's callout is marked, and the companion is labelled as a stand-in.
     await expect(page.locator('.s3-label[data-part="ailab"]')).toHaveAttribute("data-active", "true");
     await page.locator(".s3-parts").getByRole("button", { name: "AI companion" }).click();

@@ -19,6 +19,11 @@ html[data-mode] .portfolio-root {
     .hx-grid {
       grid-template-columns: minmax(0, 1.04fr) minmax(0, 0.96fr);
     }
+    /* The scene panel is much taller than the copy; start the copy at the top
+       so the headline and both calls to action sit in the first screen. */
+    .hx-pro .hx-grid {
+      align-items: start;
+    }
   }
   .hx-topline {
     display: flex;
@@ -147,4 +152,12 @@ html[data-mode] .portfolio-root {
       font-size: 11px;
     }
   }
+}
+
+.hx-proof {
+  max-width: 52ch;
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  opacity: 0.85;
 }

@@ -19,6 +19,7 @@ import {
   type MissionStep,
 } from "@/lib/exploration";
 import { hasDedicatedDemo } from "./world-playground";
+import { EvidenceStrip } from "@/components/evidence-strip";
 import {
   HowBody,
   LimitsList,
@@ -179,6 +180,8 @@ export default function CreativeProjectWorld({
             </figcaption>
           </figure>
         </header>
+
+        <EvidenceStrip project={project} />
 
         <section
           id="c-missions"

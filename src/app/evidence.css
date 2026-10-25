@@ -1,0 +1,90 @@
+/*
+ * Evidence strip: what was checked for a project. Mode-neutral; it uses the
+ * theme tokens that exist in both Professional and Creative.
+ */
+.evidence-strip {
+  margin: 20px 0;
+  padding: 16px 18px;
+  border: 1.5px solid var(--border, #17171d33);
+  border-radius: 12px;
+  background: var(--surface, #ffffff80);
+  color: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.evidence-strip .evidence-label {
+  display: inline-block;
+  min-width: 86px;
+  margin-right: 8px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+.evidence-claim {
+  margin: 0 0 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+.evidence-chip {
+  display: inline-block;
+  padding: 1px 9px;
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+.evidence-note {
+  opacity: 0.8;
+}
+.evidence-rows {
+  margin: 0 0 10px;
+}
+.evidence-row {
+  display: flex;
+  gap: 8px;
+  padding: 3px 0;
+}
+.evidence-row dt {
+  flex: 0 0 auto;
+}
+.evidence-row dd {
+  margin: 0;
+}
+.evidence-row ul {
+  margin: 0;
+  padding-left: 16px;
+}
+.evidence-caveat {
+  margin: 0;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border, #17171d33);
+}
+.evidence-commit {
+  margin: 8px 0 0;
+  font-size: 11px;
+  opacity: 0.7;
+}
+.evidence-line {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.evidence-line .evidence-chip {
+  font-size: 11px;
+}
+.evidence-line-caveat {
+  opacity: 0.85;
+}
+@media (max-width: 640px) {
+  .evidence-row {
+    flex-direction: column;
+    gap: 2px;
+  }
+  .evidence-strip .evidence-label {
+    min-width: 0;
+  }
+}

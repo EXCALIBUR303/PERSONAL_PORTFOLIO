@@ -127,22 +127,27 @@ export default function AuraScene() {
       ) : (
         <div className="s3-loading mono">Checking for 3D support…</div>
       )}
-      <div className="s3-parts" role="group" aria-label="AURA parts">
-        {auraParts.map((p, i) => (
-          <button
-            key={p.id}
-            type="button"
-            aria-pressed={selected === p.id}
-            onClick={() => select(p.id)}
-            {...hoverProps(p.id)}
-          >
-            <span className="s3-num" aria-hidden="true">
-              {i + 1}
-            </span>
-            {p.label}
-          </button>
-        ))}
-      </div>
+      <details className="s3-parts-disclosure">
+        <summary>
+          Parts <span className="mono">{auraParts.length}</span>
+        </summary>
+        <div className="s3-parts" role="group" aria-label="AURA parts">
+          {auraParts.map((p, i) => (
+            <button
+              key={p.id}
+              type="button"
+              aria-pressed={selected === p.id}
+              onClick={() => select(p.id)}
+              {...hoverProps(p.id)}
+            >
+              <span className="s3-num" aria-hidden="true">
+                {i + 1}
+              </span>
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </details>
       <div className="s3-panel">
         <p className="lz-step-text">
           <span>{part.layer === "web" ? "Web layer" : part.layer === "bridge" ? "Between the layers" : "Native layer"}</span>

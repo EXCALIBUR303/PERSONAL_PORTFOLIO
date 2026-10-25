@@ -12,6 +12,7 @@ import type { Project } from "@/data/projects";
 import { micro, motionTokens } from "./motion-config";
 import MiniAnim, { animForSlug } from "./mini-anim";
 import { usePortfolioState } from "./app-frame";
+import { EvidenceLine } from "./evidence-strip";
 
 const demoLabel: Record<Project["demo"]["type"], string> = {
   embedded: "Original app",
@@ -87,6 +88,7 @@ export function ProjectCard({ project }: { project: Project }) {
         </div>
         <h3>{project.title}</h3>
         <p>{project.description}</p>
+        <EvidenceLine project={project} />
         <Link
           className="pg-action"
           href={`/projects/${project.slug}`}

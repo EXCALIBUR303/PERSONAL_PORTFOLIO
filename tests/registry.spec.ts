@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { projects } from "../src/data/projects";
+import { evidence } from "../src/data/evidence";
 
 const setMode = (page: Page, mode: "pro" | "creative") =>
   page.addInitScript((m) => localStorage.setItem("portfolio-mode", m), mode);
@@ -88,3 +89,43 @@ test("the Creative map renders the same 8 / 5 / 7 districts", async ({
 function escape(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+
+test("every project has evidence with a claim class, a caveat and a matching audited commit", () => {
+  for (const project of projects) {
+    const item = evidence[project.slug];
+    expect(item, project.slug).toBeTruthy();
+    expect(item.claimClass, project.slug).toBeTruthy();
+    expect(item.caveat.length, project.slug).toBeGreaterThan(10);
+    for (const list of [item.ran, item.read, item.notChecked])
+      expect(list.length, project.slug).toBeLessThanOrEqual(3);
+    if (item.auditedCommit && project.sourceCommit)
+      expect(project.sourceCommit.startsWith(item.auditedCommit), project.slug).toBe(true);
+  }
+  expect(Object.keys(evidence).sort()).toEqual(projects.map((p) => p.slug).sort());
+});
+
+test("the evidence strip renders on every project page in both modes", async ({
+  page,
+}) => {
+  test.setTimeout(180000);
+  for (const mode of ["pro", "creative"] as const) {
+    await page.addInitScript((m) => localStorage.setItem("portfolio-mode", m), mode);
+    for (const project of projects) {
+      await page.goto(`/projects/${project.slug}/`);
+      const strip = page.locator(".evidence-strip");
+      await expect(strip, `${mode} ${project.slug}`).toHaveCount(1);
+      await expect(strip).toContainText(evidence[project.slug].claimClass);
+      await expect(strip).toContainText("Caveat");
+    }
+  }
+});
+
+test("featured cards show a claim chip and a caveat in Professional mode", async ({
+  page,
+}) => {
+  await setMode(page, "pro");
+  await page.goto("/");
+  const cards = page.locator(".pg-card");
+  await expect(cards).toHaveCount(6);
+  await expect(cards.locator(".evidence-line")).toHaveCount(6);
+});
