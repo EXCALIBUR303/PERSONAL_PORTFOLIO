@@ -498,7 +498,7 @@ html[data-mode="creative"] .portfolio-root {
   .c-pin-label {
     position: absolute;
     left: 50%;
-    top: 97%;
+    top: 106%;
     transform: translateX(-50%);
     width: max-content;
     max-width: 17cqw;

@@ -183,3 +183,30 @@ test("the map keeps working without sideways scrolling at tablet and phone width
     await expect(page.locator(".c-brief")).toHaveCount(0);
   }
 });
+
+test("exhibits fall back to their 2D versions when WebGL is unavailable", async ({ page }) => {
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type: string, ...args: unknown[]) {
+      if (type === "webgl" || type === "webgl2") return null;
+      return original.apply(this, [type, ...args] as Parameters<typeof original>);
+    } as typeof original;
+  });
+  for (const slug of ["smart-parking-dbms", "mazera-ai-maze-solver", "pathable", "aura", "private-local-ai", "predictive-maintenance"]) {
+    await page.goto(`/?exhibit=${slug}`);
+    await expect(page.locator(".ex .lz[data-scene]")).toBeVisible();
+    await expect(page.locator(".ex-plaque")).toContainText("What you are seeing");
+    await expect(page.locator(".ex .lz canvas")).toHaveCount(0);
+  }
+});
+
+test("Creative About is a notebook reachable from ordinary navigation, with no map needed", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("link", { name: /About/ }).first().click();
+  const about = page.locator("#about");
+  await expect(about.getByRole("heading", { level: 2 })).toContainText("The person behind");
+  await expect(about.getByRole("heading", { name: "Still open" })).toBeVisible();
+  await expect(about.getByRole("heading", { name: "How to read my labels" })).toBeVisible();
+  // The "How I verify" row belongs to Professional About only.
+  await expect(about).not.toContainText("How I verify");
+});

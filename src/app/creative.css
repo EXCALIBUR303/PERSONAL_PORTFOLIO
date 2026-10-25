@@ -2114,6 +2114,67 @@ html[data-mode="creative"] .portfolio-root .c-ab-board {
   html[data-mode="creative"] .portfolio-root .c-ab-lessons {
     grid-column: 1 / -1;
   }
+  html[data-mode="creative"] .portfolio-root .c-ab-next {
+    grid-column: 1 / span 7;
+  }
+  html[data-mode="creative"] .portfolio-root .c-ab-receipts {
+    grid-column: 8 / span 5;
+  }
+}
+html[data-mode="creative"] .portfolio-root .c-ab-next,
+html[data-mode="creative"] .portfolio-root .c-ab-receipts {
+  padding: 22px 26px 24px;
+  background: var(--c-card);
+  border: 2px solid var(--c-ink);
+  border-radius: 6px;
+  box-shadow: var(--c-shadow);
+}
+html[data-mode="creative"] .portfolio-root .c-ab-next {
+  background: var(--c-sky);
+}
+html[data-mode="creative"] .portfolio-root .c-ab-small {
+  margin: 6px 0 0;
+  max-width: 62ch;
+  font-size: 14px;
+  color: var(--c-graphite);
+}
+html[data-mode="creative"] .portfolio-root .c-ab-next .c-ab-small {
+  color: var(--c-ink);
+}
+html[data-mode="creative"] .portfolio-root .c-ab-next ul {
+  display: grid;
+  gap: 12px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+html[data-mode="creative"] .portfolio-root .c-ab-next li {
+  padding: 12px 14px;
+  background: var(--c-card);
+  border: 2px solid var(--c-ink);
+  border-radius: 10px;
+  font-size: 15.5px;
+  line-height: 1.5;
+}
+html[data-mode="creative"] .portfolio-root .c-ab-next a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  border-bottom: 2px solid var(--c-lime);
+}
+html[data-mode="creative"] .portfolio-root .c-ab-receipts dl {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 0;
+}
+html[data-mode="creative"] .portfolio-root .c-ab-receipts dt {
+  margin: 0;
+}
+html[data-mode="creative"] .portfolio-root .c-ab-receipts dd {
+  margin: 3px 0 0;
+  font-size: 14px;
+  color: var(--c-graphite);
 }
 html[data-mode="creative"] .portfolio-root .c-ab-hand {
   font-family: var(--font-display), Georgia, serif;

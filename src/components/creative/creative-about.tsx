@@ -5,6 +5,7 @@ import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { ArrowUpRight, Shuffle, Sparkles } from "lucide-react";
 import { profile } from "@/data/profile";
 import { milestones } from "@/data/milestones";
+import { claimClassNote, type ClaimClass } from "@/data/evidence";
 import { projects } from "@/data/projects";
 import { micro, motionTokens } from "../motion-config";
 
@@ -18,6 +19,32 @@ const questions = [
 /** Builds that are not finished, with the honest status the project data gives them. */
 const bench = ["aura", "aeris", "sigsmith"];
 const tones = ["lime", "pink", "sky"] as const;
+/**
+ * Open questions, each taken from a limit the project documents (and the audit
+ * checked). They are questions the work leaves open, not a list of plans.
+ */
+const openQuestions = [
+  {
+    q: "Can the robot dog's fast walk stay inside the foot-slip limit? The audit measured 0.37 against a limit of 0.25.",
+    slug: "quadruped-rl",
+  },
+  {
+    q: "What changes in the Private Local AI walkthrough when a real embedding model replaces the word-overlap stand-in?",
+    slug: "private-local-ai",
+  },
+  {
+    q: "Do SWARMMIND's learned policies keep their lead over the baselines when they are retrained? Re-running the committed actors is not the same as retraining them.",
+    slug: "swarmmind",
+  },
+];
+const claimOrder: ClaimClass[] = [
+  "original logic",
+  "adapted algorithm",
+  "simplified simulation",
+  "illustrative walkthrough",
+  "design-stage",
+  "link-out only",
+];
 const title = (slug: string) => projects.find((p) => p.slug === slug)!;
 
 /**
@@ -119,6 +146,42 @@ export default function CreativeAbout() {
                 );
               })}
             </ul>
+          </section>
+
+          <section className="c-ab-next" aria-labelledby="ab-next">
+            <h3 id="ab-next" className="c-ab-hand">
+              Still open
+            </h3>
+            <p className="c-ab-small">
+              Taken from each project&apos;s own documented limits, not from a wish list.
+            </p>
+            <ul>
+              {openQuestions.map((item) => (
+                <li key={item.slug}>
+                  {item.q}{" "}
+                  <Link href={`/projects/${item.slug}/`} prefetch={false}>
+                    {title(item.slug).title} <ArrowUpRight size={13} aria-hidden="true" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="c-ab-receipts" aria-labelledby="ab-receipts">
+            <h3 id="ab-receipts" className="c-ab-hand">
+              How to read my labels
+            </h3>
+            <p className="c-ab-small">Every project says what kind of thing you are looking at.</p>
+            <dl>
+              {claimOrder.map((claim) => (
+                <div key={claim}>
+                  <dt>
+                    <strong className="evidence-chip">{claim}</strong>
+                  </dt>
+                  <dd>{claimClassNote[claim]}</dd>
+                </div>
+              ))}
+            </dl>
           </section>
 
           <section className="c-ab-lessons" aria-labelledby="ab-lessons">
