@@ -165,10 +165,23 @@ function Redraw({ keys }: { keys: unknown[] }) {
   return null;
 }
 
+/** Shadows are redrawn at most about 30 times a second: a moving car's shadow does not need more. */
+const SHADOW_INTERVAL = 30;
+
 /** Draws the shadow map only on frames where something that casts a shadow has moved. */
 function ShadowUpdates() {
+  const last = useRef(0);
   useFrame((state) => {
-    if (takeShadows()) state.gl.shadowMap.needsUpdate = true;
+    if (!takeShadows()) return;
+    const now = performance.now();
+    if (now - last.current < SHADOW_INTERVAL) {
+      // Too soon: keep the change pending and draw one more frame, so the last move is never left out.
+      markShadows();
+      state.invalidate();
+      return;
+    }
+    last.current = now;
+    state.gl.shadowMap.needsUpdate = true;
   }, -2);
   return null;
 }
@@ -190,10 +203,38 @@ function ContextWatch({ onLost }: { onLost: () => void }) {
 /** Exposes renderer counters for the performance checks (read by the test scripts). */
 function Probe({ tier }: { tier: Tier }) {
   const gl = useThree((s) => s.gl);
+  const get = useThree((s) => s.get);
   useEffect(() => {
     const w = window as unknown as { __world?: object };
     w.__world = {
       tier,
+      /** One frame without the shadow pass and one with it, to separate the scene's cost from the shadows'. */
+      split: () => {
+        const { scene, camera } = get();
+        const read = () => ({ calls: gl.info.render.calls, triangles: gl.info.render.triangles });
+        gl.shadowMap.needsUpdate = false;
+        gl.render(scene, camera);
+        const scene_ = read();
+        gl.shadowMap.needsUpdate = true;
+        gl.render(scene, camera);
+        const both = read();
+        return { scene: scene_, withShadows: both };
+      },
+      /** Meshes that cast a shadow, biggest first, to see where the shadow pass spends its calls. */
+      casters: () => {
+        const out: { x: number; y: number; z: number; tris: number; inst: number; r: number }[] = [];
+        get().scene.traverse((o) => {
+          const m = o as THREE.Mesh;
+          if (!m.isMesh || !m.castShadow || !m.visible) return;
+          const g = m.geometry;
+          const inst = (m as THREE.InstancedMesh).isInstancedMesh ? (m as THREE.InstancedMesh).count : 1;
+          g.computeBoundingSphere();
+          const tris = (g.index ? g.index.count : g.attributes.position.count) / 3;
+          const p = m.getWorldPosition(new THREE.Vector3());
+          out.push({ x: +p.x.toFixed(1), y: +p.y.toFixed(1), z: +p.z.toFixed(1), tris: Math.round(tris * inst), inst, r: +(g.boundingSphere?.radius ?? 0).toFixed(2) });
+        });
+        return out.sort((a, b) => b.tris - a.tris);
+      },
       info: () => ({
         calls: gl.info.render.calls,
         triangles: gl.info.render.triangles,
@@ -206,7 +247,7 @@ function Probe({ tier }: { tier: Tier }) {
     return () => {
       delete w.__world;
     };
-  }, [gl, tier]);
+  }, [gl, get, tier]);
   return null;
 }
 
