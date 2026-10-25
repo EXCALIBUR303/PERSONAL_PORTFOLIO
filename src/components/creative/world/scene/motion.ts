@@ -9,6 +9,21 @@ import { useFrame, useThree } from "@react-three/fiber";
  * state (lights on, parts in place) with no movement.
  */
 
+/*
+ * The light and the architecture stand still, so the shadow map does not need
+ * drawing again when only the camera moves. Anything that moves a part marks
+ * it, and the canvas redraws the shadows on the next frame only.
+ */
+let shadowsDirty = true;
+export const markShadows = () => {
+  shadowsDirty = true;
+};
+export const takeShadows = () => {
+  const dirty = shadowsDirty;
+  shadowsDirty = false;
+  return dirty;
+};
+
 /** Frame time, clamped so the first frame after an idle spell does not jump. */
 export const tick = (delta: number) => Math.min(0.05, Math.max(0, delta));
 
@@ -25,6 +40,7 @@ export function useLevel(on: boolean, reduced: boolean, up = 0.28, down = 0.5) {
       const step = tick(delta) / (on ? up : down);
       level.current = on ? Math.min(1, level.current + step) : Math.max(0, level.current - step);
     }
+    markShadows();
     invalidate();
   });
   return level;
@@ -46,12 +62,14 @@ export function usePlay(on: boolean, reduced: boolean, seconds: number) {
       running.current = false;
       t.current = 0;
     }
+    markShadows();
     invalidate();
   }, [on, reduced, invalidate]);
   useFrame((_, delta) => {
     if (!running.current) return;
     t.current = Math.min(1, t.current + tick(delta) / seconds);
     if (t.current >= 1) running.current = false;
+    markShadows();
     invalidate();
   });
   return t;

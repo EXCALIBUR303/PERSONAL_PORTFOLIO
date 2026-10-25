@@ -6,7 +6,7 @@ import { deg } from "../camera";
 import { AZ, DISTRICTS, DISTRICT_ORDER, STUDIO } from "../layout";
 import { circle, Kit, Model, useDisposal, type V3 } from "./kit";
 import { useOwn } from "./landmark";
-import { tick, useLevel } from "./motion";
+import { markShadows, tick, useLevel } from "./motion";
 import type { Palette } from "./palette";
 
 /*
@@ -172,6 +172,7 @@ function Gyroscope({ material, active, reduced }: { material: THREE.Material; ac
       r.rotation.y += dt * (1.4 + i * 0.7);
       r.rotation.x += dt * (0.6 - i * 0.25);
     });
+    markShadows();
     state.invalidate();
   });
   return (

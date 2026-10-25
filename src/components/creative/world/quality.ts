@@ -36,10 +36,42 @@ export function readOverride(): Override {
   return null;
 }
 
-/** A guess before any WebGL context exists. */
+/** What a throwaway context says about the device's WebGL, read once. */
+let probed: { ok: boolean; software: boolean; renderer: string } | null = null;
+export function probeWebGL() {
+  if (probed) return probed;
+  try {
+    const canvas = document.createElement("canvas");
+    const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
+    const renderer = gl ? rendererName(gl) : "";
+    probed = { ok: !!gl, software: isSoftware(renderer), renderer };
+    gl?.getExtension("WEBGL_lose_context")?.loseContext();
+  } catch {
+    probed = { ok: false, software: false, renderer: "" };
+  }
+  return probed;
+}
+
+/**
+ * Whether to draw the 3D world at all. Without WebGL, or with a renderer that
+ * draws on the CPU (a few frames a second at best), the illustrated 2D map is
+ * the better experience. `?world=` overrides this for testing.
+ */
+export function worldEngine(): "3d" | "2d" {
+  const override = readOverride();
+  if (override === "2d") return "2d";
+  const gl = probeWebGL();
+  if (!gl.ok) return "2d";
+  if (gl.software && !override) return "2d";
+  return "3d";
+}
+
+/** A guess from the device and its GPU, before the world is built. */
 export function guessTier(): Tier {
   const override = readOverride();
   if (override && override !== "2d") return override;
+  // Integrated and mobile GPUs get the middle tier: a lower pixel ratio and smaller shadows.
+  if (/intel|mali|adreno|powervr|apple gpu/i.test(probeWebGL().renderer)) return "medium";
   const nav = navigator as Navigator & { deviceMemory?: number; connection?: { saveData?: boolean } };
   const cores = nav.hardwareConcurrency ?? 4;
   const memory = nav.deviceMemory ?? 8;

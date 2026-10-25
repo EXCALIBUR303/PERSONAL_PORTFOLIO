@@ -61,6 +61,15 @@ function buildGround(p: Palette) {
   k.slab(p.sysBand, rect(-5.5, -4.7, 5.5, 4.7, 0.6), -0.95, 0.4);
   k.slab(p.sysDeep, rect(-4.6, -3.85, 4.6, 3.85, 0.5), -1.35, 0.4);
 
+  // Panel seams across the terraces, as on a workshop floor.
+  const seam = (x0: number, x1: number, z0: number, z1: number, y: number) => {
+    for (let x = Math.ceil(x0); x < x1; x += 1.2) k.box(p.sysWall, [0.016, 0.004, z1 - z0], [x, y, (z0 + z1) / 2]);
+    for (let z = Math.ceil(z0); z < z1; z += 1.2) k.box(p.sysWall, [x1 - x0, 0.004, 0.016], [(x0 + x1) / 2, y, z]);
+  };
+  seam(-5.4, 5.3, -5.0, -1.55, 0.9);
+  seam(-5.8, 5.9, -1.35, 1.85, 0.45);
+  seam(-5.8, 5.8, 2.05, 4.55, 0);
+
   // Boulevard, sidewalks and the plaza where the bridge lands.
   k.slab(p.road, rect(-3.5, -0.62, 5.0, 0.22, 0.05), 0.45, 0.012);
   k.slab(p.sysPave, rect(-3.5, -0.94, 5.0, -0.62, 0.04), 0.45, 0.008);

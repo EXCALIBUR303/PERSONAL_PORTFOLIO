@@ -128,13 +128,12 @@ export function Sheet() {
 export function Distant({ palette }: { palette: Palette }) {
   const model = useMemo(() => {
     const k = new Kit();
+    // In the overview's empty corners, low and small, so they read as models further off.
     const spots: [number, number, number, number][] = [
-      [-44, -7.4, -16, 2.4],
-      [-34, -8.2, -40, 1.8],
-      [42, -7.8, -34, 2.1],
-      [50, -7.2, 6, 1.6],
-      [-52, -8.0, 16, 2.0],
-      [16, -8.4, -58, 2.2],
+      [-9.7, -5.2, 16.6, 1.6],
+      [17.8, -5.4, -1.7, 1.4],
+      [-18.2, -6.2, -2.8, 1.3],
+      [5.8, -6.4, -19.0, 1.5],
     ];
     spots.forEach(([x, y, z, r], n) => {
       k.slab(palette.plaster, circle(x, z, r, 28), y - 0.5, 0.5);

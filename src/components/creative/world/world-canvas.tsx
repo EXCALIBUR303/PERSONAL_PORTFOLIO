@@ -1,6 +1,6 @@
 "use client";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { eye } from "./camera";
@@ -9,6 +9,7 @@ import type { Rig } from "./rig";
 import { Bridges } from "./scene/bridges";
 import { Distant, Sheet, SUN } from "./scene/ground";
 import { StudyDistrict } from "./scene/massing";
+import { markShadows, takeShadows } from "./scene/motion";
 import { disposePalette, makePalette } from "./scene/palette";
 import { Studio } from "./scene/studio";
 import { Systems } from "./scene/systems";
@@ -151,11 +152,23 @@ function FirstFrame({ ready }: { ready: boolean }) {
   return null;
 }
 
-/** Redraws once when what the world shows changes (a hover, a filter, the pause ending). */
+/** Redraws once when what the world shows changes (a hover, a filter, a build step, the pause ending). */
 function Redraw({ keys }: { keys: unknown[] }) {
   const invalidate = useThree((s) => s.invalidate);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => invalidate(), [invalidate, ...keys]);
+  useEffect(() => {
+    markShadows();
+    invalidate();
+    // The keys are the things that change what is drawn.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invalidate, ...keys]);
+  return null;
+}
+
+/** Draws the shadow map only on frames where something that casts a shadow has moved. */
+function ShadowUpdates() {
+  useFrame((state) => {
+    if (takeShadows()) state.gl.shadowMap.needsUpdate = true;
+  }, -2);
   return null;
 }
 
@@ -196,10 +209,50 @@ function Probe({ tier }: { tier: Tier }) {
   return null;
 }
 
+/** Steps of the build: the world is assembled over several idle moments, not in one long task. */
+const BUILD_STEPS = 5;
+function useBuildSteps() {
+  const [built, setBuilt] = useState(1);
+  useEffect(() => {
+    if (built >= BUILD_STEPS) return;
+    const idle = typeof window.requestIdleCallback === "function";
+    const next = () => setBuilt((b) => b + 1);
+    const id = idle ? window.requestIdleCallback(next, { timeout: 250 }) : globalThis.setTimeout(next, 30);
+    return () => (idle ? window.cancelIdleCallback(id as number) : globalThis.clearTimeout(id));
+  }, [built]);
+  return built;
+}
+
+/**
+ * Lowers the pixel ratio if camera moves run slowly on this device, once
+ * enough moving frames have been seen to judge. It never raises it again.
+ */
+function Adapt({ floor }: { floor: number }) {
+  const sample = useRef({ last: 0, total: 0, count: 0 });
+  useFrame((state) => {
+    const now = performance.now();
+    const s = sample.current;
+    const gap = now - s.last;
+    s.last = now;
+    // Only consecutive frames say anything about the frame rate.
+    if (gap > 70) return;
+    s.total += gap;
+    s.count += 1;
+    if (s.count < 45) return;
+    const mean = s.total / s.count;
+    s.total = 0;
+    s.count = 0;
+    const dpr = state.viewport.dpr;
+    if (mean > 26 && dpr > floor) state.setDpr(Math.max(floor, Math.round(dpr * 0.75 * 100) / 100));
+  });
+  return null;
+}
+
 export default function WorldCanvas({ rig, tier, hot, selected, matching, reduced, paused, onReady, onLost }: WorldCanvasProps) {
   const settings = SETTINGS[tier];
   const palette = useMemo(() => makePalette(), []);
   useEffect(() => () => disposePalette(palette), [palette]);
+  const built = useBuildSteps();
   const [warm, setWarm] = useState(false);
   const ready = useCallback(() => {
     setWarm(true);
@@ -216,6 +269,8 @@ export default function WorldCanvas({ rig, tier, hot, selected, matching, reduce
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.NeutralToneMapping;
         gl.toneMappingExposure = 1.0;
+        gl.shadowMap.autoUpdate = false;
+        gl.shadowMap.needsUpdate = true;
       }}
       aria-hidden="true"
       tabIndex={-1}
@@ -225,16 +280,18 @@ export default function WorldCanvas({ rig, tier, hot, selected, matching, reduce
       <Lights shadows={settings.shadows} />
       {settings.reflections && <Reflections />}
       <Sheet />
-      <Distant palette={palette} />
       <Studio palette={palette} active={hot === "studio" || selected === "studio"} reduced={reduced} />
       <Bridges palette={palette} />
-      <Systems palette={palette} hot={hot} selected={selected} matching={matching} reduced={reduced} />
-      <StudyDistrict id="algorithms" palette={palette} hot={hot} selected={selected} reduced={reduced} />
-      <StudyDistrict id="intelligence" palette={palette} hot={hot} selected={selected} reduced={reduced} />
-      <Redraw keys={[hot, selected, matching, paused]} />
+      {built > 1 && <Systems palette={palette} hot={hot} selected={selected} matching={matching} reduced={reduced} />}
+      {built > 2 && <StudyDistrict id="algorithms" palette={palette} hot={hot} selected={selected} reduced={reduced} />}
+      {built > 3 && <StudyDistrict id="intelligence" palette={palette} hot={hot} selected={selected} reduced={reduced} />}
+      {built > 4 && <Distant palette={palette} />}
+      <Redraw keys={[hot, selected, matching, paused, built]} />
+      <ShadowUpdates />
       <ContextWatch onLost={onLost} />
-      <Warmup onReady={ready} />
+      {built >= BUILD_STEPS && <Warmup onReady={ready} />}
       <FirstFrame ready={warm} />
+      {warm && <Adapt floor={1} />}
       <Probe tier={tier} />
     </Canvas>
   );

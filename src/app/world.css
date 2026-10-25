@@ -116,7 +116,11 @@ html[data-mode="creative"] .portfolio-root {
     .w-slot:has(.w-pin:focus-visible) {
       z-index: 4000 !important;
     }
-    /* A station's button covers its landmark, so pointing at the building selects it. */
+    /*
+     * A station's button covers its landmark, so pointing at the building
+     * selects it. Its marker, plaque and check sit beside it at the landmark's
+     * foot (the slot's origin), so moving the camera only moves the slot.
+     */
     .w-pin {
       position: absolute;
       left: var(--hx, -20px);
@@ -140,54 +144,54 @@ html[data-mode="creative"] .portfolio-root {
       outline: 3px solid var(--c-cobalt);
       outline-offset: 3px;
     }
-    .w-pin[data-match="false"] {
+    .w-pin[data-match="false"] ~ * {
       opacity: 0.45;
     }
-    .w-island[data-dim] .w-pin {
+    .w-island[data-dim] .w-slot > :not(.w-pin) {
       opacity: 0.55;
     }
     /* The marker at the landmark's foot: shape says the tier, not colour alone. */
     .w-dot {
       position: absolute;
-      left: calc(-1 * var(--hx, -20px));
-      top: calc(-1 * var(--hy, -20px));
+      left: -6px;
+      top: -6px;
       width: 12px;
       height: 12px;
-      margin: -6px 0 0 -6px;
       background: var(--c-card);
       border: 2px solid var(--c-ink);
       border-radius: 50%;
       box-shadow: 0 1px 0 rgb(23 23 29 / 0.3);
+      pointer-events: none;
       transition:
         transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
         box-shadow 0.18s ease;
     }
-    .w-pin[data-tier="exhibit"] .w-dot {
+    .w-slot[data-tier="exhibit"] .w-dot {
       background: var(--c-lime);
     }
-    .w-pin[data-tier="blueprint"] .w-dot {
+    .w-slot[data-tier="blueprint"] .w-dot {
       background: #f3f7ff;
       border: 2px dashed var(--c-cobalt);
     }
-    .w-pin:hover .w-dot,
-    .w-pin:focus-visible .w-dot {
+    .w-pin:hover ~ .w-dot,
+    .w-pin:focus-visible ~ .w-dot {
       transform: scale(1.3);
     }
-    .w-pin[aria-pressed="true"] .w-dot {
+    .w-pin[aria-pressed="true"] ~ .w-dot {
       transform: scale(1.35);
       box-shadow:
         0 0 0 4px rgb(200 241 59 / 0.6),
         0 1px 0 rgb(23 23 29 / 0.3);
     }
-    .w-pin:active .w-dot {
+    .w-pin:active ~ .w-dot {
       transform: scale(1.1);
       transition-duration: 0.06s;
     }
     /* The plaque: a name at the landmark's foot, with its tier on hover, focus and selection. */
     .w-plaque {
       position: absolute;
-      left: calc(-1 * var(--hx, -20px) + var(--lx, 0px));
-      top: calc(-1 * var(--hy, -20px) + var(--ly, 9px));
+      left: var(--lx, 0px);
+      top: var(--ly, 9px);
       translate: -50% 0;
       display: flex;
       align-items: baseline;
@@ -222,9 +226,9 @@ html[data-mode="creative"] .portfolio-root {
       color: var(--c-graphite);
     }
     .w-slot[data-label="on"] .w-plaque,
-    .w-pin:hover .w-plaque,
-    .w-pin:focus-visible .w-plaque,
-    .w-pin[aria-pressed="true"] .w-plaque {
+    .w-pin:hover ~ .w-plaque,
+    .w-pin:focus-visible ~ .w-plaque,
+    .w-pin[aria-pressed="true"] ~ .w-plaque {
       visibility: visible;
       opacity: 1;
       transform: none;
@@ -233,25 +237,25 @@ html[data-mode="creative"] .portfolio-root {
         transform 0.16s ease,
         visibility 0s;
     }
-    .w-pin:hover .w-plaque small,
-    .w-pin:focus-visible .w-plaque small,
-    .w-pin[aria-pressed="true"] .w-plaque small {
+    .w-pin:hover ~ .w-plaque small,
+    .w-pin:focus-visible ~ .w-plaque small,
+    .w-pin[aria-pressed="true"] ~ .w-plaque small {
       display: inline;
     }
-    .w-pin:hover .w-plaque {
+    .w-pin:hover ~ .w-plaque {
       background: var(--c-lime);
     }
-    .w-pin[aria-pressed="true"] .w-plaque {
+    .w-pin[aria-pressed="true"] ~ .w-plaque {
       background: var(--c-ink);
       color: #fff;
     }
-    .w-pin[aria-pressed="true"] .w-plaque small {
+    .w-pin[aria-pressed="true"] ~ .w-plaque small {
       color: var(--c-lime);
     }
     .w-check {
       position: absolute;
-      left: calc(-1 * var(--hx, -20px) + 4px);
-      top: calc(-1 * var(--hy, -20px) - 17px);
+      left: 4px;
+      top: -19px;
       display: grid;
       place-items: center;
       width: 15px;
@@ -259,6 +263,7 @@ html[data-mode="creative"] .portfolio-root {
       background: var(--c-lime);
       border: 1.5px solid var(--c-ink);
       border-radius: 50%;
+      pointer-events: none;
     }
     .w-check svg {
       width: 9px;
@@ -266,14 +271,15 @@ html[data-mode="creative"] .portfolio-root {
     }
 
     /* The Studio's own plaque stays in view: it is the way to About and the passport. */
-    .w-studio .w-dot {
+    .w-studio-slot .w-dot {
+      left: -7px;
+      top: -7px;
       width: 14px;
       height: 14px;
-      margin: -7px 0 0 -7px;
       background: var(--c-lime);
     }
     .w-plaque-studio {
-      top: calc(-1 * var(--hy, -20px) - 12px);
+      top: -12px;
       translate: -50% -100%;
       display: grid;
       gap: 1px;
@@ -284,10 +290,10 @@ html[data-mode="creative"] .portfolio-root {
       text-align: center;
       font-size: 13.5px;
     }
-    .w-studio:hover .w-plaque-studio {
+    .w-studio:hover ~ .w-plaque-studio {
       background: var(--c-lime);
     }
-    .w-studio[aria-pressed="true"] .w-plaque-studio {
+    .w-studio[aria-pressed="true"] ~ .w-plaque-studio {
       background: var(--c-ink);
       color: #fff;
     }
@@ -311,9 +317,21 @@ html[data-mode="creative"] .portfolio-root {
       pointer-events: none;
       transition: opacity 0.25s ease;
     }
-    .w-plate[data-off] {
+    .w-plate[data-off],
+    .w-island[data-dim] .w-plate {
       visibility: hidden;
       opacity: 0;
+    }
+    /* Inside a district the Studio is at the edge of the frame; its plaque shows on hover or selection only. */
+    .w-overlay[data-zoomed] .w-plaque-studio {
+      visibility: hidden;
+      opacity: 0;
+    }
+    .w-overlay[data-zoomed] .w-studio:hover ~ .w-plaque-studio,
+    .w-overlay[data-zoomed] .w-studio:focus-visible ~ .w-plaque-studio,
+    .w-overlay[data-zoomed] .w-studio[aria-pressed="true"] ~ .w-plaque-studio {
+      visibility: visible;
+      opacity: 1;
     }
     .w-plate h3 {
       display: flex;
@@ -495,6 +513,13 @@ html[data-mode="creative"] .portfolio-root {
     outline-offset: 2px;
   }
 
+  /* Narrower stages keep the plates to a name and a count. */
+  @media (max-width: 1199px) {
+    .c-map[data-engine="3d"] .w-plate-blurb {
+      display: none;
+    }
+  }
+
   /* ---------- tablets: the panel opens under the stage ---------- */
   @media (max-width: 999px) {
     .c-map[data-engine="3d"] {
@@ -556,7 +581,7 @@ html[data-mode="creative"] .portfolio-root {
       .w-studio-slot[data-off],
       .w-slot,
       .w-slot[data-off] {
-        position: static;
+        position: relative;
         width: auto;
         height: auto;
         transform: none !important;
@@ -606,37 +631,45 @@ html[data-mode="creative"] .portfolio-root {
         scroll-padding-inline: 14px;
         overscroll-behavior-x: contain;
       }
-      .w-slot {
+      /* Each station is a chip: the slot is drawn as the chip, its button is a click layer over it. */
+      .w-slot,
+      .w-studio-slot {
         flex: none;
-        scroll-snap-align: start;
-      }
-      .w-pin,
-      .w-studio {
-        position: relative;
-        left: auto;
-        top: auto;
-        width: auto;
-        height: auto;
-        min-height: 44px;
         display: flex;
         align-items: center;
         gap: 8px;
+        min-height: 44px;
         padding: 8px 12px;
         background: var(--c-paper);
         border: 2px solid var(--c-ink);
         border-radius: 14px;
+        scroll-snap-align: start;
       }
-      .w-studio {
-        width: 100%;
+      .w-studio-slot {
         background: var(--c-butter);
       }
-      .w-dot {
+      .w-slot:has(.w-pin[aria-pressed="true"]),
+      .w-studio-slot:has(.w-studio[aria-pressed="true"]) {
+        background: var(--c-ink);
+        color: #fff;
+      }
+      .w-pin {
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        min-width: 0;
+        min-height: 0;
+        border-radius: 12px;
+      }
+      .w-dot,
+      .w-studio-slot .w-dot {
         position: static;
         flex: none;
-        margin: 0;
       }
       .w-plaque,
-      .w-plaque-studio {
+      .w-plaque-studio,
+      .w-overlay[data-zoomed] .w-plaque-studio {
         position: static;
         translate: none;
         visibility: visible;
@@ -646,22 +679,21 @@ html[data-mode="creative"] .portfolio-root {
         background: none;
         border: 0;
         box-shadow: none;
+        color: inherit;
         font-size: 14px;
         text-align: left;
       }
       .w-plaque small {
         display: inline;
       }
-      .w-pin:hover .w-plaque,
-      .w-pin[aria-pressed="true"] .w-plaque {
+      .w-pin:hover ~ .w-plaque,
+      .w-pin[aria-pressed="true"] ~ .w-plaque,
+      .w-studio:hover ~ .w-plaque-studio,
+      .w-studio[aria-pressed="true"] ~ .w-plaque-studio {
         background: none;
         color: inherit;
       }
-      .w-pin[aria-pressed="true"] {
-        background: var(--c-ink);
-        color: #fff;
-      }
-      .w-pin[aria-pressed="true"] .w-plaque small {
+      .w-pin[aria-pressed="true"] ~ .w-plaque small {
         color: var(--c-lime);
       }
       .w-check {

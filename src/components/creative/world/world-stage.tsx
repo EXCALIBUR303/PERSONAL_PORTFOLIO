@@ -151,13 +151,7 @@ export default function WorldStage({
           s.slot.dataset.label = "off";
           continue;
         }
-        let box = plaques.current.get(s.slug);
-        if (!box) {
-          const el = s.slot.querySelector<HTMLElement>(".w-plaque");
-          box = { w: el?.offsetWidth || 90, h: el?.offsetHeight || 22 };
-          plaques.current.set(s.slug, box);
-        }
-        const { w: pw, h: ph } = box;
+        const { w: pw, h: ph } = plaques.current.get(s.slug) ?? { w: 90, h: 22 };
         // Under the marker first, then a line lower, then to either side.
         const options: [number, number][] = [
           [0, 9],
@@ -185,14 +179,30 @@ export default function WorldStage({
     [stations],
   );
 
+  /**
+   * Places everything for a camera pose. While the camera moves only positions
+   * change (transforms, which skip layout); hit areas and the label layout are
+   * written once it settles, or when `full` asks for them.
+   */
   const place = useCallback(
-    (pose: Pose) => {
+    (pose: Pose, full = false) => {
       const { w, h } = size.current;
       if (w < 2 || h < 2) return;
+      const settled = full || !rig.moving;
+      // Reads first: measuring between writes would force a layout per label.
+      if (plaques.current.size < slots.current.length)
+        for (const slot of slots.current) {
+          const el = slot.querySelector<HTMLElement>(".w-plaque");
+          plaques.current.set(slot.dataset.slot!, { w: el?.offsetWidth || 90, h: el?.offsetHeight || 22 });
+        }
+      if (plateSizes.current.size < plates.current.length)
+        for (const plate of plates.current)
+          plateSizes.current.set(plate.dataset.plate!, { w: plate.offsetWidth || 180, h: plate.offsetHeight || 50 });
       proj.set(pose, w, h);
       const placed: Placed[] = [];
       const hit = (el: HTMLElement, footX: number, footY: number, b: { left: number; top: number; right: number; bottom: number }) => {
         el.style.transform = `translate3d(${footX.toFixed(1)}px, ${footY.toFixed(1)}px, 0)`;
+        if (!settled) return;
         el.style.setProperty("--hx", `${(b.left - footX).toFixed(1)}px`);
         el.style.setProperty("--hy", `${(b.top - footY).toFixed(1)}px`);
         el.style.setProperty("--hw", `${(b.right - b.left).toFixed(1)}px`);
@@ -217,11 +227,7 @@ export default function WorldStage({
         const id = plate.dataset.plate as District;
         const at = plateOf(id);
         const s = proj.project(at[0], at[1], at[2]);
-        let box = plateSizes.current.get(id);
-        if (!box) {
-          box = { w: plate.offsetWidth || 180, h: plate.offsetHeight || 50 };
-          plateSizes.current.set(id, box);
-        }
+        const box = plateSizes.current.get(id) ?? { w: 180, h: 50 };
         // Read from the anchor in the plate's direction, then kept inside the stage.
         const align = PLATES[id].align;
         let left = align === "left" ? s.x - box.w : align === "right" ? s.x : s.x - box.w / 2;
@@ -243,9 +249,9 @@ export default function WorldStage({
         if (top.visible && top.x > 0 && top.x < w && top.y > 0 && top.y < h) delete st.dataset.off;
         else st.dataset.off = "";
       }
-      layoutPlaques(placed, w, h);
+      if (settled) layoutPlaques(placed, w, h);
     },
-    [layoutPlaques],
+    [layoutPlaques, rig],
   );
 
   // Collect the elements the rig moves.
@@ -322,10 +328,15 @@ export default function WorldStage({
   }, [ready]);
 
   // Re-place the labels when what decides them changes.
+  // Plates drop their blurb when zoomed, so their size changes with it.
+  const zoomedNow = focus !== "all" || !!selected;
+  useLayoutEffect(() => {
+    plateSizes.current.clear();
+  }, [zoomedNow]);
   useLayoutEffect(() => {
     labels.current = { focus, selected, hover, layout };
-    place(rig.pose);
-  }, [focus, selected, hover, layout, matching, place, rig]);
+    place(rig.pose, true);
+  }, [focus, selected, hover, layout, matching, place, rig, zoomedNow]);
 
   // Build the canvas after the page has painted, and never during a mode transition.
   useEffect(() => {
@@ -372,7 +383,7 @@ export default function WorldStage({
         {layout === "wide" && card}
       </div>
 
-      <div className="c-stage-inner w-overlay" ref={root}>
+      <div className="c-stage-inner w-overlay" ref={root} data-zoomed={focus !== "all" || undefined}>
         <div className="w-studio-slot" data-studio-slot="">
           <button
             type="button"
@@ -385,12 +396,12 @@ export default function WorldStage({
             onBlur={() => onHover(null)}
           >
             <span className="sr-only">The Studio: welcome, about and your passport</span>
-            <span className="w-dot" aria-hidden="true" />
-            <span className="w-plaque w-plaque-studio" aria-hidden="true">
-              <span>The Studio</span>
-              <small>Welcome, about and your passport</small>
-            </span>
           </button>
+          <span className="w-dot" aria-hidden="true" />
+          <span className="w-plaque w-plaque-studio" aria-hidden="true">
+            <span>The Studio</span>
+            <small>Welcome, about and your passport</small>
+          </span>
         </div>
 
         {byDistrict.map((d) => (
@@ -432,27 +443,28 @@ export default function WorldStage({
                         onFocus={() => onHover(s.slug)}
                         onBlur={() => onHover(null)}
                       >
-                        {/* The name is outside the plaque, which is hidden until it is shown. */}
                         <span className="sr-only">
                           {p.title}
                           {isVisited && ", explored"}
                         </span>
-                        <span className="w-dot" aria-hidden="true" />
-                        <span className="w-plaque" aria-hidden="true">
-                          <span>{s.short}</span>
-                          <small>{tierWords[s.tier].label}</small>
-                        </span>
-                        {isVisited && (
-                          <m.span
-                            className="w-check"
-                            initial={reduced ? false : { scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={micro.glide}
-                          >
-                            <Check size={9} aria-hidden="true" />
-                          </m.span>
-                        )}
                       </button>
+                      {/* The marker and plaque sit at the landmark's foot, beside its button. */}
+                      <span className="w-dot" aria-hidden="true" />
+                      <span className="w-plaque" aria-hidden="true">
+                        <span>{s.short}</span>
+                        <small>{tierWords[s.tier].label}</small>
+                      </span>
+                      {isVisited && (
+                        <m.span
+                          className="w-check"
+                          aria-hidden="true"
+                          initial={reduced ? false : { scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={micro.glide}
+                        >
+                          <Check size={9} />
+                        </m.span>
+                      )}
                     </li>
                   );
                 })}

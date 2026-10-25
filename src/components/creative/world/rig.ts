@@ -98,10 +98,12 @@ export class Rig {
         const b = get(tw.to, key);
         put(this.pose, key, key === "az" ? a + angleDelta(a, b) * k : a + (b - a) * k);
       }
-      this.emit();
       if (t >= 1) {
         this.tween = null;
         this.active = false;
+      }
+      this.emit();
+      if (t >= 1) {
         tw.done?.();
         return false;
       }

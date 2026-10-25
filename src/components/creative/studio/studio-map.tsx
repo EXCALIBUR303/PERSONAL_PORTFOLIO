@@ -8,9 +8,8 @@ import { evidence } from "@/data/evidence";
 import { missionSteps, useExploration, type MissionStep } from "@/lib/exploration";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { useGalleryFilter } from "../../use-gallery-filter";
-import { useWebGL } from "../../scenes/use-webgl";
 import { districts, toneFor, type District } from "../identity";
-import { readOverride } from "../world/quality";
+import { worldEngine } from "../world/quality";
 import WorldStage, { screenSpot } from "../world/world-stage";
 import { Map2D } from "./map-2d";
 import { hubPoint, plateXY, stationPoint } from "./plates";
@@ -35,9 +34,9 @@ function useLayoutMode(): Layout {
   );
 }
 const noop = () => () => {};
-/** `?world=2d` asks for the illustrated map; it is read once, after hydration. */
-function useOverride() {
-  return useSyncExternalStore(noop, readOverride, () => null);
+/** "3d" or "2d", decided once on the client from WebGL support, the renderer and `?world=`. */
+function useEngine() {
+  return useSyncExternalStore(noop, worldEngine, () => null);
 }
 
 const ExhibitStage = dynamic(() => import("./exhibit-stage"), { ssr: false });
@@ -104,10 +103,9 @@ export default function StudioMap() {
   const reduced = useReducedMotion();
   const layout = useLayoutMode();
   const wide = layout === "wide";
-  const webgl = useWebGL();
-  const override = useOverride();
+  const preferred = useEngine();
   const [failed, setFailed] = useState(false);
-  const engine: "3d" | "2d" = webgl === false || failed || override === "2d" ? "2d" : "3d";
+  const engine: "3d" | "2d" = preferred === "2d" || failed ? "2d" : "3d";
   const { visited, stepsFor, markStep, markProject, reset } = useExploration();
   const { done: challenges } = useChallenges();
   const { filtered, gallery, setGallery } = useGalleryFilter();
