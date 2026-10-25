@@ -130,3 +130,13 @@
   text-align: left;
   border-bottom: 1px solid var(--border, #17171d22);
 }
+
+/* The card text above is clamped to three lines; the evidence line must stay whole. */
+.pg-card p.evidence-line {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+  font-size: 12.5px;
+  line-height: 1.45;
+  margin-top: 10px;
+}
