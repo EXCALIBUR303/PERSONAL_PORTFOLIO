@@ -285,8 +285,8 @@ export default function WorldCanvas({ rig, tier, hot, selected, matching, visite
       <Studio palette={palette} active={hot === "studio" || selected === "studio"} selected={selected === "studio"} reduced={reduced} visited={visited} />
       <Bridges palette={palette} />
       {built > 1 && <Systems palette={palette} hot={hot} selected={selected} matching={matching} reduced={reduced} />}
-      {built > 2 && <StudyDistrict id="algorithms" palette={palette} hot={hot} selected={selected} reduced={reduced} />}
-      {built > 3 && <StudyDistrict id="intelligence" palette={palette} hot={hot} selected={selected} reduced={reduced} />}
+      {built > 2 && <StudyDistrict id="algorithms" palette={palette} hot={hot} selected={selected} matching={matching} reduced={reduced} />}
+      {built > 3 && <StudyDistrict id="intelligence" palette={palette} hot={hot} selected={selected} matching={matching} reduced={reduced} />}
       <Redraw keys={[hot, selected, matching, paused, built]} />
       <ShadowUpdates />
       <ContextWatch onLost={onLost} />

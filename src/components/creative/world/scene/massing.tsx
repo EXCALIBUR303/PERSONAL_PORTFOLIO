@@ -1,9 +1,10 @@
 "use client";
-import { useMemo } from "react";
+import { useMemo, type ComponentType } from "react";
 import * as THREE from "three";
 import { ALGORITHMS_PIER, ALGORITHMS_PLATES, BOWL, DISTRICTS, PLACEMENTS, type Placement } from "../layout";
 import { circle, Kit, Model, useDisposal, type V3 } from "./kit";
-import { Placed, tree } from "./landmark";
+import { Placed, tree, type LandmarkProps } from "./landmark";
+import { LastMile, Mazera, ParkScan, PathAble, Penalty } from "./algorithms-landmarks";
 import type { Palette } from "./palette";
 import { rect, terrace } from "./systems";
 
@@ -239,6 +240,15 @@ function massing(slug: string, p: Palette) {
   return k.build();
 }
 
+/** Landmarks modelled in detail; the rest are still white-card massings. */
+const DETAILED: Record<string, ComponentType<LandmarkProps>> = {
+  "mazera-ai-maze-solver": Mazera,
+  pathable: PathAble,
+  "last-mile-daa": LastMile,
+  "parkscan-swarm": ParkScan,
+  "football-penalty-shootout": Penalty,
+};
+
 function Massing({ slug, palette }: { slug: string; palette: Palette }) {
   const model = useMemo(() => massing(slug, palette), [slug, palette]);
   useDisposal(model);
@@ -250,12 +260,14 @@ export function StudyDistrict({
   palette,
   hot,
   selected,
+  matching,
   reduced,
 }: {
   id: "algorithms" | "intelligence";
   palette: Palette;
   hot: string | null;
   selected: string | null;
+  matching: Set<string>;
   reduced: boolean;
 }) {
   const ground = useMemo(() => (id === "algorithms" ? buildAlgorithms(palette) : buildIntelligence(palette)), [id, palette]);
@@ -266,11 +278,19 @@ export function StudyDistrict({
   return (
     <group>
       <Model model={ground} />
-      {slugs.map((slug) => (
-        <Placed key={slug} slug={slug} active={hot === slug || selected === slug} reduced={reduced}>
-          <Massing slug={slug} palette={palette} />
-        </Placed>
-      ))}
+      {slugs.map((slug) => {
+        const active = hot === slug || selected === slug;
+        const Landmark = DETAILED[slug];
+        return (
+          <Placed key={slug} slug={slug} active={active} reduced={reduced}>
+            {Landmark ? (
+              <Landmark palette={palette} active={active} dim={!matching.has(slug)} reduced={reduced} />
+            ) : (
+              <Massing slug={slug} palette={palette} />
+            )}
+          </Placed>
+        );
+      })}
     </group>
   );
 }
