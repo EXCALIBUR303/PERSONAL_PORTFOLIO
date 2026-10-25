@@ -113,7 +113,7 @@ export function SourceLinks({ project }: { project: Project }) {
         <p>
           {project.kind === "unavailable"
             ? "Only the name and college classification provided by the owner are displayed. Private source and internal project details are withheld."
-            : "The supplied football repository is private. Its code was not read or reproduced. All controls and visuals here belong to this original portfolio demonstration."}
+            : "No source link is shown. The related football repository's ownership, attribution and licence have not been verified, so nothing from it is used. All controls and visuals here belong to this independent portfolio demonstration."}
         </p>
       )}
     </div>
@@ -159,7 +159,7 @@ export function ProjectLinks({
         <span className={noneClass}>
           {project.sourceVisibility === "public"
             ? "No verified external live demo"
-            : "Private source not shared"}
+            : "No source link shown"}
         </span>
       )}
     </div>

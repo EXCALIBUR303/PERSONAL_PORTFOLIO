@@ -49,7 +49,7 @@ export const auraParts: AuraPart[] = [
     id: "ailab",
     label: "AI lab",
     layer: "web",
-    text: "The zone for the AI companion's work. Requests go to a provider-neutral AI service in Swift. The README says this is still mocked.",
+    text: "The zone for the AI companion's work. Requests go to a provider-neutral AI service in Swift. Its source includes an OpenAI-compatible adapter with read-only tools; hosted-model use was not verified, and the app was not run for this portfolio.",
     service: "ai",
     at: [-2.3, DECK_Y, 2.3],
   },
@@ -121,7 +121,7 @@ export const hopText: Record<string, string> = {
   bridge: "the bridge checks the contract and passes it to Swift",
   router: "the router dispatches it to one service",
   github: "reads from GitHub with the Keychain token, read-only",
-  ai: "answers from the AI service (mocked in AURA today)",
+  ai: "answers from the AI service (a provider-neutral service in Swift)",
   store: "reads local data from SQLite",
   back: "the reply comes back over the same bridge",
 };

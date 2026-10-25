@@ -44,13 +44,13 @@ export default function CreativeHero() {
     () =>
       districts.map((d) => ({
         ...d,
-        stations: projects.filter((p) => districtFor(p.categories) === d.id),
+        stations: projects.filter((p) => districtFor(p) === d.id),
       })),
     [],
   );
   const number = projects.indexOf(project) + 1;
   const district = districts.find(
-    (d) => d.id === districtFor(project.categories),
+    (d) => d.id === districtFor(project),
   )!;
   const demo = demoClassFor(project);
   const lens = sceneForSlug(project.slug)?.id;

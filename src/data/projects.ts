@@ -19,6 +19,7 @@ export type Architecture = {
 };
 export type Evidence = { label: string; path: string; url: string };
 export type ProjectCollection = "College" | "Personal";
+export type ProjectDistrict = "systems" | "algorithms" | "intelligence";
 export type ProjectDiscipline = "Software" | "Hardware" | "Unverified";
 export type DemoInfo = {
   type: "embedded" | "simulation" | "local" | "unavailable";
@@ -48,9 +49,11 @@ export type Project = {
   kind: WorldKind;
   accent: string;
   featured: boolean;
+  /** Creative map district, assigned explicitly (never inferred from tags). */
+  district: ProjectDistrict;
   githubUrl: string | null;
   liveUrl: string | null;
-  sourceVisibility: "public" | "private";
+  sourceVisibility: "public" | "private" | "independent";
   interactionLabel: string;
   overview: string;
   problem: string;
@@ -102,8 +105,8 @@ export const projects: Project[] = [
       runtimeStatus:
         "Original React production build passed. Model inference and the complete backend were not run.",
       testStatus:
-        "1 SQLite feedback test passed. Frontend Jest suite failed to resolve react-router-dom; no frontend tests executed.",
-      verifiedOn: "2026-10-22",
+        "14 backend tests passed (run with the network denied). The frontend's one test cannot run (Jest cannot resolve react-router-dom 7); its build compiles but fails when warnings are treated as errors.",
+      verifiedOn: "2026-10-25",
       notes: [
         "Portfolio interaction explains the pipeline; it does not diagnose burnout or run the trained model.",
         "Full startup loads committed model artifacts; those were not deserialized in this audit.",
@@ -129,7 +132,8 @@ export const projects: Project[] = [
     status: "Research prototype",
     kind: "signals",
     accent: "#79dce5",
-    featured: true,
+    featured: false,
+    district: "intelligence",
     githubUrl: "https://github.com/EXCALIBUR303/student-burnout-ai",
     liveUrl: null,
     sourceVisibility: "public",
@@ -148,7 +152,7 @@ export const projects: Project[] = [
       "Mixed/synthetic-source holdout metrics do not establish real-student predictive validity.",
       "v5 metadata reports primary holdout accuracy 0.7672 and macro-F1 0.7932, but real-lifestyle benchmark accuracy 0.337 and macro-F1 0.168. Prefer not highlighting a single accuracy figure.",
       "Trainer comments initially claim 19 features; actual feature arrays, model metadata and inference source have 18.",
-      "Source includes older duplicate frontend/backend trees; current primary backend main.py tries v5 artifact before v4/v3/legacy.",
+      "Source includes older duplicate frontend/backend trees; this repository's backend main.py loads the v3 and v2 artifacts (v5 is skipped in a code comment) and applies a rule-based Medium-to-Low override; the v5 artifact is used by the separate Burnout Backend repository.",
       "Model training and inference were not rerun; bounded verification is documented in the execution bay.",
     ],
     architecture: {
@@ -268,6 +272,7 @@ export const projects: Project[] = [
     kind: "maze",
     accent: "#d5f86e",
     featured: true,
+    district: "algorithms",
     githubUrl: "https://github.com/EXCALIBUR303/mazera-ai-maze-solver",
     liveUrl: null,
     sourceVisibility: "public",
@@ -393,13 +398,13 @@ export const projects: Project[] = [
         },
       ],
       runtimeStatus:
-        "Original kiosk and dashboard builds passed. API build blocked by missing generated Prisma client; Prisma engine download returned HTTP 403.",
+        "Kiosk and dashboard builds passed. The API built and was run without payment keys against a throwaway database. Payment status requires owner verification.",
       testStatus:
-        "5 original classifier branches and 2 integer payout checks passed; database and payment workflows not run.",
-      verifiedOn: "2026-10-22",
+        "Against a throwaway database: the project's flow check passed 13/13, status 17/17, admin and security 34/34 and database invariants 10/10. One payout script is out of date and fails 5 of 15. No live payment path was exercised.",
+      verifiedOn: "2026-10-25",
       notes: [
-        "Portfolio station is an illustrative software simulation. No physical station or real payment is connected.",
-        "A local database is required. Payment integration is optional and unverified here.",
+        "The portfolio station is an illustrative software simulation. It performs no transactions and connects to no physical station.",
+        "A local database is required. The project's payment status requires owner verification; payment integration was not verified here.",
       ],
     },
     slug: "uco-recovery-station",
@@ -421,7 +426,8 @@ export const projects: Project[] = [
     status: "Software prototype · hardware calibration pending",
     kind: "process",
     accent: "#f5a17d",
-    featured: true,
+    featured: false,
+    district: "systems",
     githubUrl: "https://github.com/EXCALIBUR303/uco-recovery-station",
     liveUrl: null,
     sourceVisibility: "public",
@@ -439,7 +445,7 @@ export const projects: Project[] = [
     ],
     limitations: [
       "Sensor calibration thresholds are placeholders until measured on real hardware.",
-      "README states real money is not moving; payments default to mock Razorpay until real configuration.",
+      "Payment status: requires owner verification. The repository's README and PAYMENTS.md describe payments differently, and no live payment path was exercised. This exhibit performs no transactions.",
       "README has stale/inconsistent statements about phone signup and telemetry auth; avoid broad claims of complete production readiness.",
       "Do not invent filtration or biodiesel hardware stages: source verifies the software deposit/classification/payment workflow, not physical purification machinery.",
       "No environmental impact reduction numbers are established.",
@@ -488,9 +494,14 @@ export const projects: Project[] = [
     },
     sources: [
       {
-        label: "Current scope and important mock/calibration limitations",
+        label: "Current scope and calibration limitations (README; its payment statements differ from PAYMENTS.md)",
         path: "README.md",
         url: "https://github.com/EXCALIBUR303/uco-recovery-station/blob/44608149de81cd50ab75ad56e120fbbc5c0e84e1/README.md",
+      },
+      {
+        label: "Payments description (differs from the README; status requires owner verification)",
+        path: "PAYMENTS.md",
+        url: "https://github.com/EXCALIBUR303/uco-recovery-station/blob/44608149de81cd50ab75ad56e120fbbc5c0e84e1/PAYMENTS.md",
       },
       {
         label: "Pure classifier and integer payout arithmetic",
@@ -557,10 +568,10 @@ export const projects: Project[] = [
         },
       ],
       runtimeStatus:
-        "API startup attempted; PostgreSQL connection pool timed out because no database was configured.",
+        "Migrations, SQL tests and the API tests ran against a throwaway PostgreSQL database. Two simultaneous sessions were given different bays by the row-locked allocation (FOR UPDATE SKIP LOCKED).",
       testStatus:
-        "Database and authenticated end-to-end tests not run; local portfolio parking simulation is tested separately.",
-      verifiedOn: "2026-10-22",
+        "18 API tests passed on a throwaway database, plus the SQL tests. Authenticated browser end-to-end flows were not run; the portfolio's parking scene is tested separately.",
+      verifiedOn: "2026-10-25",
       notes: [
         "The interactive parking lot is a browser-only demonstration, not connected to the original database.",
         "Original setup creates local database/schema resources; use a dedicated development database.",
@@ -586,6 +597,7 @@ export const projects: Project[] = [
     kind: "parking",
     accent: "#9bcab8",
     featured: true,
+    district: "systems",
     githubUrl: "https://github.com/EXCALIBUR303/DBMS_SMART_PARKING",
     liveUrl: null,
     sourceVisibility: "public",
@@ -709,8 +721,8 @@ export const projects: Project[] = [
       runtimeStatus:
         "Actual Uvicorn API started on 127.0.0.1:18321; GET /health returned HTTP 200 with loaded:false.",
       testStatus:
-        "18 selected repository ingestion, targets, preprocessing, sequence-window, metric, EDA and download-script tests passed.",
-      verifiedOn: "2026-10-22",
+        "28 repository tests passed. The FD001 and FD004 experiments were retrained and their tracked result files matched the committed ones. The project's FD001 download script no longer works against NASA's current archive layout.",
+      verifiedOn: "2026-10-25",
       notes: [
         "Raw C-MAPSS data and trained artifacts not committed",
         "No full model inference or training reproduction",
@@ -739,6 +751,7 @@ export const projects: Project[] = [
     kind: "maintenance",
     accent: "#b8a0f0",
     featured: true,
+    district: "intelligence",
     githubUrl: "https://github.com/EXCALIBUR303/rul-predictive-maintenance",
     liveUrl: null,
     sourceVisibility: "public",
@@ -868,7 +881,7 @@ export const projects: Project[] = [
       type: "simulation",
       url: null,
       summary:
-        "An original browser penalty game built for this portfolio. It does not reproduce or expose the private project.",
+        "An independent browser penalty game made for this portfolio. It does not use code or assets from any related repository.",
       commands: [],
       environment: [],
       runtimeStatus: "Runs entirely in this portfolio using local game state.",
@@ -876,7 +889,7 @@ export const projects: Project[] = [
         "Shot, score, mode and reset behavior are covered by portfolio browser tests.",
       verifiedOn: "2026-10-22",
       notes: [
-        "Independent portfolio implementation; private repository contents were not inspected.",
+        "Independent portfolio implementation. The ownership, attribution and licence of the related football repository have not been verified, so nothing from that game or its assets is used here.",
       ],
     },
     slug: "football-penalty-shootout",
@@ -884,28 +897,29 @@ export const projects: Project[] = [
     title: "Penalty Shootout",
     tagline: "One ball. Three possibilities.",
     description:
-      "An original, playable penalty study. The listed football repository is private, so this experience is independently implemented.",
+      "An independent, playable penalty study made for this portfolio. The related football repository's ownership and licence have not been verified, so this experience is implemented independently.",
     categories: ["Interactive Systems"],
     stack: ["React", "TypeScript", "SVG"],
     status: "Independent portfolio study",
     kind: "penalty",
     accent: "#82cda0",
-    featured: true,
+    featured: false,
+    district: "algorithms",
     githubUrl: null,
     liveUrl: null,
-    sourceVisibility: "private",
-    interactionLabel: "Original playable demo · not the private game",
+    sourceVisibility: "independent",
+    interactionLabel: "Independent portfolio demo · no code or assets from another game",
     overview:
-      "Choose your shot, set the power and read the goalkeeper. This lightweight local game is an original portfolio interaction. The private football repository was not inspected or embedded, and no claims are made about its implementation.",
+      "Choose your shot, set the power and read the goalkeeper. This lightweight local game is an independent portfolio interaction. Nothing from the related football repository or its assets is embedded, its ownership and licence have not been verified, and no claims are made about its implementation.",
     features: [
       "Keyboard-operable aim and power controls",
       "Deterministic goalkeeper sequence and local scoring",
       "No network requests, account or saved game data",
     ],
     limitations: [
-      "The private repository source was not read or reproduced.",
+      "Nothing from the related football repository or its assets is used; its ownership, attribution and licence have not been verified.",
       "The controls, game rules and technology tags describe this portfolio study only.",
-      "This is a small original demonstration, not a deployment of the private game.",
+      "This is a small independent demonstration, not a deployment of any other game.",
     ],
     architecture: {
       kind: "Architecture of this independent portfolio demo",
@@ -938,7 +952,7 @@ export const projects: Project[] = [
     sourceCommit: null,
     eyebrow: "Play / aim / repeat",
     problem:
-      "A portfolio game should offer a meaningful interaction without exposing a private project or pretending to run its source.",
+      "A portfolio game should offer a meaningful interaction without reusing another project's code or assets, and without pretending to run its source.",
     solution:
       "Build an original local penalty study with clear controls, deterministic shot resolution, and a session-only scoreboard.",
   },
@@ -960,10 +974,10 @@ export const projects: Project[] = [
       ],
       environment: [],
       runtimeStatus:
-        "Full Java application not run: this workspace lacks javac, Maven, Tomcat and configured MySQL.",
+        "The web application archive (WAR) builds with Maven. The application was not deployed or run: it needs Tomcat and a MySQL database.",
       testStatus:
-        "Java utility test harness prepared, but not executed because the JDK compiler is unavailable.",
-      verifiedOn: "2026-10-22",
+        "No automated tests exist in the repository.",
+      verifiedOn: "2026-10-25",
       notes: [
         "Carbon savings are estimates using fixed factors, not measured emissions.",
         "Portfolio guide does not book real vehicles or connect to MySQL.",
@@ -981,6 +995,7 @@ export const projects: Project[] = [
     kind: "architecture",
     accent: "#b9d895",
     featured: false,
+    district: "systems",
     githubUrl: "https://github.com/EXCALIBUR303/pbl6-green-mobility",
     liveUrl: null,
     sourceVisibility: "public",
@@ -1090,13 +1105,13 @@ export const projects: Project[] = [
       runtimeStatus:
         "CLI simulation startup attempted and failed explicitly with Px4NotFoundError: external PX4 checkout is absent.",
       testStatus:
-        "70 selected core configuration/types/units/logging/clock and A* tests passed in 2.71 s.",
-      verifiedOn: "2026-10-22",
+        "1042 unit tests passed. The PX4 and Gazebo simulation, integration and evaluation tiers were not run.",
+      verifiedOn: "2026-10-25",
       notes: [
         "Built PX4-Autopilot checkout absent",
         "Gazebo Harmonic simulator and integration not exercised",
         "PyTorch learning extras not installed; no training attempted",
-        "Initial A* collection failed because numba was absent; installing numba resolved collection and all 70 selected tests passed.",
+        "The unit tier passed (1042 tests); the PX4 and Gazebo tiers need external simulators and were not run.",
         "Physical flight is out of scope; classify as software simulation.",
         "No public deployment URL verified.",
       ],
@@ -1120,6 +1135,7 @@ export const projects: Project[] = [
     kind: "architecture",
     accent: "#96c6f0",
     featured: false,
+    district: "intelligence",
     githubUrl: "https://github.com/EXCALIBUR303/aeris",
     liveUrl: null,
     sourceVisibility: "public",
@@ -1269,13 +1285,13 @@ export const projects: Project[] = [
       runtimeStatus:
         "Actual Uvicorn API started on 127.0.0.1:18322; GET /api/health returned HTTP 200 with status:degraded,database:false.",
       testStatus:
-        "66 repository deterministic money, budget, savings and investing engine tests passed with --noconftest.",
-      verifiedOn: "2026-10-22",
+        "448 backend tests passed against a throwaway PostgreSQL database, and 38 frontend tests passed. Browser end-to-end tests were not run.",
+      verifiedOn: "2026-10-25",
       notes: [
         "No PostgreSQL instance/schema configured",
         "Private answer keys intentionally not accessed; production requires them",
         "Full suite includes autouse DROP SCHEMA fixture and requires a dedicated isolated test database",
-        "--noconftest intentionally bypassed repository database fixtures to safely execute independent pure-engine tests; does not claim full suite pass.",
+        "The full backend suite recreates the database schema, so it was run only against a throwaway database.",
         "Five-member hackathon project; user classifies Personal. No sole-authorship claim.",
         "Fictional money; optional paid API integrations not called.",
       ],
@@ -1301,6 +1317,7 @@ export const projects: Project[] = [
     kind: "architecture",
     accent: "#f0c57c",
     featured: false,
+    district: "systems",
     githubUrl: "https://github.com/EXCALIBUR303/IIIT_HACKATHON",
     liveUrl: null,
     sourceVisibility: "public",
@@ -1443,13 +1460,13 @@ export const projects: Project[] = [
       runtimeStatus:
         "Full API startup not verified; database, storage and service configuration are required.",
       testStatus:
-        "64 repository scoring/injection/evidence/fusion and ranking metric tests passed in 8.49 s using offline stub provider and --noconftest.",
-      verifiedOn: "2026-10-22",
+        "615 tests passed, including 31 PostgreSQL integration tests, using synthetic data and no live model.",
+      verifiedOn: "2026-10-25",
       notes: [
         "Full deployment needs PostgreSQL with pgvector, parse worker, OCR binaries, spaCy/embedding models and local model service",
         "Only synthetic data used; no real candidate files or live models accessed",
-        "Initial selected suite had 63 pass / 1 dependency failure (pgvector absent). Installing pgvector resolved it; rerun passed all 64.",
-        "The test subset skips application/database conftest and does not establish end-to-end upload or hiring validity.",
+        "An earlier 64-test selected run was superseded by the full-suite run.",
+        "Passing tests do not establish hiring validity or fairness with a live model; live-model scoring was not run.",
         "Local-only deployment guidance; no verified public URL.",
       ],
     },
@@ -1477,6 +1494,7 @@ export const projects: Project[] = [
     kind: "architecture",
     accent: "#df9bc8",
     featured: false,
+    district: "intelligence",
     githubUrl: "https://github.com/EXCALIBUR303/resume-screener",
     liveUrl: null,
     sourceVisibility: "public",
@@ -1588,10 +1606,10 @@ export const projects: Project[] = [
       ],
       environment: [],
       runtimeStatus:
-        "Not run in this portfolio audit. Commands come from the repository's RUN.md.",
+        "The test suite and benchmark checks were run; the application itself was not launched.",
       testStatus:
-        "The repository contains backend tests per algorithm and benchmark checks; they were not run here.",
-      verifiedOn: "2026-10-23",
+        "417 tests passed.",
+      verifiedOn: "2026-10-25",
       notes: [
         "Source and documentation were read at the pinned commit; nothing was executed.",
         "The backend needs a Python virtual environment created from backend/requirements.txt.",
@@ -1603,6 +1621,7 @@ export const projects: Project[] = [
     kind: "architecture",
     accent: "#e8b26a",
     featured: false,
+    district: "algorithms",
     githubUrl: "https://github.com/EXCALIBUR303/lastmile-daa",
     liveUrl: null,
     sourceVisibility: "public",
@@ -1625,7 +1644,7 @@ export const projects: Project[] = [
       "Each stage is a heuristic or exact algorithm on a modelled approximation; the code states that the plan is not provably optimal.",
       "The negative-cost-cycle check is informational and does not change routing.",
       "Instances are generated, not real road data.",
-      "Not run in this portfolio audit; no hosted demo is linked.",
+      "The application was not launched here; no hosted demo is linked.",
     ],
     architecture: {
       kind: "Reconstructed from the solver pipeline source",
@@ -1745,9 +1764,9 @@ export const projects: Project[] = [
             "Optional external chatbot; leave unset for offline fallback.",
         },
       ],
-      runtimeStatus: "Source-reviewed startup; inference not run.",
-      testStatus: "1 SQLite feedback test passed in an isolated environment.",
-      verifiedOn: "2026-10-22",
+      runtimeStatus: "The API started with and without its model file; model quality was not re-evaluated.",
+      testStatus: "15 tests passed (run with the network denied).",
+      verifiedOn: "2026-10-25",
       notes: [
         "No README exists at this snapshot.",
         "Separate backend of the same burnout research project; not an independent clinical result.",
@@ -1768,6 +1787,7 @@ export const projects: Project[] = [
     kind: "architecture",
     accent: "#79dce5",
     featured: false,
+    district: "systems",
     githubUrl: "https://github.com/EXCALIBUR303/burnout-backend",
     liveUrl: null,
     sourceVisibility: "public",
@@ -1887,6 +1907,7 @@ export const projects: Project[] = [
     kind: "architecture",
     accent: "#d5acff",
     featured: false,
+    district: "intelligence",
     githubUrl: "https://github.com/EXCALIBUR303/sigsmith",
     liveUrl: null,
     sourceVisibility: "public",
@@ -2004,8 +2025,8 @@ export const projects: Project[] = [
       runtimeStatus:
         "Original frontend build and core simulation checks passed. Trained-policy API workflow not run.",
       testStatus:
-        "88 core environment tests and 204 frontend tests passed; 1 frontend test skipped.",
-      verifiedOn: "2026-10-22",
+        "494 tests and the audit script passed (the committed trained actors were re-run with no differences), and 204 frontend tests passed with 1 skipped. Retraining was not attempted.",
+      verifiedOn: "2026-10-25",
       notes: [
         "Software simulator; no physical robotics claim.",
         "Local single-user application is not hardened for public hosting.",
@@ -2028,6 +2049,7 @@ export const projects: Project[] = [
     kind: "architecture",
     accent: "#edb76e",
     featured: false,
+    district: "intelligence",
     githubUrl: "https://github.com/EXCALIBUR303/swarmmind",
     liveUrl: null,
     sourceVisibility: "public",
@@ -2191,9 +2213,9 @@ export const projects: Project[] = [
         },
       ],
       runtimeStatus:
-        "Original frontend production build passed. Pure routing engine executed; complete PostGIS workflow not run.",
-      testStatus: "163 routing/oracle tests and 41 frontend tests passed.",
-      verifiedOn: "2026-10-22",
+        "Frontend build passed. The backend ran in Linux containers with PostGIS. Browser end-to-end tests were not run.",
+      testStatus: "341 backend tests passed (324 in a Linux container plus 17 ML integration tests), 41 frontend tests and 10 ML pipeline tests. On macOS, 10 image-evidence tests fail because of an operating-system memory-limit call; they pass on Linux. Browser end-to-end tests were not run.",
+      verifiedOn: "2026-10-25",
       notes: [
         "All campus examples are fictional demonstration data, not a university survey.",
         "Hazard inference remains disabled because no approved evaluated weights exist.",
@@ -2214,7 +2236,8 @@ export const projects: Project[] = [
     status: "Local accessibility navigation application",
     kind: "architecture",
     accent: "#79dce5",
-    featured: false,
+    featured: true,
+    district: "algorithms",
     githubUrl: "https://github.com/EXCALIBUR303/PATHABLE",
     liveUrl: null,
     sourceVisibility: "public",
@@ -2338,10 +2361,10 @@ export const projects: Project[] = [
       ],
       environment: [],
       runtimeStatus:
-        "Not run in this portfolio audit. Commands come from the repository README.",
+        "The test suite, smoke test and benchmark were run with PostGIS and MQTT; the ROS 2 backend and the live dashboard were not launched.",
       testStatus:
-        "The README reports 787 Python and 74 web tests; they were not re-run here.",
-      verifiedOn: "2026-10-23",
+        "826 tests passed with PostGIS and MQTT, the smoke test passed and 74 web tests passed. The ROS 2 backend image was not built.",
+      verifiedOn: "2026-10-25",
       notes: [
         "Source and documentation were read at the pinned commit; nothing was executed.",
         "Needs Docker for PostGIS and the MQTT broker.",
@@ -2362,6 +2385,7 @@ export const projects: Project[] = [
     kind: "architecture",
     accent: "#8fd0c2",
     featured: false,
+    district: "algorithms",
     githubUrl: "https://github.com/EXCALIBUR303/parkscan-swarm",
     liveUrl: null,
     sourceVisibility: "public",
@@ -2385,7 +2409,7 @@ export const projects: Project[] = [
       "The robots are centrally coordinated, not a decentralised swarm; the name is the project's own.",
       "The README says the ROS 2 backend ran cleanly for 100 steps but a 600-step run failed on transport overhead, so it is a second implementation, not an equally trusted one.",
       "Leases cover charging bays, not individual lane segments.",
-      "Not run in this portfolio audit.",
+      "The ROS 2 backend and the live dashboard were not launched here.",
     ],
     architecture: {
       kind: "Reconstructed from the repository README and decision records",
@@ -2480,9 +2504,9 @@ export const projects: Project[] = [
       ],
       environment: [],
       runtimeStatus:
-        "Not run in this portfolio audit. Commands come from the repository README.",
-      testStatus: "The README reports 85 tests; they were not re-run here.",
-      verifiedOn: "2026-10-23",
+        "The test suite and benchmark were run; the voice chain and hardware were not.",
+      testStatus: "101 tests passed. The documented domain-randomisation benchmark table was reproduced; 5 of 6 evaluation checks passed (walking fast fails its foot-slip check).",
+      verifiedOn: "2026-10-25",
       notes: [
         "Source and documentation were read at the pinned commit; nothing was executed.",
         "Voice control needs Ollama with a local model and a Mac for the speech output.",
@@ -2502,6 +2526,7 @@ export const projects: Project[] = [
     kind: "architecture",
     accent: "#e9a38a",
     featured: false,
+    district: "intelligence",
     githubUrl: "https://github.com/EXCALIBUR303/quadruped-rl",
     liveUrl: null,
     sourceVisibility: "public",
@@ -2521,9 +2546,9 @@ export const projects: Project[] = [
     ],
     limitations: [
       "Simulation only; there is no physical robot.",
-      "The README's own results mark walking fast and walking while turning as only partly clean on foot slip.",
+      "In the audit run, walking fast failed the foot-slip check (0.37 against a 0.25 limit); the README calls it only partly clean.",
       "Voice control is set up for a Mac with Ollama.",
-      "Not run in this portfolio audit.",
+      "The voice chain was not run here.",
     ],
     architecture: {
       kind: "Reconstructed from the repository README",
@@ -2615,10 +2640,10 @@ export const projects: Project[] = [
       ],
       environment: [],
       runtimeStatus:
-        "Not run in this portfolio audit. Commands come from the repository README.",
+        "The test suite was run with a fake embedder; the app with real models was not.",
       testStatus:
-        "The README reports 238 offline tests; they were not re-run here.",
-      verifiedOn: "2026-10-23",
+        "301 tests passed using a fake embedder. The real models and the end-to-end app were not run.",
+      verifiedOn: "2026-10-25",
       notes: [
         "Source and documentation were read at the pinned commit; nothing was executed.",
         "Needs Ollama and downloaded models, which are large.",
@@ -2629,7 +2654,8 @@ export const projects: Project[] = [
     status: "Working application",
     kind: "architecture",
     accent: "#a7c4f2",
-    featured: false,
+    featured: true,
+    district: "systems",
     githubUrl: "https://github.com/EXCALIBUR303/private-local-ai",
     liveUrl: null,
     sourceVisibility: "public",
@@ -2651,7 +2677,7 @@ export const projects: Project[] = [
       "Designed for one Mac; setup depends on Ollama and large local models.",
       "Answer quality is bounded by the small local models the README names.",
       "The README reports measured performance for the author's own machine only.",
-      "Not run in this portfolio audit.",
+      "The app with real models was not run here.",
     ],
     architecture: {
       kind: "Reconstructed from the repository README",
@@ -2749,7 +2775,7 @@ export const projects: Project[] = [
         },
       ],
       runtimeStatus:
-        "Not run in this portfolio audit. The README links a deployed version.",
+        "Lint and a production build passed. The app was not launched, and the deployed version the README links was not fetched.",
       testStatus: "No test suite is named in the README.",
       verifiedOn: "2026-10-23",
       notes: [
@@ -2771,6 +2797,7 @@ export const projects: Project[] = [
     kind: "architecture",
     accent: "#c6a8f0",
     featured: false,
+    district: "systems",
     githubUrl: "https://github.com/EXCALIBUR303/lifeos",
     liveUrl: "https://lifeos-eta-woad.vercel.app",
     sourceVisibility: "public",
@@ -2793,7 +2820,7 @@ export const projects: Project[] = [
       "Data lives in the browser's local storage unless the user turns on sync.",
       "Conflicts in sync resolve by newest write wins.",
       "Health data from phones and two-way calendar sync are listed in the README as future work.",
-      "Not run in this portfolio audit; no tests are named in the README.",
+      "The app was not launched here, and the repository has no tests.",
     ],
     architecture: {
       kind: "Reconstructed from the repository README",
@@ -2880,10 +2907,10 @@ export const projects: Project[] = [
       ],
       environment: [],
       runtimeStatus:
-        "Not run in this portfolio audit. Commands come from the repository README.",
+        "Swift and bridge test suites were run; the app was not launched.",
       testStatus:
-        "The README lists TypeScript and Swift test commands; they were not run here.",
-      verifiedOn: "2026-10-23",
+        "242 Swift tests and 22 bridge and frontend tests passed. The app itself was not run.",
+      verifiedOn: "2026-10-25",
       notes: [
         "Source and documentation were read at the pinned commit; nothing was executed.",
         "Needs macOS 15 on Apple Silicon and the avatar model, which is not stored in git.",
@@ -2902,7 +2929,8 @@ export const projects: Project[] = [
     status: "Work in progress",
     kind: "architecture",
     accent: "#9ac2f5",
-    featured: false,
+    featured: true,
+    district: "systems",
     githubUrl: "https://github.com/EXCALIBUR303/AURA",
     liveUrl: null,
     sourceVisibility: "public",
@@ -2921,10 +2949,10 @@ export const projects: Project[] = [
       "Speech recognition and synthesis using system frameworks on the device.",
     ],
     limitations: [
-      "The README describes the app as in progress, with AI and voice still mocked or unavailable over the bridge at that point.",
+      "The README is out of date: it describes an earlier phase. Hosted-model inference and physical microphone and speaker acceptance are not verified.",
       "Requires macOS 15 on Apple Silicon.",
       "The 3D avatar model is not in the repository and carries its own CC BY 4.0 credit.",
-      "Not run in this portfolio audit.",
+      "The app itself was not run here.",
     ],
     architecture: {
       kind: "Reconstructed from the repository architecture document",

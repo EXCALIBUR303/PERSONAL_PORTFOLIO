@@ -41,7 +41,7 @@ export const scenes: SceneInfo[] = [
     is3d: true,
     seeing:
       "AURA's four studio zones and its companion sit on the top deck, which is the web layer. Below them are the native Swift services. Choose a zone and send a request to watch it cross the typed bridge.",
-    why: "AURA keeps everything visual in a React and three.js web view and everything privileged in Swift, joined only by a versioned JSON bridge. Its README says the AI and voice are still mocked, and nothing from AURA runs here.",
+    why: "AURA keeps everything visual in a React and three.js web view and everything privileged in Swift, joined only by a versioned JSON bridge. Its source includes a provider-neutral AI service and on-device speech, though its own README is out of date. Hosted-model inference and microphone and speaker acceptance were not verified, and nothing from AURA runs here.",
     slug: "aura",
     project: "AURA",
   },
@@ -80,7 +80,7 @@ export const scenes: SceneInfo[] = [
     is3d: true,
     seeing:
       "A real graph search running on a generated maze. Pick one of Mazera's six algorithms, then play, pause or step through the cells it explores before the path lights up.",
-    why: "Mazera compares six search algorithms on mazes. These are TypeScript versions of the same algorithms, running live in your browser.",
+    why: "Mazera compares six search algorithms on mazes. These are independent TypeScript re-implementations of the six algorithms, running live in your browser; they are not the original application's code.",
     slug: "mazera-ai-maze-solver",
     project: "Mazera AI Maze Solver",
   },

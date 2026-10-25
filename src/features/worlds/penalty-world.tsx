@@ -223,8 +223,9 @@ export default function PenaltyWorld() {
         )}
       </div>
       <p className="module-disclaimer">
-        Original local demonstration. The listed football repository is private
-        and was not inspected or embedded. Keeper movement is deterministic;
+        Independent local demonstration. Nothing from the related football
+        repository or its assets is used, and that repository&apos;s ownership and
+        licence have not been verified. Keeper movement is deterministic;
         power above 90 sends the shot wide. Scores last only for this visit.
       </p>
     </div>

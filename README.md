@@ -25,7 +25,7 @@ For static hosting, use `npm run build:static` and serve `out/` with a static se
 Run browser checks against a separately running server:
 
 ```sh
-TEST_BASE_URL=http://localhost:3000 npm test
+TEST_BASE_URL=http://localhost:3001 npm test
 ```
 
 Playwright uses installed Google Chrome on macOS or `/usr/bin/chromium` on Linux when available. Set `CHROMIUM_PATH` to another installed browser, or install Playwright Chromium in your own environment. Algorithm-only checks use `npm run test:unit`.
@@ -42,7 +42,7 @@ Playwright uses installed Google Chrome on macOS or `/usr/bin/chromium` on Linux
 
 ## Project and demo boundaries
 
-The authorized repository listing returned 21 repositories: 14 public (including the empty portfolio repository) and seven private. Thirteen public project repositories are represented, alongside an independent penalty game and the owner-named Last Mile DAA entry. Private source is not published. The five other private repositories are omitted.
+At the time of the October 2026 repository audit, the account's repository listing returned 21 repositories, all public, and the registry holds 20 project entries. The independent penalty game has no source link: the related repository's ownership, attribution and licence have not been verified, so nothing from it is used. Counts like these change over time and should be re-checked before they are quoted.
 
 The owner classified Burnout, its separate backend, Mazera AI Maze Solver, UCO Recovery Station, PBL6 Green Mobility, Last Mile DAA and SmartPark DBMS as College. Other represented repositories are Personal. This collection label is not a sole-authorship claim; RupeeRise retains its team attribution. Last Mile DAA has no speculative architecture or technology claims. SIGSMITH is a documented proposal, not an implemented model.
 
@@ -96,4 +96,4 @@ For an original static application, build it with a `/demos/<slug>/` asset base,
 
 `.openai/hosting.json` identifies the existing owner-private Sites project and `out/` artifact. Source is versioned and pushed to that site's separate source repository before deployment. The GitHub `origin` is preserved; deployment does not mean the empty GitHub repository was populated. Sharing remains private until the owner explicitly changes it.
 
-Previous verification is retained in `docs/history/`. Current results are in [VERIFICATION.md](VERIFICATION.md). The original V2 stylesheet remains a foundation; `universe.css` provides the V3 visual system. No previous performance score is presented as a V3 result.
+Previous verification is retained in `docs/history/`. [VERIFICATION.md](VERIFICATION.md) and the Lighthouse files are historical (the earlier V3 baseline); the registry (`src/data/projects.ts`) carries the current per-project execution statements. The original V2 stylesheet remains a foundation; `universe.css` provides the V3 visual system. No previous performance score is presented as a V3 result.

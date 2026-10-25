@@ -34,11 +34,11 @@ export const demoClassInfo: Record<
 const bySlug: Record<string, { kind: DemoClass; note: string }> = {
   "mazera-ai-maze-solver": {
     kind: "working",
-    note: "The search algorithms are re-written in TypeScript and run live here. The original Mazera application can also be launched.",
+    note: "The search algorithms are independently re-implemented in TypeScript and run live here. The original Mazera application can also be launched.",
   },
   "football-penalty-shootout": {
     kind: "working",
-    note: "An original demonstration made for this portfolio. The private repository was not used.",
+    note: "An independent demonstration made for this portfolio. The related repository's ownership and licence have not been verified, so nothing from it is used.",
   },
   "smart-parking-dbms": {
     kind: "walkthrough",

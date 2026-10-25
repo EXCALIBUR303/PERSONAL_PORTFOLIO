@@ -35,7 +35,7 @@ WebGL is deferred on touch/data-saving devices until requested. Hero rendering i
 
 ## Repository execution
 
-The authorized inventory contained 21 repositories: 14 public (including the empty portfolio repository), seven private. Fifteen portfolio entries comprise thirteen public project repositories, an independent penalty game and the owner-named Last Mile DAA entry. No private implementation is published.
+This describes the earlier V3 audit and is kept for history. In the October 2026 repository audit the account listed 21 repositories, all public, and the registry holds 20 entries. The independent penalty game uses nothing from the related repository, whose ownership and licence have not been verified.
 
 See [execution audit](docs/research/v3-execution-audit.md) for per-repository results and [Mazera verification](docs/research/mazera-demo-verification.md) for its original application. Notable results include 168 Mazera algorithm checks; 41 PathAble frontend and 163 routing checks; 204 SWARMMIND frontend checks (one skipped) and 88 core checks; and 218 selected Python tests across AERIS, RUL, RupeeRise and Resume Screener. Each burnout backend passed one SQLite feedback test. UCO passed five classifier branches and two payout arithmetic checks.
 
