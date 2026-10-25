@@ -10,6 +10,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import { m } from "motion/react";
 import { ArrowLeft, Check } from "lucide-react";
 import { projects } from "@/data/projects";
@@ -18,7 +19,7 @@ import { micro } from "../../motion-config";
 import { lazyView } from "../../scenes/lazy-view";
 import { districts, toneFor, type District } from "../identity";
 import { tierWords, type Station } from "../studio/stations";
-import { easeInCubic, Projector, type Pose } from "./camera";
+import { easeInCubic, easeInOutCubic, Projector, type Pose } from "./camera";
 import { boxOf, PLACEMENTS, plateOf, PLATES, poseFor, STUDIO, type Shot, type Stage } from "./layout";
 import { guessTier, readOverride, type Tier } from "./quality";
 import { Rig } from "./rig";
@@ -64,6 +65,9 @@ type Props = {
 
 /** Width the docked panel takes from the stage (its CSS width plus margins). */
 const PANEL = 328 + 28;
+/** The share of the stage a tablet's panel sheet covers. */
+const SHEET = 0.46;
+const sheetHost = () => (typeof document === "undefined" ? null : document.querySelector<HTMLElement>(".portfolio-root"));
 const proj = new Projector();
 type Placed = { slot: HTMLElement; slug: string; x: number; y: number; depth: number; visible: boolean };
 
@@ -112,6 +116,8 @@ export default function WorldStage({
   const rig = useMemo(() => new Rig(poseFor({ kind: "overview" }, { width: 1200, height: 720, insetRight: 0 })), []);
 
   const inset = layout === "wide" && selected ? PANEL : 0;
+  // On a tablet the panel is a sheet over the bottom of the stage; the camera frames the subject above it.
+  const sheet = layout === "tablet" && selected && measured ? Math.round(measured.h * SHEET) : 0;
   const shot: Shot = entering
     ? { kind: "approach", slug: entering }
     : selected === "studio"
@@ -291,7 +297,7 @@ export default function WorldStage({
   const establishing = useRef(false);
   useLayoutEffect(() => {
     if (!measured) return;
-    const stage: Stage = { width: measured.w, height: measured.h, insetRight: inset };
+    const stage: Stage = { width: measured.w, height: measured.h, insetRight: inset, insetBottom: sheet };
     const goal = poseFor(shot, stage);
     if (first.current) {
       first.current = false;
@@ -314,16 +320,19 @@ export default function WorldStage({
     }
     if (establishing.current && !ready) return;
     establishing.current = false;
-    rig.glide(goal, 0.44);
+    // A long move lifts over what lies between; a short one glides.
+    const travel = Math.hypot(goal.target[0] - rig.pose.target[0], goal.target[2] - rig.pose.target[2]);
+    if (travel > 12) rig.fly(goal, 900, easeInOutCubic, undefined, travel * 0.18);
+    else rig.glide(goal, 0.44);
     // `shot` is represented by `shotKey`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shotKey, measured, inset, reduced, rig]);
+  }, [shotKey, measured, inset, sheet, reduced, rig]);
 
   // Once the world has drawn, finish the establishing move.
   useEffect(() => {
     if (!ready || !establishing.current || !measured) return;
     establishing.current = false;
-    rig.glide(poseFor(shot, { width: measured.w, height: measured.h, insetRight: inset }), 0.7);
+    rig.glide(poseFor(shot, { width: measured.w, height: measured.h, insetRight: inset, insetBottom: sheet }), 0.7);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
 
@@ -381,7 +390,7 @@ export default function WorldStage({
             <ArrowLeft size={15} aria-hidden="true" /> All districts
           </button>
         )}
-        {layout === "wide" && card}
+        {layout !== "phone" && card}
       </div>
 
       <div className="c-stage-inner w-overlay" ref={root} data-zoomed={focus !== "all" || undefined}>
@@ -471,11 +480,11 @@ export default function WorldStage({
                 })}
               </ul>
             </section>
-            {layout === "phone" && selectedDistrict === d.id && card}
           </Fragment>
         ))}
-        {layout === "phone" && selected === "studio" && card}
       </div>
+      {/* On a phone the panel is a sheet fixed to the bottom of the screen. A page wrapper above the stage is transformed, which would trap a fixed child, so the sheet is drawn from the page root. */}
+      {layout === "phone" && measured && card && sheetHost() && createPortal(card, sheetHost()!)}
     </>
   );
 }

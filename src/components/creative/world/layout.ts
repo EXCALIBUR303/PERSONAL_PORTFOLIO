@@ -1,5 +1,5 @@
 import type { District } from "../identity";
-import { copyPose, deg, Projector, type Pose, type Vec3 } from "./camera";
+import { copyPose, deg, eye, Projector, type Pose, type Vec3 } from "./camera";
 
 /*
  * The studio world's composition, in world units (about a metre of model
@@ -216,7 +216,14 @@ const studioPoints = (pad = 0) => boxPoints([-STUDIO.radius, -0.6, -STUDIO.radiu
 
 /* ---------------- camera framings ---------------- */
 
-export type Stage = { width: number; height: number; /** Pixels on the right covered by the docked panel. */ insetRight: number };
+export type Stage = {
+  width: number;
+  height: number;
+  /** Pixels on the right covered by the docked panel. */
+  insetRight: number;
+  /** Pixels at the bottom covered by the tablet sheet. */
+  insetBottom?: number;
+};
 /** What the visitor is looking at; the camera pose follows from it. */
 export type Shot =
   | { kind: "overview" }
@@ -255,7 +262,7 @@ function fit(points: Vec3[], base: Pose, stage: Stage, mx: number, my: number): 
   const left = mx * W;
   const right = W - stage.insetRight - mx * W;
   const top = my * H;
-  const bottom = H - my * H;
+  const bottom = H - (stage.insetBottom ?? 0) - my * H;
   const cx = (left + right) / 2;
   const cy = (top + bottom) / 2;
   for (let pass = 0; pass < 4; pass++) {
@@ -283,6 +290,60 @@ const centreOf = (pts: Vec3[]): Vec3 => {
   const s = pts.reduce((a, p) => [a[0] + p[0], a[1] + p[1], a[2] + p[2]] as Vec3, [0, 0, 0] as Vec3);
   return [s[0] / pts.length, 0.4, s[2] / pts.length];
 };
+
+
+/* ---------------- keeping the subject in view ---------------- */
+
+function rayHitsBox(o: Vec3, d: Vec3, min: Vec3, max: Vec3, tmax: number) {
+  let t0 = 0;
+  let t1 = tmax;
+  for (let i = 0; i < 3; i++) {
+    if (Math.abs(d[i]) < 1e-9) {
+      if (o[i] < min[i] || o[i] > max[i]) return false;
+    } else {
+      let a = (min[i] - o[i]) / d[i];
+      let b = (max[i] - o[i]) / d[i];
+      if (a > b) [a, b] = [b, a];
+      t0 = Math.max(t0, a);
+      t1 = Math.min(t1, b);
+      if (t0 > t1) return false;
+    }
+  }
+  return true;
+}
+
+/** The point of a landmark the camera must see: a little above the middle of its body. */
+const subjectOf = (p: Placement): Vec3 => [p.base[0], p.base[1] + p.size[1] * 0.6, p.base[2]];
+
+/**
+ * The landmark (or the Studio) that stands between this pose's camera and the
+ * station's subject, if any. Boxes are shrunk a little so a grazing line past a
+ * corner does not count.
+ */
+export function viewBlockedBy(pose: Pose, slug: string): string | null {
+  const subject = PLACEMENTS[slug];
+  if (!subject) return null;
+  const o = eye(pose);
+  const target = subjectOf(subject);
+  const d: Vec3 = [target[0] - o[0], target[1] - o[1], target[2] - o[2]];
+  const len = Math.hypot(...d);
+  const dir: Vec3 = [d[0] / len, d[1] / len, d[2] / len];
+  const shrink = (min: Vec3, max: Vec3, k: number): [Vec3, Vec3] => [
+    [min[0] + k, min[1], min[2] + k],
+    [max[0] - k, max[1] - k * 0.5, max[2] - k],
+  ];
+  for (const other of Object.values(PLACEMENTS)) {
+    if (other.slug === slug) continue;
+    const [min, max] = shrink(...boxOf(other), 0.25);
+    if (rayHitsBox(o, dir, min, max, len * 0.97)) return other.slug;
+  }
+  const [smin, smax] = shrink(STUDIO.min, STUDIO.max, 0.5);
+  if (rayHitsBox(o, dir, smin, smax, len * 0.97)) return "studio";
+  return null;
+}
+
+/** The turns tried, in order, when the straight-on framing is blocked: small, then larger, either way, then a steeper look. */
+const TURNS = [0, 12, -12, 24, -24, 36, -36].map(deg);
 
 export function poseFor(shot: Shot, stage: Stage): Pose {
   const aspect = stage.width / stage.height;
@@ -320,7 +381,17 @@ export function poseFor(shot: Shot, stage: Stage): Pose {
         el: deg(shot.within === "district" ? 40 : 44),
         fov: FOV,
       };
-      return fit(boxPoints(min, max, pad), base, stage, 0.05, 0.08);
+      const pts = boxPoints(min, max, pad);
+      // Straight on if the subject is in view; otherwise the smallest turn (then a steeper look) that clears it.
+      let first: Pose | null = null;
+      for (const lift of [0, 4]) {
+        for (const turn of TURNS) {
+          const pose = fit(pts, { ...base, az: base.az + turn, el: base.el + deg(lift) }, stage, 0.05, 0.08);
+          first ??= pose;
+          if (!viewBlockedBy(pose, shot.slug)) return pose;
+        }
+      }
+      return first!;
     }
     case "studio": {
       const base: Pose = { target: [0, 1.9, 0], dist: 20, az: AZ, el: deg(31), fov: FOV };

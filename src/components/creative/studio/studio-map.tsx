@@ -145,13 +145,6 @@ export default function StudioMap() {
       slug: station.slug,
       focus: saved.focus !== "all" && saved.focus !== station.district ? station.district : saved.focus,
     });
-    // Narrower layouts show the preview below the world; make sure the visitor sees it.
-    if (!wide)
-      requestAnimationFrame(() =>
-        requestAnimationFrame(() =>
-          document.querySelector(".c-brief")?.scrollIntoView({ block: "nearest", behavior: reduced ? "auto" : "smooth" }),
-        ),
-      );
   }
   function openStudio() {
     setEntering(null);
@@ -368,7 +361,7 @@ export default function StudioMap() {
                 layout={layout}
                 reduced={reduced}
                 paused={mapHidden || !!exhibitStation}
-                card={layout === "tablet" ? null : card}
+                card={card}
                 onChoose={choose}
                 onStudio={openStudio}
                 onOverview={() => update({ focus: "all", slug: null })}
@@ -393,7 +386,6 @@ export default function StudioMap() {
               />
             )}
           </div>
-          {engine === "3d" && layout === "tablet" && card && <div className="w-after">{card}</div>}
           <ul className="c-keys" aria-label="How to read the map">
             {(["exhibit", "briefing", "blueprint"] as const).map((tier) => (
               <li key={tier} id={`tier-${tier}`}>

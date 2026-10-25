@@ -290,3 +290,55 @@ test("arrow keys move between stations in a district and Tab moves between distr
   await expect(page.locator(".c-brief")).toHaveCount(0);
   await expect(page.locator('[data-station="aura"]')).toBeFocused();
 });
+
+test("on a tablet the station panel is a sheet inside the stage, and the station stays in view above it", async ({ page }) => {
+  await page.setViewportSize({ width: 820, height: 1100 });
+  await page.goto("/");
+  const stage = page.locator(".w-stage");
+  await page.locator('[data-station="smart-parking-dbms"]').click();
+  const sheet = stage.locator(".c-brief");
+  await expect(sheet).toBeVisible();
+  await page.waitForTimeout(1600);
+  const [s, b, pin] = await Promise.all([
+    stage.boundingBox(),
+    sheet.boundingBox(),
+    page.locator('[data-slot="smart-parking-dbms"] .w-pin').boundingBox(),
+  ]);
+  expect(b!.y).toBeGreaterThanOrEqual(s!.y);
+  expect(b!.y + b!.height).toBeLessThanOrEqual(s!.y + s!.height + 1);
+  // The landmark's centre is above the top of the sheet.
+  expect(pin!.y + pin!.height / 2).toBeLessThan(b!.y);
+  await expect(sheet.getByRole("button", { name: /Enter exhibit/ })).toBeVisible();
+});
+
+test("on a phone the station panel is a bottom sheet that stays inside the screen", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await page.locator('[data-station="smart-parking-dbms"]').click();
+  const sheet = page.locator(".c-brief");
+  await expect(sheet).toBeVisible();
+  await expect(sheet).toHaveCSS("position", "fixed");
+  await page.waitForTimeout(600); // the sheet slides in
+  const b = (await sheet.boundingBox())!;
+  expect(b.y).toBeGreaterThanOrEqual(0);
+  expect(b.y + b.height).toBeLessThanOrEqual(844 + 1);
+  await expect(sheet.getByRole("button", { name: /Enter exhibit/ })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".c-brief")).toHaveCount(0);
+});
+
+test("rapid district and station changes settle on the last choice with no errors", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.goto("/");
+  const group = page.getByRole("group", { name: "District" });
+  for (const name of [/^Systems/, /^Algorithms/, /^Intelligence/, /^Systems/, /^All districts/, /^Algorithms/])
+    await group.getByRole("button", { name }).click({ delay: 10 });
+  await page.locator('[data-station="mazera-ai-maze-solver"]').click();
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(1500);
+  await expect(page.locator(".w-stage")).toHaveAttribute("data-shot", "overview");
+  await expect(page.locator(".c-brief")).toHaveCount(0);
+  expect(errors).toEqual([]);
+});

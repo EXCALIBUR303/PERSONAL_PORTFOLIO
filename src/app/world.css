@@ -531,13 +531,69 @@ html[data-mode="creative"] .portfolio-root {
         display: none;
       }
     }
-    .w-after > .c-brief {
-      position: relative;
-      inset: auto;
+  }
+
+
+  /* ---------- the panel as a sheet: over the bottom of the stage on tablets, over the page on phones ---------- */
+  @media (max-width: 999px) {
+    .c-map[data-engine="3d"] .w-stage > .c-brief,
+    .c-map[data-engine="3d"] .w-overlay .c-brief {
+      display: flex;
+      flex-direction: column;
+      padding-top: 18px;
+    }
+    .c-brief > * {
+      order: 8;
+    }
+    .c-brief > .c-brief-close {
+      order: 0;
+    }
+    .c-brief > .c-brief-no {
+      order: 1;
+    }
+    .c-brief > h2 {
+      order: 2;
+    }
+    .c-brief > .c-brief-tag,
+    .c-brief > .c-brief-exhibit {
+      order: 3;
+    }
+    .c-brief > .c-brief-actions {
+      order: 4;
+    }
+    .c-brief > .c-brief-badges {
+      order: 5;
+    }
+    .c-brief > .c-brief-claim {
+      order: 6;
+    }
+    .c-brief > .c-brief-note {
+      order: 7;
+    }
+  }
+  @media (max-width: 639px) {
+    & > .c-brief {
+      display: flex;
+      flex-direction: column;
+      padding-top: 18px;
+      position: fixed;
+      inset: auto 8px 8px 8px;
+      z-index: 120;
       width: auto;
-      max-height: none;
-      margin-top: 14px;
-      overflow: visible;
+      max-height: 44svh;
+      margin: 0;
+      overflow: auto;
+      animation: w-sheet-in 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+  }
+  @media (min-width: 640px) and (max-width: 999px) {
+    .c-map[data-engine="3d"] .w-stage > .c-brief {
+      top: auto;
+      right: 10px;
+      bottom: 10px;
+      left: 10px;
+      width: auto;
+      max-height: calc(46% - 10px);
     }
   }
 
@@ -698,14 +754,6 @@ html[data-mode="creative"] .portfolio-root {
         left: 10px;
         top: 10px;
       }
-      .c-brief {
-        position: relative;
-        inset: auto;
-        width: auto;
-        max-height: none;
-        margin: 0 10px 12px;
-        overflow: visible;
-      }
     }
   }
 }
@@ -725,5 +773,21 @@ html.has-cursor:has(.w-pin:hover) .cursor-ring > span.is-grown {
   }
   to {
     opacity: 1;
+  }
+}
+
+@keyframes w-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .c-brief {
+    animation: none !important;
   }
 }

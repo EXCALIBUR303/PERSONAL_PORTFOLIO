@@ -7,7 +7,7 @@ import { DISTRICTS, DISTRICT_ORDER, STUDIO } from "../layout";
 import { stations } from "../../studio/stations";
 import { circle, Kit, Model, useDisposal, type V3 } from "./kit";
 import { useOwn } from "./landmark";
-import { useLevel } from "./motion";
+import { span, useLevel, usePlay } from "./motion";
 import type { Palette } from "./palette";
 
 /*
@@ -170,13 +170,16 @@ function plaqueCells(): Cell[] {
 
 const ACCENT = { systems: "#ee8466", algorithms: "#2f4bff", intelligence: "#7a4ee6" } as const;
 
-function Wall({ visited }: { visited: string[] }) {
+function Wall({ visited, pulse, reduced }: { visited: string[]; pulse: boolean; reduced: boolean }) {
   const mesh = useRef<THREE.InstancedMesh>(null);
   const invalidate = useThree((s) => s.invalidate);
   const cells = useMemo(() => plaqueCells(), []);
   const geometry = useMemo(() => new THREE.BoxGeometry(0.13, 0.15, 0.014), []);
   const material = useMemo(() => new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.9 }), []);
   const seen = useMemo(() => new Set(visited), [visited]);
+  // On selection the visited plaques brighten once, one after another.
+  const run = usePlay(pulse, reduced, 1.5);
+  const painted = useRef(0);
   useEffect(
     () => () => {
       geometry.dispose();
@@ -184,22 +187,50 @@ function Wall({ visited }: { visited: string[] }) {
     },
     [geometry, material],
   );
+  const paint = useMemo(() => {
+    const paper = new THREE.Color("#ece6d8");
+    const colour = new THREE.Color();
+    const white = new THREE.Color("#ffffff");
+    return (m: THREE.InstancedMesh, t: number) => {
+      let k = 0;
+      cells.forEach((c, i) => {
+        if (!seen.has(c.slug)) {
+          m.setColorAt(i, paper);
+          return;
+        }
+        colour.set(ACCENT[c.district]).lerp(paper, 0.18);
+        if (t > 0 && t < 1) colour.lerp(white, Math.sin(Math.PI * span(t, k * 0.08, k * 0.08 + 0.4)) * 0.75);
+        k++;
+        m.setColorAt(i, colour);
+      });
+      if (m.instanceColor) m.instanceColor.needsUpdate = true;
+    };
+  }, [cells, seen]);
   useEffect(() => {
     const m = mesh.current;
     if (!m) return;
     const dummy = new THREE.Object3D();
-    const paper = new THREE.Color("#ece6d8");
-    const colour = new THREE.Color();
     cells.forEach((c, i) => {
       dummy.position.set(...c.position);
       dummy.updateMatrix();
       m.setMatrixAt(i, dummy.matrix);
-      m.setColorAt(i, seen.has(c.slug) ? colour.set(ACCENT[c.district]).lerp(paper, 0.18) : paper);
     });
     m.instanceMatrix.needsUpdate = true;
-    if (m.instanceColor) m.instanceColor.needsUpdate = true;
+    paint(m, 0);
     invalidate();
-  }, [cells, seen, invalidate]);
+  }, [cells, paint, invalidate]);
+  useFrame(() => {
+    const m = mesh.current;
+    if (!m) return;
+    const t = run.current;
+    if (t > 0 && t < 1) {
+      paint(m, t);
+      painted.current = 1;
+    } else if (painted.current) {
+      paint(m, 0);
+      painted.current = 0;
+    }
+  });
   return (
     // The plaques are positioned in the building's own frame (turned and scaled with it, by the parent group).
     <instancedMesh ref={mesh} args={[geometry, material, cells.length]} castShadow={false} receiveShadow={false} frustumCulled={false} />
@@ -209,11 +240,13 @@ function Wall({ visited }: { visited: string[] }) {
 export function Studio({
   palette,
   active,
+  selected,
   reduced,
   visited,
 }: {
   palette: Palette;
   active: boolean;
+  selected: boolean;
   reduced: boolean;
   visited: string[];
 }) {
@@ -236,7 +269,7 @@ export function Studio({
       <group position={[0, top, 0]} scale={STUDIO.scale}>
         <Model model={building} />
         <group rotation={[0, TURN, 0]}>
-          <Wall visited={visited} />
+          <Wall visited={visited} pulse={selected} reduced={reduced} />
         </group>
       </group>
     </group>

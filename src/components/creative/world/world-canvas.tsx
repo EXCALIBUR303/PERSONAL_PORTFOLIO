@@ -282,7 +282,7 @@ export default function WorldCanvas({ rig, tier, hot, selected, matching, visite
       {settings.reflections && <Reflections />}
       <Sheet />
       <Grounding />
-      <Studio palette={palette} active={hot === "studio" || selected === "studio"} reduced={reduced} visited={visited} />
+      <Studio palette={palette} active={hot === "studio" || selected === "studio"} selected={selected === "studio"} reduced={reduced} visited={visited} />
       <Bridges palette={palette} />
       {built > 1 && <Systems palette={palette} hot={hot} selected={selected} matching={matching} reduced={reduced} />}
       {built > 2 && <StudyDistrict id="algorithms" palette={palette} hot={hot} selected={selected} reduced={reduced} />}

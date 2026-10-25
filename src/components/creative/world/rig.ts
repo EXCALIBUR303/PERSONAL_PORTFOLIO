@@ -16,6 +16,8 @@ type Tween = {
   start: number;
   duration: number;
   ease: (t: number) => number;
+  /** Extra distance at the middle of the move, so a long flight lifts over what is between. */
+  lift: number;
   done?: () => void;
 };
 
@@ -77,10 +79,10 @@ export class Rig {
   }
 
   /** A timed move with its own easing. `done` runs once it arrives (not if interrupted). */
-  fly(pose: Pose, duration: number, ease: (t: number) => number, done?: () => void) {
+  fly(pose: Pose, duration: number, ease: (t: number) => number, done?: () => void, lift = 0) {
     KEYS.forEach((k) => (this.vel[k].v = 0));
     this.goal = copyPose(pose);
-    this.tween = { from: copyPose(this.pose), to: copyPose(pose), start: performance.now(), duration, ease, done };
+    this.tween = { from: copyPose(this.pose), to: copyPose(pose), start: performance.now(), duration, ease, lift, done };
     this.wake();
   }
 
@@ -98,6 +100,7 @@ export class Rig {
         const b = get(tw.to, key);
         put(this.pose, key, key === "az" ? a + angleDelta(a, b) * k : a + (b - a) * k);
       }
+      if (tw.lift) this.pose.dist += tw.lift * Math.sin(Math.PI * t);
       if (t >= 1) {
         this.tween = null;
         this.active = false;

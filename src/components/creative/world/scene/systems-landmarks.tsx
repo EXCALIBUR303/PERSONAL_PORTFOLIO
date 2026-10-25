@@ -33,6 +33,15 @@ const GARAGE_PATH: V3[] = [
   [-0.45, GL[3], -0.46],
 ];
 
+/** The second car follows the first up the ramps, then is handed the next free bay: across the middle lane to the other row. */
+const GARAGE_PATH_2: V3[] = [
+  ...GARAGE_PATH.slice(0, 11),
+  [0.45, GL[3], -0.8],
+  [0.45, GL[3], 0],
+  [-0.45, GL[3], 0],
+  [-0.45, GL[3], 0.36],
+];
+
 export function Garage({ palette: p, active, dim, reduced }: LandmarkProps) {
   const light = useOwn(p.lamp);
   const sign = useMemo(() => new THREE.MeshStandardMaterial({ map: letterTexture("P", "#2f4bff", "#ffffff"), roughness: 0.6 }), []);
@@ -115,13 +124,21 @@ export function Garage({ palette: p, active, dim, reduced }: LandmarkProps) {
     car(k, p, 0, 0, 0, p.lime, "z");
     return k.build();
   }, [p]);
+  const second = useMemo(() => {
+    const k = new Kit();
+    car(k, p, 0, 0, 0, p.amber, "z");
+    return k.build();
+  }, [p]);
+  useDisposal(second);
   useDisposal(arrival);
 
   const lit = useLevel(active, reduced, 0.25, 0.6);
   const run = usePlay(active, reduced, 3.6);
   const mover = useRef<THREE.Group>(null);
+  const mover2 = useRef<THREE.Group>(null);
   const arm = useRef<THREE.Group>(null);
   const heading = useRef(Math.PI);
+  const heading2 = useRef(Math.PI);
   useFrame((_, delta) => {
     light.setValues({ emissiveIntensity: 0.12 + lit.current * 2.2 });
     const t = run.current;
@@ -133,6 +150,16 @@ export function Garage({ palette: p, active, dim, reduced }: LandmarkProps) {
       const diff = Math.atan2(Math.sin(at.heading - heading.current), Math.cos(at.heading - heading.current));
       heading.current = t < 0.02 || reduced ? at.heading : heading.current + diff * (1 - Math.exp(-tick(delta) * 12));
       g.rotation.y = heading.current;
+    }
+    const g2 = mover2.current;
+    if (g2) {
+      const t2 = span(t, 0.16, 1);
+      g2.visible = active && t2 > 0;
+      const at = along(GARAGE_PATH_2, smooth(t2));
+      g2.position.set(at.x, at.y + 0.02, at.z);
+      const diff = Math.atan2(Math.sin(at.heading - heading2.current), Math.cos(at.heading - heading2.current));
+      heading2.current = t2 < 0.02 || reduced ? at.heading : heading2.current + diff * (1 - Math.exp(-tick(delta) * 12));
+      g2.rotation.y = heading2.current;
     }
     if (arm.current) {
       const open = active ? smooth(span(t, 0, 0.09)) * (1 - smooth(span(t, 0.22, 0.32))) : 0;
@@ -149,6 +176,9 @@ export function Garage({ palette: p, active, dim, reduced }: LandmarkProps) {
       </group>
       <group ref={mover} visible={false}>
         <Model model={arrival} receive={false} />
+      </group>
+      <group ref={mover2} visible={false}>
+        <Model model={second} receive={false} />
       </group>
     </group>
   );
