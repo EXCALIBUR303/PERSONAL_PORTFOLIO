@@ -320,7 +320,12 @@ test.describe("Creative home: the studio map", () => {
     await expect(
       page.locator('[data-station="mazera-ai-maze-solver"]'),
     ).toHaveAttribute("aria-pressed", "true");
-    // A station with no exhibit offers none.
+    // A station with no exhibit offers none. (The camera is on Mazera; step
+    // back to the whole world to reach a station in another district.)
+    await page
+      .getByRole("group", { name: "District" })
+      .getByRole("button", { name: /^All districts/ })
+      .click();
     await page
       .locator(".c-map")
       .getByRole("button", { name: "Student Burnout AI" })

@@ -122,10 +122,65 @@ test("Mazera and Private Local AI experiments recompute from real inputs", async
   await expect(page.locator(".ch-order li")).toHaveCount(5);
 });
 
-test("the Studio building is a link to the About notebook", async ({ page }) => {
+test("the Studio opens a panel with the way to About, the bench and the passport", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("link", { name: /The Studio/ })).toHaveAttribute("href", "#about");
+  await page.locator(".c-map").getByRole("button", { name: /The Studio/ }).click();
+  const panel = page.getByRole("complementary", { name: "The Studio" });
+  await expect(panel).toBeVisible();
+  await expect(panel.getByRole("link", { name: /The person behind the experiments/ })).toHaveAttribute("href", "#about");
+  await expect(panel).toContainText("On the bench");
+  await expect(panel).toContainText("0 of 20 stations opened and 0 of 6 challenges tried");
+  await panel.getByRole("button", { name: /^Algorithms/ }).click();
+  await expect(page.locator(".c-map")).toHaveAttribute("data-focus", "algorithms");
   await expect(page.locator("#about h2")).toContainText("The person behind");
+});
+
+test("the camera follows district focus and station selection, and Escape steps back out", async ({ page }) => {
+  await page.goto("/");
+  const stage = page.locator(".w-stage");
+  await expect(stage).toHaveAttribute("data-shot", "overview");
+  await page.getByRole("group", { name: "District" }).getByRole("button", { name: /^Systems/ }).click();
+  await expect(stage).toHaveAttribute("data-shot", "district");
+  await page.locator('[data-station="aura"]').click();
+  await expect(stage).toHaveAttribute("data-shot", "station");
+  await expect(page.locator(".c-brief h2")).toHaveText("AURA");
+  await page.keyboard.press("Escape");
+  await expect(stage).toHaveAttribute("data-shot", "district");
+  await expect(page.locator('[data-station="aura"]')).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(stage).toHaveAttribute("data-shot", "overview");
+  await expect(page.locator(".c-map")).toHaveAttribute("data-focus", "all");
+});
+
+test("entering an exhibit from the world opens it, and Back returns to the selected station", async ({ page }) => {
+  await page.goto("/");
+  await page.locator('[data-station="private-local-ai"]').click();
+  await page.getByRole("button", { name: /Enter exhibit/ }).click();
+  await expect(page.locator("#ex-title")).toHaveText("The Evidence Vault");
+  await page.goBack();
+  await expect(page.locator(".ex")).toHaveCount(0);
+  await expect(page.locator('[data-station="private-local-ai"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".w-stage")).toHaveAttribute("data-shot", "station");
+  await expect(page.locator('[data-station="private-local-ai"]')).toBeFocused();
+});
+
+test("without WebGL, or with ?world=2d, the map is the illustrated 2D campus", async ({ page }) => {
+  await page.goto("/?world=2d");
+  await expect(page.locator('.c-map[data-engine="2d"]')).toBeVisible();
+  await expect(page.locator(".c-plate")).toHaveCount(3);
+  await expect(page.locator(".c-pin")).toHaveCount(20);
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type: string, ...args: unknown[]) {
+      if (type === "webgl" || type === "webgl2") return null;
+      return original.apply(this, [type, ...args] as Parameters<typeof original>);
+    } as typeof original;
+  });
+  await page.goto("/");
+  await expect(page.locator('.c-map[data-engine="2d"]')).toBeVisible();
+  await expect(page.locator(".c-map canvas")).toHaveCount(0);
+  await page.locator('[data-station="aura"]').click();
+  await expect(page.locator(".c-brief h2")).toHaveText("AURA");
 });
 
 test("selection survives a trip to a project page and back", async ({ page }) => {
