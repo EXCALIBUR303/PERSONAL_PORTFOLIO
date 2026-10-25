@@ -325,14 +325,14 @@ export default function StudioMap() {
           </label>
           <div className="c-tools-group c-view-toggle" role="group" aria-label="Show stations as">
             <button type="button" aria-pressed={saved.view === "map"} onClick={() => update({ view: "map" })}>
-              <MapIcon size={14} aria-hidden="true" /> Map
+              <MapIcon size={14} aria-hidden="true" /> <span className="c-view-label">Map</span>
             </button>
             <button type="button" aria-pressed={saved.view === "list"} onClick={() => update({ view: "list" })}>
-              <List size={14} aria-hidden="true" /> List
+              <List size={14} aria-hidden="true" /> <span className="c-view-label">List</span>
             </button>
           </div>
           <button type="button" className="c-surprise" onClick={nextUnexplored} hidden={mapHidden}>
-            <Compass size={16} aria-hidden="true" /> Next unexplored station
+            <Compass size={16} aria-hidden="true" /> Next<span className="c-surprise-rest"> unexplored station</span>
           </button>
         </div>
 

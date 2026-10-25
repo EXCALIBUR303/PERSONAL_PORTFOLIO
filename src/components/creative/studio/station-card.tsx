@@ -78,12 +78,6 @@ export function StationCard({
           <span className="sr-only"> {claimClassNote[item.claimClass]}</span>
         </p>
       )}
-      {station.tier !== "exhibit" && (
-        <figure className="c-brief-sketch">
-          <MiniAnim kind={animKindFor(project.slug)} label={`Animated concept sketch of ${project.title}`} />
-          <figcaption className="mono">Concept sketch, not the project running.</figcaption>
-        </figure>
-      )}
       {station.note && <p className="c-brief-note">{station.note}</p>}
       {station.tier === "exhibit" && station.exhibit && (
         <p className="c-brief-exhibit mono">Exhibit: {station.exhibit}</p>
@@ -110,6 +104,37 @@ export function StationCard({
           </a>
         )}
       </div>
+      <details className="c-brief-more">
+        <summary className="mono">More about this project</summary>
+        <div className="c-brief-more-body">
+          <h3>Problem</h3>
+          <p>{project.problem}</p>
+          <h3>What I built</h3>
+          <p>{project.solution}</p>
+          <h3>Technologies</h3>
+          <ul className="c-brief-stack">
+            {project.stack.map((t) => (
+              <li key={t}>{t}</li>
+            ))}
+          </ul>
+          {project.limitations.length > 0 && (
+            <>
+              <h3>Limits</h3>
+              <ul className="c-brief-limits">
+                {project.limitations.map((l) => (
+                  <li key={l}>{l}</li>
+                ))}
+              </ul>
+            </>
+          )}
+          {station.tier !== "exhibit" && (
+            <figure className="c-brief-sketch">
+              <MiniAnim kind={animKindFor(project.slug)} label={`Animated concept sketch of ${project.title}`} />
+              <figcaption className="mono">Concept sketch, not the project running.</figcaption>
+            </figure>
+          )}
+        </div>
+      </details>
       <details className="c-brief-route">
         <summary className="mono">
           The full page, in four steps

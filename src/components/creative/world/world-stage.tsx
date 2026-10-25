@@ -63,7 +63,7 @@ type Props = {
 };
 
 /** Width the docked panel takes from the stage (its CSS width plus margins). */
-const PANEL = 372 + 28;
+const PANEL = 328 + 28;
 const proj = new Projector();
 type Placed = { slot: HTMLElement; slug: string; x: number; y: number; depth: number; visible: boolean };
 

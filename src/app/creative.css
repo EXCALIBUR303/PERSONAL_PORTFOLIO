@@ -698,9 +698,9 @@ html[data-mode="creative"] .portfolio-root {
   }
   .c-brief-tag {
     margin: 4px 0 0;
-    font-family: var(--font-display);
-    font-style: italic;
-    font-size: 19px;
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.4;
     color: var(--c-graphite);
   }
   .c-brief p {
