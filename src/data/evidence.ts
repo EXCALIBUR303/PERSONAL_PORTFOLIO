@@ -280,7 +280,7 @@ export const evidence: Record<string, ProjectEvidence> = {
       "Frontend typecheck passes",
     ],
     read: [
-      "A versioned bridge with 44 request methods and 18 push events",
+      "A versioned bridge with 52 request methods and 18 push events",
       "A provider-neutral AI service and on-device speech",
     ],
     notChecked: [

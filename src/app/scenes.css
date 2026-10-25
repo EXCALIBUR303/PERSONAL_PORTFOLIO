@@ -892,3 +892,11 @@ html[data-mode] .portfolio-root {
     min-height: 44px;
   }
 }
+
+/* AURA stage: a little taller on wide screens so the zones read at 1280 px. */
+@media (min-width: 1000px) {
+  html[data-mode] .portfolio-root .s3-aura .s3-stage {
+    aspect-ratio: 4 / 3;
+    max-height: 520px;
+  }
+}

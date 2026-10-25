@@ -20,7 +20,9 @@ const LIME = "#d9f542";
 const PAPER = "#fbfaf5";
 
 const framing: Framing = {
-  pro: { position: [9.5, 7.5, 9.5], target: [0, 0.4, 0] },
+  // Turned about 20 degrees from the deck diagonal, so the companion at the centre
+  // does not hide the hardware lab standing behind it.
+  pro: { position: [5.7, 7.5, 12.2], target: [0, 0.4, 0] },
   creative: { position: [-6.5, 4.2, 10.5], target: [0, 0.9, 0] },
 };
 
