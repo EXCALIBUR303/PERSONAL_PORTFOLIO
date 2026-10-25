@@ -14,8 +14,8 @@ export const preloadCanvas = () => VaultCanvas.preload();
 
 const notes = [
   "The notes are cut into passages, each remembering its file and section or page.",
-  "Each passage gets a keyword (BM25) score, the blue bar, and a meaning score, the orange bar. *Here the meaning score is word overlap standing in for embeddings.",
-  "The two scores are averaged and the passages ranked. Averaging is this demo's choice.",
+  "Each passage gets a keyword (BM25) score, the blue bar, and a meaning score, the orange bar. *The meaning match here is a word-overlap stand-in; no embedding model runs.",
+  "The two rankings are fused with weighted Reciprocal Rank Fusion, as the project does: 1.0 / (20 + meaning rank) + 0.5 / (20 + keyword rank), after dropping keyword hits below 0.35 of the best. The passages are then ordered by that fused score.",
   "The best passage is wrapped as untrusted text, so instructions inside a document are treated as data.",
   "The answer is the passage itself, quoted with its source. In the real app a local model writes the answer and cites it.",
 ];
@@ -33,7 +33,7 @@ export default function RetrievalScene() {
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const scored = useMemo(() => scoreQuestion(q), [q]);
-  const top = useMemo(() => [...scored].sort((a, b) => b.total - a.total)[0], [scored]);
+  const top = useMemo(() => scored.find((s) => s.place === 0)!, [scored]);
   const pick = selected !== null ? scored[selected] : null;
   const [moving, setMoving] = useState(false);
   const go = (next: number) => {
@@ -78,17 +78,17 @@ export default function RetrievalScene() {
       )}
       <p className="lz-note s3-selection" aria-live="polite">
         {pick
-          ? `${pick.source}: “${pick.text}”${step >= 1 ? ` Keyword ${pick.keyword.toFixed(2)}, meaning* ${pick.dense.toFixed(2)}, combined ${pick.total.toFixed(2)}.` : ""}`
+          ? `${pick.source}: “${pick.text}”${step >= 1 ? ` Keyword ${pick.keyword.toFixed(2)}, meaning* ${pick.dense.toFixed(2)}, fused ${pick.total.toFixed(2)} of the best.` : ""}`
           : "Select a passage in the chamber to read it."}
       </p>
       {step >= 1 && step < 3 && (
         <table className="fl-table">
           <caption className="sr-only">Passage scores for this question</caption>
           <thead>
-            <tr><th scope="col">Passage</th><th scope="col">Keyword</th><th scope="col">Meaning*</th>{step >= 2 && <th scope="col">Combined</th>}</tr>
+            <tr><th scope="col">Passage</th><th scope="col">Keyword</th><th scope="col">Meaning*</th>{step >= 2 && <th scope="col">Fused</th>}</tr>
           </thead>
           <tbody>
-            {[...scored].sort((a, b) => (step >= 2 ? b.total - a.total : 0)).map((s) => (
+            {[...scored].sort((a, b) => (step >= 2 ? a.place - b.place : 0)).map((s) => (
               <tr key={s.source} data-top={step >= 2 && s === top ? "" : undefined}>
                 <th scope="row">{s.source}</th>
                 <td>{s.keyword.toFixed(2)}</td>

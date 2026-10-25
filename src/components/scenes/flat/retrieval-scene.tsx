@@ -7,7 +7,7 @@ export default function RetrievalFlat() {
   const [q, setQ] = useState(0);
   const [step, setStep] = useState(0);
   const scored = useMemo(() => {
-    return [...scoreQuestion(q)].sort((a, b) => b.total - a.total);
+    return [...scoreQuestion(q)].sort((a, b) => a.place - b.place);
   }, [q]);
   const top = scored[0];
   const list = step >= 2 ? scored : scoreQuestion(q);
@@ -38,7 +38,7 @@ export default function RetrievalFlat() {
                 <div className="fl-scores mono">
                   <span>keyword {p.keyword.toFixed(2)}</span>
                   <span>meaning* {p.dense.toFixed(2)}</span>
-                  {step >= 2 && <b>combined {p.total.toFixed(2)}</b>}
+                  {step >= 2 && <b>fused {p.total.toFixed(2)}</b>}
                 </div>
               )}
             </li>
@@ -57,8 +57,8 @@ export default function RetrievalFlat() {
       <p className="lz-note">
         {[
           "The notes are cut into passages, each remembering its file and section or page.",
-          "Each passage gets a keyword (BM25) score and a meaning score. *Here the meaning score is word overlap standing in for embeddings.",
-          "The two scores are averaged and the passages ranked. Averaging is this demo's choice.",
+          "Each passage gets a keyword (BM25) score and a meaning score. *The meaning match here is a word-overlap stand-in; no embedding model runs.",
+          "The two rankings are fused with weighted Reciprocal Rank Fusion, as the project does: 1.0 / (20 + meaning rank) + 0.5 / (20 + keyword rank), after dropping keyword hits below 0.35 of the best. The passages are then ordered by that fused score.",
           "The best passage is wrapped as untrusted text, so instructions inside a document are treated as data.",
           "The answer is the passage itself, quoted with its source. In the real app a local model writes the answer and cites it.",
         ][step]}

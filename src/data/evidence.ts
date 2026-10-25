@@ -253,7 +253,10 @@ export const evidence: Record<string, ProjectEvidence> = {
   },
   "private-local-ai": {
     claimClass: "illustrative walkthrough",
-    ran: ["301 tests pass (fake embedder)"],
+    ran: [
+      "301 tests pass (fake embedder)",
+      "The scene's rank fusion matches the project's own code on its sample passages",
+    ],
     read: [
       "Weighted rank fusion of keyword and meaning matches; retrieved text is fenced as untrusted",
     ],

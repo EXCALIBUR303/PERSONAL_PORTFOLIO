@@ -1,0 +1,163 @@
+{
+ "project_commit": "091da75",
+ "constants": {
+  "DENSE_WEIGHT": 1.0,
+  "LEXICAL_WEIGHT": 0.5,
+  "RRF_K": 20.0,
+  "LEXICAL_FLOOR": 0.35,
+  "MAX_DF_RATIO": 0.5,
+  "MIN_DOCS_FOR_DF_GUARD": 5
+ },
+ "questions": [
+  {
+   "question": "When do the lab doors lock?",
+   "rows": [
+    {
+     "source": "travel-notes.md \u00a7 Visa",
+     "bm25": 0.0,
+     "standin": 0.0,
+     "fused": 0.047619047619047616,
+     "denseRank": 1,
+     "lexicalRank": null,
+     "place": 1
+    },
+    {
+     "source": "travel-notes.md \u00a7 Packing",
+     "bm25": 0.0,
+     "standin": 0.0,
+     "fused": 0.045454545454545456,
+     "denseRank": 2,
+     "lexicalRank": null,
+     "place": 2
+    },
+    {
+     "source": "lab-handbook.pdf \u00b7 p. 2",
+     "bm25": 4.116779327392578,
+     "standin": 0.5773502691896257,
+     "fused": 0.07500000000000001,
+     "denseRank": 0,
+     "lexicalRank": 0,
+     "place": 0
+    },
+    {
+     "source": "lab-handbook.pdf \u00b7 p. 4",
+     "bm25": 0.0,
+     "standin": 0.0,
+     "fused": 0.043478260869565216,
+     "denseRank": 3,
+     "lexicalRank": null,
+     "place": 3
+    },
+    {
+     "source": "budget.csv \u00b7 row 7",
+     "bm25": 0.0,
+     "standin": 0.0,
+     "fused": 0.041666666666666664,
+     "denseRank": 4,
+     "lexicalRank": null,
+     "place": 4
+    }
+   ]
+  },
+  {
+   "question": "What should I pack for the trip?",
+   "rows": [
+    {
+     "source": "travel-notes.md \u00a7 Visa",
+     "bm25": 0.0,
+     "standin": 0.0,
+     "fused": 0.047619047619047616,
+     "denseRank": 1,
+     "lexicalRank": null,
+     "place": 1
+    },
+    {
+     "source": "travel-notes.md \u00a7 Packing",
+     "bm25": 1.4454253911972046,
+     "standin": 0.25,
+     "fused": 0.07500000000000001,
+     "denseRank": 0,
+     "lexicalRank": 0,
+     "place": 0
+    },
+    {
+     "source": "lab-handbook.pdf \u00b7 p. 2",
+     "bm25": 0.0,
+     "standin": 0.0,
+     "fused": 0.045454545454545456,
+     "denseRank": 2,
+     "lexicalRank": null,
+     "place": 2
+    },
+    {
+     "source": "lab-handbook.pdf \u00b7 p. 4",
+     "bm25": 0.0,
+     "standin": 0.0,
+     "fused": 0.043478260869565216,
+     "denseRank": 3,
+     "lexicalRank": null,
+     "place": 3
+    },
+    {
+     "source": "budget.csv \u00b7 row 7",
+     "bm25": 0.0,
+     "standin": 0.0,
+     "fused": 0.041666666666666664,
+     "denseRank": 4,
+     "lexicalRank": null,
+     "place": 4
+    }
+   ]
+  },
+  {
+   "question": "How much is the grocery budget?",
+   "rows": [
+    {
+     "source": "travel-notes.md \u00a7 Visa",
+     "bm25": 0.0,
+     "standin": 0.0,
+     "fused": 0.047619047619047616,
+     "denseRank": 1,
+     "lexicalRank": null,
+     "place": 1
+    },
+    {
+     "source": "travel-notes.md \u00a7 Packing",
+     "bm25": 0.0,
+     "standin": 0.0,
+     "fused": 0.045454545454545456,
+     "denseRank": 2,
+     "lexicalRank": null,
+     "place": 2
+    },
+    {
+     "source": "lab-handbook.pdf \u00b7 p. 2",
+     "bm25": 0.0,
+     "standin": 0.0,
+     "fused": 0.043478260869565216,
+     "denseRank": 3,
+     "lexicalRank": null,
+     "place": 3
+    },
+    {
+     "source": "lab-handbook.pdf \u00b7 p. 4",
+     "bm25": 0.0,
+     "standin": 0.0,
+     "fused": 0.041666666666666664,
+     "denseRank": 4,
+     "lexicalRank": null,
+     "place": 4
+    },
+    {
+     "source": "budget.csv \u00b7 row 7",
+     "bm25": 2.6122891902923584,
+     "standin": 0.3651483716701107,
+     "fused": 0.07500000000000001,
+     "denseRank": 0,
+     "lexicalRank": 0,
+     "place": 0
+    }
+   ]
+  }
+ ]
+}

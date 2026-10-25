@@ -151,7 +151,7 @@ export default function VaultCanvas({
 }) {
   const n = scored.length;
   const rank = useMemo(() => {
-    const order = scored.map((s, i) => i).sort((a, b) => scored[b].total - scored[a].total);
+    const order = scored.map((s, i) => i).sort((a, b) => scored[a].place - scored[b].place);
     return order.reduce<number[]>((r, idx, place) => ((r[idx] = place), r), []);
   }, [scored]);
   const topIndex = rank.indexOf(0);
