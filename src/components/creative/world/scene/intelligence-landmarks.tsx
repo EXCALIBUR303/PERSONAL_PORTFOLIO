@@ -437,10 +437,10 @@ function blueprintSheet(p: { card: THREE.Material; blueprint: THREE.Material }, 
 
 function useInk() {
   const ink = useMemo(
-    () => new THREE.LineDashedMaterial({ color: "#2f4bff", dashSize: 0.05, gapSize: 0.035, transparent: true, opacity: 0.8 }),
+    () => new THREE.LineDashedMaterial({ color: "#2f4bff", dashSize: 0.05, gapSize: 0.035, transparent: true, opacity: 1 }),
     [],
   );
-  const solid = useMemo(() => new THREE.LineBasicMaterial({ color: "#2f4bff", transparent: true, opacity: 0.9 }), []);
+  const solid = useMemo(() => new THREE.LineBasicMaterial({ color: "#2f4bff", transparent: true, opacity: 1 }), []);
   useEffect(
     () => () => {
       ink.dispose();

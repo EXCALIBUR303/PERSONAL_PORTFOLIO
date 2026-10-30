@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { AZ, DISTRICTS, PLACEMENTS, poseFor, viewBlockedBy, type Stage } from "../src/components/creative/world/layout";
+import { Projector } from "../src/components/creative/world/camera";
 
 /*
  * Camera framings: every station must be in view (nothing between the camera and
@@ -44,4 +45,25 @@ test("the blocking check can fire", () => {
     if (Math.abs(pose.az - (AZ + DISTRICTS[p.district].turn)) > 1e-6) turned++;
   }
   console.log(`stations framed with a turn to clear the view: ${turned}`);
+});
+
+test("a portrait phone overview keeps the Studio and every district in view", () => {
+  for (const [w, h] of [[342, 390], [360, 560], [390, 640]]) {
+    const stage: Stage = { width: w, height: h, insetRight: 0 };
+    const pose = poseFor({ kind: "overview" }, stage);
+    const proj = new Projector();
+    proj.set(pose, w, h);
+    const centres: [string, [number, number, number]][] = [
+      ["studio", [0, 1, 0]],
+      ...(Object.keys(DISTRICTS) as (keyof typeof DISTRICTS)[]).map((d): [string, [number, number, number]] => [d, DISTRICTS[d].centre]),
+    ];
+    for (const [name, c] of centres) {
+      const p = proj.project(...c);
+      expect(p.visible, `${name} at ${w}x${h}`).toBe(true);
+      expect(p.x, `${name} x at ${w}x${h}`).toBeGreaterThan(10);
+      expect(p.x, `${name} x at ${w}x${h}`).toBeLessThan(w - 10);
+      expect(p.y, `${name} y at ${w}x${h}`).toBeGreaterThan(10);
+      expect(p.y, `${name} y at ${w}x${h}`).toBeLessThan(h - 10);
+    }
+  }
 });

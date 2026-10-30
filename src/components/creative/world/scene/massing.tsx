@@ -107,8 +107,8 @@ function buildIntelligence(p: Palette) {
   // Strata under the whole island, then the court floor, the terrace and the rim over them.
   k.slab(p.intBand, circle(0, 0, rim.outer - 0.55, 64), -1.0, 0.5);
   k.slab(p.intDeep, circle(0, 0, rim.outer - 1.5, 56), -1.4, 0.4);
-  terrace(k, circle(0, 0, step.inner + 0.1, 64), -0.5, court.top, g, p.charcoal);
-  terrace(k, circle(0, 0, rim.inner + 0.1, 72), -0.5, step.top, g, p.charcoal, { holes: [circle(0, 0, step.inner, 64).reverse()] });
+  terrace(k, circle(0, 0, step.inner + 0.1, 64), -0.5, court.top, { top: p.intCourt, wall: p.intWall }, p.charcoal);
+  terrace(k, circle(0, 0, rim.inner + 0.1, 72), -0.5, step.top, { top: p.intStep, wall: p.intWall }, p.charcoal, { holes: [circle(0, 0, step.inner, 64).reverse()] });
   terrace(k, circle(0, 0, rim.outer, 72), -0.5, rim.top, g, p.charcoal, { holes: [circle(0, 0, rim.inner, 72).reverse()] });
   k.torus(p.violet, (rim.inner + rim.outer) / 2, 0.012, [0, rim.top + 0.012, 0], { seg: 96 });
   // The court's test field: lavender disc, a violet ring and two finer ones.
@@ -121,7 +121,7 @@ function buildIntelligence(p: Palette) {
   for (const s of ["predictive-maintenance", "quadruped-rl", "aeris", "swarmmind", "sigsmith", "student-burnout-ai", "resume-screener"]) {
     const [x, , z] = local(PLACEMENTS[s], "intelligence");
     const [w, , d] = PLACEMENTS[s].size;
-    k.box(p.intTop, [w + 0.2, 0.03, d + 0.2], [x, step.top, z], { r: 0.02 });
+    k.box(p.intPad, [w + 0.2, 0.03, d + 0.2], [x, step.top, z], { r: 0.02 });
   }
   for (const a of [10, 100, 170, 250, 330]) {
     const r = (a * Math.PI) / 180;

@@ -58,3 +58,26 @@ test("the scene stays inside its budget: 320 draw calls, 180k triangles, without
   // The shadow pass is drawn only on frames where something moves; it must not grow without notice.
   expect(withShadows.calls).toBeLessThanOrEqual(560);
 });
+
+test("in each district view a station's name does not sit on its own landmark", async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/?world=medium");
+  await page.waitForSelector(".w-stage[data-ready]", { state: "attached", timeout: 30000 });
+  const district = page.getByRole("group", { name: "District" });
+  for (const name of [/^Systems/, /^Algorithms/, /^Intelligence/]) {
+    await district.getByRole("button", { name }).click();
+    await page.waitForTimeout(2500);
+    const covered = await page.evaluate(() => {
+      const hits: string[] = [];
+      for (const slot of document.querySelectorAll<HTMLElement>('.w-slot[data-label="on"]')) {
+        const pin = slot.querySelector<HTMLElement>(".w-pin")!.getBoundingClientRect();
+        const plaque = slot.querySelector<HTMLElement>(".w-plaque")!.getBoundingClientRect();
+        const overlap = Math.min(pin.right, plaque.right) - Math.max(pin.left, plaque.left) > 2 && Math.min(pin.bottom, plaque.bottom) - Math.max(pin.top, plaque.top) > 2;
+        if (overlap) hits.push(slot.dataset.slot!);
+      }
+      return hits;
+    });
+    expect(covered, `${name} view`).toEqual([]);
+  }
+});

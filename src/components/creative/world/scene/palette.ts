@@ -63,6 +63,10 @@ export function makePalette() {
     intWall: std("#a99fbc", 0.95),
     intBand: std("#978cb0", 0.96),
     intDeep: std("#83789f", 0.97),
+    // The bowl's terrace and the pads on it: darker than the rim, so white landmarks stand out from them.
+    intStep: std("#cfc5de", 0.94),
+    intPad: std("#b3a6cc", 0.95),
+    intCourt: std("#c4b8d8", 0.94),
     lavender: std("#d5c5f2", 0.82),
     violet: std("#7a4ee6", 0.6),
     // Studio

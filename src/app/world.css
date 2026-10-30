@@ -295,6 +295,12 @@ html[data-mode="creative"] .portfolio-root {
       display: block;
       font-size: 9px;
     }
+    /* On narrower stages the Studio's name stands alone, so it does not reach over the neighbouring island. */
+    @media (max-width: 1099px) {
+      .w-plaque-studio small {
+        display: none;
+      }
+    }
 
     /* District name plates, set on each island's front edge. */
     .w-plate {

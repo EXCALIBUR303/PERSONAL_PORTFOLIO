@@ -69,7 +69,7 @@ const PANEL = 328 + 28;
 const SHEET = 0.46;
 const sheetHost = () => (typeof document === "undefined" ? null : document.querySelector<HTMLElement>(".portfolio-root"));
 const proj = new Projector();
-type Placed = { slot: HTMLElement; slug: string; x: number; y: number; depth: number; visible: boolean };
+type Placed = { slot: HTMLElement; slug: string; x: number; y: number; depth: number; visible: boolean; box: { left: number; top: number; right: number; bottom: number } };
 
 function useTransitionRunning() {
   return useSyncExternalStore(subscribeTransition, () => transition.running, () => false);
@@ -158,18 +158,28 @@ export default function WorldStage({
           continue;
         }
         const { w: pw, h: ph } = plaques.current.get(s.slug) ?? { w: 90, h: 22 };
-        // Under the marker first, then a line lower, then to either side.
+        // Beside or below the landmark's own outline, so a name never sits on the model it names;
+        // then, if the stage is too crowded for that, under the marker as before.
+        const b = s.box;
+        const mid = (b.left + b.right) / 2 - s.x;
         const options: [number, number][] = [
+          [mid, b.bottom + 6 - s.y],
+          [b.right + pw / 2 + 8 - s.x, (b.top + b.bottom) / 2 - ph / 2 - s.y],
+          [b.left - pw / 2 - 8 - s.x, (b.top + b.bottom) / 2 - ph / 2 - s.y],
+          [mid, b.top - ph - 6 - s.y],
           [0, 9],
           [0, 12 + ph],
           [pw / 2 + 12, -ph / 2],
           [-pw / 2 - 12, -ph / 2],
         ];
         let chosen: [number, number] | null = null;
-        for (const [cx, top] of options) {
+        for (const option of options) {
+          const [cx, top] = option;
           const r = { l: s.x + cx - pw / 2 - 3, t: s.y + top - 2, r: s.x + cx + pw / 2 + 3, b: s.y + top + ph + 2 };
           if (r.l < 4 || r.r > w - 4 || r.t < 4 || r.b > h - 4) continue;
           if (taken.some((o) => o.own !== s.slug && r.l < o.r && r.r > o.l && r.t < o.b && r.b > o.t)) continue;
+          // The first four options must clear the landmark's own outline.
+          if (options.indexOf(option) < 4 && r.l < b.right && r.r > b.left && r.t < b.bottom && r.b > b.top) continue;
           chosen = [cx, top];
           taken.push({ ...r, own: s.slug });
           break;
@@ -227,7 +237,7 @@ export default function WorldStage({
         if (visible) delete slot.dataset.off;
         else slot.dataset.off = "";
         screen.set(slug, { x: foot.x, y: foot.y, visible });
-        placed.push({ slot, slug, x: foot.x, y: foot.y, depth: foot.depth, visible });
+        placed.push({ slot, slug, x: foot.x, y: foot.y, depth: foot.depth, visible, box: b });
       }
       for (const plate of plates.current) {
         const id = plate.dataset.plate as District;

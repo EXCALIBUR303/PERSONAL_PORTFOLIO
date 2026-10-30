@@ -192,6 +192,17 @@ export const plateOf = (d: District): Vec3 => PLATES[d].at;
 function districtPoints(d: District, pad = 0): Vec3[] {
   const f = DISTRICTS[d];
   const pts: Vec3[] = [];
+  if (d === "algorithms") {
+    // Its plates and pier, not the box round them: the island is a graph with empty corners.
+    const squares: [number, number, number][] = [
+      ...local.algorithms.map(([slug, x, , z]): [number, number, number] => [x, z, ALGORITHMS_PLATES[slug] ?? 1.4]),
+      [ALGORITHMS_PIER.x, ALGORITHMS_PIER.z, ALGORITHMS_PIER.half],
+    ];
+    for (const [x, z, h] of squares)
+      for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]])
+        for (const y of f.span) pts.push([f.centre[0] + x + sx * (h + pad), f.centre[1] + y, f.centre[2] + z + sz * (h + pad)]);
+    return pts;
+  }
   const ring: [number, number][] = f.round
     ? Array.from({ length: 8 }, (_, i) => [Math.cos((i * Math.PI) / 4), Math.sin((i * Math.PI) / 4)])
     : [
@@ -345,17 +356,19 @@ export function viewBlockedBy(pose: Pose, slug: string): string | null {
 /** The turns tried, in order, when the straight-on framing is blocked: small, then larger, either way, then a steeper look. */
 const TURNS = [0, 12, -12, 24, -24, 36, -36].map(deg);
 
+/** How far a portrait stage turns the overview so the archipelago's long axis runs up the screen. */
+const PORTRAIT_TURN = 62;
+
 export function poseFor(shot: Shot, stage: Stage): Pose {
   const aspect = stage.width / stage.height;
   const portrait = aspect < 0.95;
   switch (shot.kind) {
     case "overview": {
       if (portrait) {
-        // A phone frames the Studio with the near edge of each district round it;
-        // the district buttons and the station strips below take the visitor further.
-        const hub = [...studioPoints(5.2)];
-        const base: Pose = { target: [0, 0.6, 0], dist: 40, az: AZ, el: deg(52), fov: FOV };
-        return fit(hub, base, { ...stage, insetRight: 0 }, 0.02, 0.04);
+        // A phone shows the whole archipelago, turned so its long axis runs up the screen
+        // and seen from higher up, instead of cropping the far districts.
+        const base: Pose = { target: centreOf(WORLD_POINTS), dist: 60, az: AZ + deg(PORTRAIT_TURN), el: deg(60), fov: FOV };
+        return fit(WORLD_POINTS, base, { ...stage, insetRight: 0 }, 0.04, 0.05);
       }
       // Squarer stages look down a little more steeply, so the world uses their height.
       const el = deg(48 + 12 * Math.min(1, Math.max(0, (1.6 - aspect) / 0.6)));
