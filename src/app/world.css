@@ -444,6 +444,65 @@ html[data-mode="creative"] .portfolio-root {
       overflow: auto;
       overscroll-behavior: contain;
     }
+
+    /*
+     * Chrome that sits on the world speaks the world's language: paper with a fine ink line and a soft, layered
+     * lift, as a model's labels do, instead of the page's hard offset shadow. The loud treatment is kept for what
+     * the visitor is pointing at (the hovered plaque, the selected one) and for the panel's actions, so the
+     * 3D leads and the interface answers it.
+     */
+    & {
+      --w-line: rgb(23 23 29 / 0.5);
+      --w-lift:
+        0 1px 0 rgb(255 255 255 / 0.75) inset, 0 1px 2px rgb(32 40 52 / 0.22), 0 6px 16px -4px rgb(32 40 52 / 0.2);
+    }
+    .w-plaque,
+    .w-plate {
+      border-width: 1px;
+      border-color: var(--w-line);
+      box-shadow: var(--w-lift);
+    }
+    .w-plaque {
+      border-radius: 8px;
+      font-weight: 650;
+    }
+    .w-plate {
+      border-radius: 12px;
+      padding: 6px 12px 7px;
+      background: rgb(255 253 247 / 0.88);
+    }
+    .w-pin:hover ~ .w-plaque,
+    .w-pin:focus-visible ~ .w-plaque,
+    .w-pin[aria-pressed="true"] ~ .w-plaque,
+    .w-studio:hover ~ .w-plaque-studio,
+    .w-studio:focus-visible ~ .w-plaque-studio,
+    .w-studio[aria-pressed="true"] ~ .w-plaque-studio {
+      border-color: var(--c-ink);
+      box-shadow: 2px 2px 0 var(--c-ink);
+    }
+    .w-plate h3::before {
+      border-width: 1px;
+      border-color: var(--w-line);
+    }
+    .w-back {
+      box-shadow: var(--w-lift);
+      border-width: 1.5px;
+    }
+    .w-stage > .c-brief {
+      border-width: 1.5px;
+      border-color: rgb(23 23 29 / 0.78);
+      border-radius: 16px;
+      box-shadow:
+        0 1px 0 rgb(255 255 255 / 0.8) inset,
+        0 2px 4px rgb(32 40 52 / 0.2),
+        0 18px 40px -12px rgb(32 40 52 / 0.34);
+    }
+    .w-stage > .c-brief::before {
+      height: 6px;
+      border-radius: 14px 14px 0 0;
+      border-bottom-width: 1px;
+      border-bottom-color: var(--w-line);
+    }
   }
 
   /* The Studio panel: welcome, the bench, the passport and the ways to each district. */
