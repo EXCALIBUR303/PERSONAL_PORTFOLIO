@@ -8,6 +8,7 @@ import { stations } from "../../studio/stations";
 import { circle, Kit, Model, useDisposal, type V3 } from "./kit";
 import { useOwn } from "./landmark";
 import { span, useLevel, usePlay } from "./motion";
+import { ambient } from "../ambient";
 import type { Palette } from "./palette";
 
 /*
@@ -260,8 +261,11 @@ export function Studio({
   const glow = useLevel(active, reduced, 0.3, 0.7);
   useFrame(() => {
     const g = glow.current;
-    interior.setValues({ emissiveIntensity: 0.7 + g * 0.35 });
-    spark.setValues({ emissiveIntensity: 0.3 + g * 0.55 });
+    // Ambient (../ambient.ts): the Studio's interior and lime sign breathe slowly, so the centre of the map reads as
+    // the place everything starts from. Only in the full level; under reduced motion or a pause it rests.
+    const breath = ambient.level === "full" ? ambient.amount * (0.5 - 0.5 * Math.cos((ambient.t * Math.PI * 2) / 4.8)) : 0;
+    interior.setValues({ emissiveIntensity: 0.7 + g * 0.35 + breath * 0.16 });
+    spark.setValues({ emissiveIntensity: 0.3 + g * 0.55 + breath * 0.45 });
   });
   return (
     <group>

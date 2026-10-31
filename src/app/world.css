@@ -41,9 +41,10 @@ html[data-mode="creative"] .portfolio-root {
     .w-stage[data-ready] .w-canvas {
       opacity: 1;
     }
-    /* Ambient life without redrawing the 3D: two cloud shadows and a slow sweep of low sun cross the world on
-       the compositor, in plain alpha. They stop while the stage is hidden or an exhibit is open, and are not
-       drawn at all on the lowest tier or under reduced motion. */
+    /* Ambient life without redrawing the 3D: two cloud shadows and a sweep of low sun cross the world on the
+       compositor, in plain alpha, slowly enough to read as weather and quickly enough to be seen within a few
+       seconds. They run on every tier (they cost no 3D drawing), stop while the stage is hidden, an exhibit is
+       open or the visitor has paused motion, and are not drawn at all under reduced motion. */
     .w-drift {
       position: absolute;
       inset: 0;
@@ -63,18 +64,18 @@ html[data-mode="creative"] .portfolio-root {
       top: -10%;
       width: 80%;
       height: 70%;
-      background: radial-gradient(ellipse 50% 50% at 50% 50%, rgb(66 84 112 / 0.11), transparent 100%);
+      background: radial-gradient(ellipse 50% 50% at 50% 50%, rgb(66 84 112 / 0.16), transparent 100%);
       animation-name: w-cloud-a;
-      animation-duration: 110s;
+      animation-duration: 44s;
     }
     .w-drift i:nth-child(2) {
       right: -45%;
       bottom: -20%;
       width: 70%;
       height: 60%;
-      background: radial-gradient(ellipse 50% 50% at 50% 50%, rgb(66 84 112 / 0.09), transparent 100%);
+      background: radial-gradient(ellipse 50% 50% at 50% 50%, rgb(66 84 112 / 0.13), transparent 100%);
       animation-name: w-cloud-b;
-      animation-duration: 150s;
+      animation-duration: 60s;
     }
     .w-drift i:nth-child(3) {
       left: -40%;
@@ -83,10 +84,11 @@ html[data-mode="creative"] .portfolio-root {
       height: 100%;
       background: linear-gradient(112deg, transparent 38%, rgb(255 236 200 / 0.13) 50%, transparent 62%);
       animation-name: w-sweep;
-      animation-duration: 64s;
+      animation-duration: 26s;
     }
-    .w-stage[data-paused] .w-drift i {
-      animation-play-state: paused;
+    .w-stage[data-paused] .w-drift i,
+    &[data-still] .w-drift i {
+      animation-play-state: paused !important;
     }
     .w-vignette {
       position: absolute;
@@ -215,6 +217,28 @@ html[data-mode="creative"] .portfolio-root {
     }
     .w-slot[data-tier="exhibit"] .w-dot {
       background: var(--c-lime);
+    }
+    /* Ambient (components/creative/world/ambient.ts): the explorable stations' markers take turns to send out a
+       soft lime ripple, one at a time round the map (9 stations, one every 2.4 s), so a visitor who has not touched
+       anything sees which stations open into an exhibit. The ripple is drawn where the button already is, so it
+       never drifts from it; it stops while motion is paused and is not drawn under reduced motion. */
+    .w-slot[data-tier="exhibit"] .w-dot::after {
+      content: "";
+      position: absolute;
+      inset: -4px;
+      border: 2px solid var(--c-lime);
+      border-radius: 50%;
+      opacity: 0;
+      pointer-events: none;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .w-stage[data-ready] .w-slot[data-tier="exhibit"]:not([data-off]) .w-dot::after {
+        animation: w-beckon 21.6s cubic-bezier(0.2, 0.7, 0.3, 1) calc(var(--amb-i, 0) * 2.4s) infinite;
+      }
+    }
+    &[data-still] .w-dot::after,
+    .w-stage[data-paused] .w-dot::after {
+      animation-play-state: paused !important;
     }
     .w-slot[data-tier="blueprint"] .w-dot {
       background: #f3f7ff;
@@ -1017,5 +1041,22 @@ html.has-cursor:has(.w-pin:hover) .cursor-ring > span.is-grown {
   }
   .c-brief {
     animation: none !important;
+  }
+}
+@keyframes w-beckon {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  1.5% {
+    opacity: 1;
+  }
+  9% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
   }
 }

@@ -265,7 +265,6 @@ html[data-mode="creative"] .portfolio-root {
     border-radius: 22px;
     box-shadow: var(--c-shadow);
   }
-
   /* ---------- the station preview ---------- */
   .c-brief {
     position: absolute;

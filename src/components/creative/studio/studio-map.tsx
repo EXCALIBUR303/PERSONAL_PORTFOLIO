@@ -12,6 +12,8 @@ import { districts, toneFor, type District } from "../identity";
 import { worldEngine } from "../world/quality";
 import WorldStage, { screenSpot } from "../world/world-stage";
 import { Map2D } from "./map-2d";
+import { MotionToggle } from "./motion-toggle";
+import { useAmbientPaused } from "../world/ambient";
 import { hubPoint, plateXY, stationPoint } from "./plates";
 import { StationCard } from "./station-card";
 import { StudioCard } from "./studio-card";
@@ -101,6 +103,7 @@ const KEY_DIR: Record<string, Dir> = {
  */
 export default function StudioMap() {
   const reduced = useReducedMotion();
+  const motionPaused = useAmbientPaused();
   const layout = useLayoutMode();
   const wide = layout === "wide";
   const preferred = useEngine();
@@ -336,6 +339,7 @@ export default function StudioMap() {
               <List size={14} aria-hidden="true" /> <span className="c-view-label">List</span>
             </button>
           </div>
+          <MotionToggle />
           <button type="button" className="c-surprise" onClick={nextUnexplored} hidden={mapHidden}>
             <Compass size={16} aria-hidden="true" /> Next<span className="c-surprise-rest"> unexplored station</span>
           </button>
@@ -357,6 +361,7 @@ export default function StudioMap() {
             data-engine={engine}
             data-focus={saved.focus}
             data-entering={entering ? "" : undefined}
+            data-still={motionPaused || undefined}
             style={stageVars}
             onKeyDown={onMapKey}
           >

@@ -191,6 +191,10 @@ export function Connectors() {
       {links.map((l) => (
         <path key={l.d} className="cn-line" d={l.path} />
       ))}
+      {/* Ambient (map-2d.css): a short district-coloured light travels from the Studio along one link at a time. */}
+      {links.map((l, i) => (
+        <path key={`flow-${l.d}`} className="cn-flow" data-district={l.d} d={l.path} pathLength={100} style={{ animationDelay: `${i * 3.4}s` }} />
+      ))}
     </svg>
   );
 }

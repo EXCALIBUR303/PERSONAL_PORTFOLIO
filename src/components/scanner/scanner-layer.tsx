@@ -55,6 +55,9 @@ function prefersLite() {
  */
 export default function ScannerLayer() {
   const webgl = useWebGL();
+  // A software renderer (no GPU, as with hardware acceleration turned off) would draw the particles on the CPU and
+  // stall the transition; it gets the drawn frame only, as the studio map gets its 2D version (world/quality.ts).
+  const gpu = webgl === true && !probeWebGL().software;
   const [load, setLoad] = useState(false);
   useEffect(() => {
     const capable =
@@ -102,7 +105,7 @@ export default function ScannerLayer() {
   }, []);
   return (
     <div className="sc-layer" aria-hidden="true">
-      {load && webgl && <ScannerCanvas />}
+      {load && gpu && <ScannerCanvas />}
       <ScannerFrame />
     </div>
   );

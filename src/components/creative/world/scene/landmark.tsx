@@ -5,6 +5,8 @@ import * as THREE from "three";
 import { PLACEMENTS } from "../layout";
 import type { Kit } from "./kit";
 import { smooth, useLevel } from "./motion";
+import { ambient, seedOf } from "../ambient";
+import { FEATURED } from "./ambient-clock";
 import type { Palette } from "./palette";
 
 /** What every landmark is told: its materials, whether it is the one in focus, and whether a filter dims it. */
@@ -32,8 +34,20 @@ function frameGeometry(w: number, d: number) {
 }
 
 /**
+ * How far a landmark floats either way, in world units (about 1.5 to 2 px at the overview framing on a laptop, so
+ * 3 to 4 px from top to bottom, measured), and how far an explorable one turns either way, in radians (half a degree).
+ */
+const FLOAT = 0.08;
+const SWAY = 0.009;
+
+/**
  * Puts a landmark on its footprint. While it is in focus (hovered, focused or
  * selected) it lifts a little and a lime frame is drawn round it on the ground.
+ *
+ * Ambient motion (../ambient.ts): in the full level every landmark floats slowly on its own period and phase, so no
+ * two move together, and the explorable ones turn a fraction of a degree. The station's button, marker and label
+ * are DOM elements placed from the footprint, not from the moving group, so they never move with it (the markers'
+ * turn-taking ripple is in world.css).
  */
 export function Placed({ slug, active, reduced, children }: { slug: string; active: boolean; reduced: boolean; children: ReactNode }) {
   const p = PLACEMENTS[slug];
@@ -51,9 +65,21 @@ export function Placed({ slug, active, reduced, children }: { slug: string; acti
     },
     [frame, ink],
   );
+  const own = useMemo(() => {
+    const seed = seedOf(slug);
+    return { period: 5.8 + seed * 3.2, phase: seed * Math.PI * 2, turn: 11 + seed * 5, featured: FEATURED.indexOf(slug) };
+  }, [slug]);
   useFrame(() => {
     const t = smooth(lift.current);
-    if (group.current) group.current.position.y = p.base[1] + (reduced ? 0 : t * 0.06);
+    const a = ambient.amount;
+    const full = ambient.level === "full" && a > 0;
+    const s = ambient.t;
+    const float = full ? a * FLOAT * Math.sin((s * Math.PI * 2) / own.period + own.phase) : 0;
+    const g = group.current;
+    if (g) {
+      g.position.y = p.base[1] + (reduced ? 0 : t * 0.06) + float;
+      g.rotation.y = full && ambient.rich && own.featured >= 0 ? a * SWAY * Math.sin((s * Math.PI * 2) / own.turn + own.phase * 0.7) : 0;
+    }
     ink.setValues({ opacity: t * 0.95 });
   });
   return (

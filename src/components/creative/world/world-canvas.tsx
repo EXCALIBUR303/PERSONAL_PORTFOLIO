@@ -6,6 +6,8 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { eye } from "./camera";
 import { SETTINGS, type Tier } from "./quality";
 import type { Rig } from "./rig";
+import { ambient, ambientLevel, ambientRate, markBusy } from "./ambient";
+import { AmbientClock } from "./scene/ambient-clock";
 import { Bridges } from "./scene/bridges";
 import { CHART, Grounding, Sheet, SUN } from "./scene/ground";
 import { StudyDistrict } from "./scene/massing";
@@ -62,7 +64,10 @@ function CameraMirror({ rig }: { rig: Rig }) {
       fog.near = p.dist * 1.25;
       fog.far = p.dist * 3.4 + 30;
     }
-    if (moving) state.invalidate();
+    if (moving) {
+      markBusy();
+      state.invalidate();
+    }
   }, -1);
   return null;
 }
@@ -90,9 +95,16 @@ function Lights({ shadows }: { shadows: false | 1024 | 2048 }) {
     return light;
   }, [shadows]);
   useEffect(() => () => key.dispose(), [key]);
+  // Ambient: the key light swells and fades by a few per cent over about forty seconds, like a sky with passing
+  // cloud. Only its strength changes (not its direction), so the shadow map stays valid.
+  const sun = useRef<THREE.DirectionalLight>(null);
+  useFrame(() => {
+    const a = ambient.level === "full" && ambient.rich ? ambient.amount : 0;
+    if (sun.current) sun.current.intensity = 3.6 * (1 + a * 0.045 * Math.sin((ambient.t * Math.PI * 2) / 38));
+  });
   return (
     <>
-      <primitive object={key} />
+      <primitive ref={sun} object={key} />
       <hemisphereLight args={["#d6e4f4", "#c7b399", 0.34]} />
       <directionalLight position={[35, 20, 22]} intensity={0.42} color="#bdd2f0" />
       <directionalLight position={[8, 26, -46]} intensity={0.6} color="#fff0dc" />
@@ -168,6 +180,7 @@ function Redraw({ keys }: { keys: unknown[] }) {
   const invalidate = useThree((s) => s.invalidate);
   useEffect(() => {
     markShadows();
+    markBusy();
     invalidate();
     // The keys are the things that change what is drawn.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -400,6 +413,7 @@ export default function WorldCanvas({ rig, tier, hot, selected, matching, visite
       <Redraw keys={[hot, selected, matching, paused, built]} />
       {settings.shadows && <ShadowUpdates size={settings.shadows} />}
       <ContextWatch onLost={onLost} />
+      {warm && <AmbientClock level={ambientLevel(tier, reduced)} shadows={!!settings.shadows} rate={ambientRate()} rich={tier === "high"} />}
       {built >= BUILD_STEPS && <Warmup onReady={ready} />}
       <FirstFrame ready={warm} />
       {warm && <Adapt floor={1} />}

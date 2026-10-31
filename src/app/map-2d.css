@@ -549,4 +549,83 @@ html[data-mode="creative"] .portfolio-root .c-map[data-engine="2d"] {
       font-size: 13px;
     }
   }
+
+  /* ---------- ambient motion (components/creative/world/ambient.ts describes the 3D side) ----------
+     The illustrated map moves a little by itself, on the compositor: a district-coloured light travels from the
+     Studio along one link at a time, the explorable stations take turns to glow, and every landmark floats a pixel
+     or two on its own phase (--amb, set per station). Nothing here runs under reduced motion, and all of it stops
+     while the visitor has paused motion (data-still). */
+  .cn-flow {
+    fill: none;
+    stroke-linecap: round;
+    stroke-width: 7;
+    stroke-dasharray: 9 191;
+    stroke-dashoffset: 8;
+    opacity: 0;
+  }
+  .cn-flow[data-district="systems"] {
+    stroke: #ff7a4d;
+  }
+  .cn-flow[data-district="algorithms"] {
+    stroke: #4f6dff;
+  }
+  .cn-flow[data-district="intelligence"] {
+    stroke: #8f62f2;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .cn-flow {
+      animation: m2-flow 10.2s linear infinite both;
+    }
+    /* The explorable stations float a pixel or two (not on a phone, where the map is a row of cards and a main-thread
+       animation of every glyph costs more than it shows). */
+    @media (min-width: 700px) {
+      .c-slot[data-tier="exhibit"] .c-art {
+        animation: m2-float 7s ease-in-out var(--amb, 0s) infinite alternate;
+      }
+    }
+    .c-slot[data-tier="exhibit"] .c-pin:not([aria-pressed="true"], :hover, :focus-visible) .c-sel {
+      animation: m2-glow 9s ease-in-out var(--amb, 0s) infinite;
+    }
+  }
+  &[data-still] .cn-flow,
+  &[data-still] .c-art,
+  &[data-still] .c-sel {
+    /* !important: the animations above are set by rules of higher specificity, whose shorthand would restart them. */
+    animation-play-state: paused !important;
+  }
+}
+@keyframes m2-flow {
+  0% {
+    stroke-dashoffset: -100;
+    opacity: 0;
+  }
+  3% {
+    opacity: 0.95;
+  }
+  23% {
+    opacity: 0.95;
+  }
+  25.5%,
+  100% {
+    stroke-dashoffset: 8;
+    opacity: 0;
+  }
+}
+@keyframes m2-float {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 0 -2px;
+  }
+}
+@keyframes m2-glow {
+  0%,
+  72%,
+  100% {
+    opacity: 0;
+  }
+  84% {
+    opacity: 0.55;
+  }
 }

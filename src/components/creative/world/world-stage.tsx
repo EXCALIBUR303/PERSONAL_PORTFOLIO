@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type CSSProperties,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
@@ -24,6 +25,8 @@ import { tierWords, type Station } from "../studio/stations";
 import { easeInCubic, easeInOutCubic, easeOutCubic, Projector, type Pose } from "./camera";
 import { boxOf, establishingPose, PLACEMENTS, plateOf, PLATES, poseFor, STUDIO, type Shot, type Stage } from "./layout";
 import { guessTier, readOverride, type Tier } from "./quality";
+import { ambient } from "./ambient";
+import { FEATURED } from "./scene/ambient-clock";
 import { Rig } from "./rig";
 
 /*
@@ -309,6 +312,25 @@ export default function WorldStage({
 
   useEffect(() => rig.subscribe(place), [rig, place]);
 
+  // Ambient motion runs only while the stage is on screen (../world/ambient.ts); scrolling it away lets the canvas
+  // sleep, and bringing it back asks for a frame so the motion picks up where it stopped.
+  useEffect(() => {
+    const el = frame.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        ambient.visible = entry.isIntersecting;
+        if (entry.isIntersecting) ambient.kick?.();
+      },
+      { rootMargin: "120px 0px" },
+    );
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      ambient.visible = true;
+    };
+  }, []);
+
   // Move the camera to the current shot. The first framing is a jump (or a
   // short establishing glide once the world has drawn); after that every
   // change eases, and entering an exhibit flies into the landmark first.
@@ -438,7 +460,7 @@ export default function WorldStage({
             onLost={onFailed}
           />
         )}
-        {ready && tier && tier !== "low" && !reduced && (
+        {ready && tier && !reduced && (
           <div className="w-drift" aria-hidden="true">
             <i />
             <i />
@@ -522,7 +544,15 @@ export default function WorldStage({
                   const isVisited = visited.includes(s.slug);
                   const tabbable = selectedDistrict === d.id ? selected === s.slug : index === 0;
                   return (
-                    <li key={s.slug} className="w-slot" data-slot={s.slug} data-tier={s.tier} data-label="off">
+                    <li
+                      key={s.slug}
+                      className="w-slot"
+                      data-slot={s.slug}
+                      data-tier={s.tier}
+                      data-label="off"
+                      // The explorable stations' markers take turns to ripple (world.css); this is this one's turn.
+                      style={s.tier === "exhibit" ? ({ "--amb-i": FEATURED.indexOf(s.slug) } as CSSProperties) : undefined}
+                    >
                       <button
                         type="button"
                         className="c-pin w-pin"

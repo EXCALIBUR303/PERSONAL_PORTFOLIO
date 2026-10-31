@@ -105,6 +105,8 @@ export function Map2D({
                             left: `${(sx / PLATE.w) * 100}%`,
                             top: `${(sy / PLATE.h) * 100}%`,
                             zIndex: Math.round(sy),
+                            // The ambient motion's phase for this station (map-2d.css), so no two move together.
+                            "--amb": `${(((sx * 7 + sy * 13) % 97) / 97) * -9}s`,
                           } as CSSProperties
                         }
                       >
