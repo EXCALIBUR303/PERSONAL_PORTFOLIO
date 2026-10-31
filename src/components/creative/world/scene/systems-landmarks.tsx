@@ -43,9 +43,14 @@ const GARAGE_PATH_2: V3[] = [
   [-0.45, GL[3], 0.36],
 ];
 
+const LIME_CAR = new THREE.Color("#c8f13b");
+const INK_CAR = new THREE.Color("#1d2027");
+
 export function Garage({ palette: p, active, dim, reduced }: LandmarkProps) {
   const light = useOwn(p.lamp);
   const beacon = useOwn(p.amber);
+  // The first car's own body colour: lime on the road, ink once the database has given it the bay.
+  const first = useOwn(p.lime);
   const sign = useMemo(() => new THREE.MeshStandardMaterial({ map: letterTexture("P", "#2f4bff", "#ffffff"), roughness: 0.6 }), []);
   useEffect(
     () => () => {
@@ -123,9 +128,9 @@ export function Garage({ palette: p, active, dim, reduced }: LandmarkProps) {
   useDisposal(model);
   const arrival = useMemo(() => {
     const k = new Kit();
-    car(k, p, 0, 0, 0, p.lime, "z");
+    car(k, p, 0, 0, 0, first, "z");
     return k.build();
-  }, [p]);
+  }, [p, first]);
   const second = useMemo(() => {
     const k = new Kit();
     car(k, p, 0, 0, 0, p.amber, "z");
@@ -148,6 +153,9 @@ export function Garage({ palette: p, active, dim, reduced }: LandmarkProps) {
     const deciding = active && t < 0.24;
     const tone = active && !deciding ? "#c8f13b" : "#f2b544";
     beacon.setValues({ color: tone, emissive: tone, emissiveIntensity: active ? 1.4 : 0.2 });
+    // Taking the bay turns the first car ink: it is committed, and the second must look elsewhere.
+    const taken = active ? smooth(span(t, 0.86, 1)) : 0;
+    first.setValues({ color: INK_CAR.clone().lerpColors(LIME_CAR, INK_CAR, taken), emissiveIntensity: 0.16 * (1 - taken) });
     const g = mover.current;
     if (g) {
       g.visible = active && t > 0;
@@ -524,6 +532,8 @@ export function BlueprintApi({ palette: p, active, dim, reduced }: LandmarkProps
 }
 
 /* ---------- Cycoil: a used-oil collection kiosk ---------- */
+/** Where the dial, counter and gate lamp sit along the kiosk's east wall. */
+const DIAL_Z = 0.08;
 const DROP_PATH: V3[] = [
   [-0.06, 0.3, -0.2],
   [0.38, 0.3, -0.2],
@@ -560,6 +570,14 @@ export function Kiosk({ palette: p, active, dim, reduced }: LandmarkProps) {
     k.sphere(p.steel, 0.22, [0.6, 0.75, -0.25], { seg: 24, squash: 0.35 });
     k.box(p.glassDark, [0.07, 0.5, 0.02], [0.6, 0.12, -0.035]);
     k.cyl(p.steel, 0.025, 0.46, [0.16, 0.3, -0.2], { rz: Math.PI / 2, centre: true, seg: 10 });
+    // The weighing dial on the kiosk's east wall, the one that faces the street and the tank: a ring and a card
+    // face with five ticks (the needle is animated). The wall is where the camera sees the kiosk from.
+    k.cyl(p.charcoal, 0.095, 0.014, [-0.053, 0.64, DIAL_Z], { rz: Math.PI / 2, centre: true, seg: 28 });
+    k.cyl(p.card, 0.08, 0.016, [-0.05, 0.64, DIAL_Z], { rz: Math.PI / 2, centre: true, seg: 28 });
+    for (let i = 0; i < 5; i++) {
+      const a = -0.9 + i * 0.45;
+      k.box(p.charcoal, [0.006, 0.016, 0.008], [-0.042, 0.64 + Math.cos(a) * 0.062 - 0.008, DIAL_Z + Math.sin(a) * 0.062], { rx: a });
+    }
     return k.build();
   }, [p, screen]);
   useDisposal(model);
@@ -567,9 +585,10 @@ export function Kiosk({ palette: p, active, dim, reduced }: LandmarkProps) {
   const run = usePlay(active, reduced, 2.6);
   const drop = useRef<THREE.Mesh>(null);
   const level = useRef<THREE.Mesh>(null);
+  const needle = useRef<THREE.Group>(null);
   const shown = useRef(0);
   useFrame(() => {
-    // The screen wakes, a drop runs down the pipe (the weighing), the rule gate shows accept,
+    // The screen wakes, a drop runs down the pipe (the weighing, read on the dial), the rule gate shows accept,
     // the counter ticks by one and the tank's level rises a little.
     screen.setValues({ emissiveIntensity: on.current * 0.8 });
     const t = run.current;
@@ -586,6 +605,12 @@ export function Kiosk({ palette: p, active, dim, reduced }: LandmarkProps) {
       const at = along(DROP_PATH, smooth(span(t, 0.05, 0.7)));
       drop.current.position.set(at.x, at.y + 0.045, at.z);
     }
+    if (needle.current) {
+      // Rests at zero (swung left), swings up as the drop passes and settles on a reading: a shape, not a figure.
+      const w = active ? smooth(span(t, 0.1, 0.5)) : 0;
+      const settle = active ? Math.sin(Math.PI * span(t, 0.5, 0.62)) * 0.06 : 0;
+      needle.current.rotation.z = 0.95 - 1.45 * w + settle;
+    }
     if (level.current) {
       const fill = 0.22 + (active ? smooth(span(t, 0.6, 1)) * 0.16 : 0);
       level.current.scale.y = fill;
@@ -598,12 +623,19 @@ export function Kiosk({ palette: p, active, dim, reduced }: LandmarkProps) {
       <mesh ref={drop} visible={false} material={p.brass}>
         <sphereGeometry args={[0.035, 12, 8]} />
       </mesh>
-      <mesh position={[-0.17, 0.5, 0.234]} material={dim ? p.card : counter}>
-        <planeGeometry args={[0.09, 0.09]} />
+      <mesh position={[-0.052, 0.46, DIAL_Z]} rotation={[0, Math.PI / 2, 0]} material={dim ? p.card : counter}>
+        <planeGeometry args={[0.13, 0.13]} />
       </mesh>
-      <mesh position={[-0.17, 0.4, 0.236]} material={dim ? p.card : gate}>
-        <boxGeometry args={[0.07, 0.035, 0.012]} />
+      <mesh position={[-0.052, 0.35, DIAL_Z]} material={dim ? p.card : gate}>
+        <boxGeometry args={[0.012, 0.05, 0.11]} />
       </mesh>
+      <group position={[-0.04, 0.64, DIAL_Z]} rotation={[0, Math.PI / 2, 0]}>
+        <group ref={needle} rotation={[0, 0, 0.95]}>
+          <mesh position={[0, 0.034, 0]} material={dim ? p.card : p.charcoal}>
+            <boxGeometry args={[0.012, 0.072, 0.006]} />
+          </mesh>
+        </group>
+      </group>
       <mesh ref={level} position={[0.6, 0.23, -0.022]} material={dim ? p.card : p.brass}>
         <boxGeometry args={[0.05, 1, 0.012]} />
       </mesh>
@@ -615,7 +647,7 @@ export function Kiosk({ palette: p, active, dim, reduced }: LandmarkProps) {
 /** The street's shuttle lane, in this landmark's own (unscaled) units. */
 const LANE_Z = 1.04;
 /** Six seat lights along the shuttle's window band, filling as it arrives. */
-const SEAT_LIGHTS: Block[] = [-0.35, -0.21, -0.07, 0.07, 0.21, 0.35].map((x) => ({ size: [0.07, 0.07, 0.012], at: [x, 0.275, 0.207] }));
+const SEAT_LIGHTS: Block[] = [-0.35, -0.21, -0.07, 0.07, 0.21, 0.35].map((x) => ({ size: [0.09, 0.09, 0.012], at: [x, 0.275, 0.207] }));
 /** A small bar gauge for the emissions estimate: no figure, only a shape that grows. */
 const SAVED_BARS: Block[] = [
   { size: [0.032, 0.05, 0.012], at: [1.1, 0.415, 0.325] },
