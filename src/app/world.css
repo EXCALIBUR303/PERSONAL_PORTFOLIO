@@ -45,7 +45,13 @@ html[data-mode="creative"] .portfolio-root {
       position: absolute;
       inset: 0;
       pointer-events: none;
-      background: radial-gradient(ellipse 80% 75% at 50% 48%, transparent 58%, rgb(38 44 52 / 0.14));
+      /* Atmosphere, in plain alpha so it costs nothing per frame: a warm sun glow high on the key light's side,
+         a cool sky tone fading in from the top, a warm low haze at the foot, and the vignette. */
+      background:
+        radial-gradient(ellipse 46% 42% at 14% 6%, rgb(255 226 178 / 0.34), transparent 70%),
+        linear-gradient(180deg, rgb(168 192 222 / 0.26), transparent 38%),
+        linear-gradient(0deg, rgb(236 208 170 / 0.16), transparent 22%),
+        radial-gradient(ellipse 80% 75% at 50% 48%, transparent 58%, rgb(38 44 52 / 0.16));
     }
     .w-wait {
       position: absolute;

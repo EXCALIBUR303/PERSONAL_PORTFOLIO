@@ -10,7 +10,7 @@ import { Bridges } from "./scene/bridges";
 import { CHART, Grounding, Sheet, SUN } from "./scene/ground";
 import { StudyDistrict } from "./scene/massing";
 import { markShadows, takeShadows } from "./scene/motion";
-import { disposePalette, makePalette } from "./scene/palette";
+import { disposePalette, makePalette, type Palette } from "./scene/palette";
 import { Studio } from "./scene/studio";
 import { Systems } from "./scene/systems";
 
@@ -70,7 +70,7 @@ function CameraMirror({ rig }: { rig: Rig }) {
 /** Late-afternoon key light from the upper left (40 degrees up), a cool fill from the right and a rim from behind. */
 function Lights({ shadows }: { shadows: false | 1024 | 2048 }) {
   const key = useMemo(() => {
-    const light = new THREE.DirectionalLight("#ffe4c4", 3.6);
+    const light = new THREE.DirectionalLight("#ffdcb2", 3.6);
     light.position.copy(SUN).multiplyScalar(70);
     light.castShadow = !!shadows;
     if (shadows) {
@@ -93,15 +93,19 @@ function Lights({ shadows }: { shadows: false | 1024 | 2048 }) {
   return (
     <>
       <primitive object={key} />
-      <hemisphereLight args={["#e6edf3", "#b9a993", 0.3]} />
-      <directionalLight position={[35, 20, 22]} intensity={0.32} color="#cfdcf0" />
+      <hemisphereLight args={["#d6e4f4", "#c7b399", 0.34]} />
+      <directionalLight position={[35, 20, 22]} intensity={0.42} color="#bdd2f0" />
       <directionalLight position={[8, 26, -46]} intensity={0.6} color="#fff0dc" />
     </>
   );
 }
 
-/** Soft reflections for glass, brass and painted metal, generated (nothing is downloaded). */
-function Reflections() {
+/**
+ * Soft reflections for glass, brass and painted metal, generated (nothing is downloaded). The scene's
+ * environment lights everything faintly; glass and metal take the same map directly, which lets each
+ * choose its own strength, so they shine while plaster and card stay matte.
+ */
+function Reflections({ palette }: { palette: Palette }) {
   const get = useThree((s) => s.get);
   useEffect(() => {
     const { gl, scene } = get();
@@ -109,14 +113,20 @@ function Reflections() {
     const room = new RoomEnvironment();
     const target = pmrem.fromScene(room, 0.04);
     scene.environment = target.texture;
-    scene.environmentIntensity = 0.2;
+    scene.environmentIntensity = 0.24;
+    const shiny = [palette.glass, palette.glassDark, palette.glassClear, palette.steel, palette.brass, palette.roof];
+    for (const m of shiny) {
+      m.envMap = target.texture;
+      m.needsUpdate = true;
+    }
     room.dispose();
     pmrem.dispose();
     return () => {
+      for (const m of shiny) m.envMap = null;
       scene.environment = null;
       target.dispose();
     };
-  }, [get]);
+  }, [get, palette]);
   return null;
 }
 
@@ -346,7 +356,7 @@ export default function WorldCanvas({ rig, tier, hot, selected, matching, visite
       <fog attach="fog" args={[HAZE, 60, 180]} />
       <CameraMirror rig={rig} />
       <Lights shadows={settings.shadows} />
-      {settings.reflections && <Reflections />}
+      {settings.reflections && <Reflections palette={palette} />}
       <Sheet />
       <Grounding />
       <Studio palette={palette} active={hot === "studio" || selected === "studio"} selected={selected === "studio"} reduced={reduced} visited={visited} />
