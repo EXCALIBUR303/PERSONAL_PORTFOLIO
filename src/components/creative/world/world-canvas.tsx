@@ -360,7 +360,7 @@ export default function WorldCanvas({ rig, tier, hot, selected, matching, visite
       <Sheet />
       <Grounding />
       <Studio palette={palette} active={hot === "studio" || selected === "studio"} selected={selected === "studio"} reduced={reduced} visited={visited} />
-      <Bridges palette={palette} />
+      <Bridges palette={palette} dark={hot === "private-local-ai" || selected === "private-local-ai"} reduced={reduced} />
       {built > 1 && <Systems palette={palette} hot={hot} selected={selected} matching={matching} reduced={reduced} />}
       {built > 2 && <StudyDistrict id="algorithms" palette={palette} hot={hot} selected={selected} matching={matching} reduced={reduced} />}
       {built > 3 && <StudyDistrict id="intelligence" palette={palette} hot={hot} selected={selected} matching={matching} reduced={reduced} />}

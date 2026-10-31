@@ -6,8 +6,10 @@ Closes three of the spec gaps recorded in `V6-C3-PHASE7B.md`.
 - **Cycoil:** the weighing is now a dial, not only a lamp. A card-faced dial with five ticks sits on the kiosk's east wall; its needle starts at zero, swings as the drop passes and settles on a reading. It is a shape, with no number, no unit and no currency. The counter plate and the gate lamp moved to the same wall: the awning hid them on the front face from the camera's side.
 - **Size:** the Cycoil counter and gate lamp are about 40 percent larger, and the six Green Mobility seat lights are about 30 percent larger, so they read from the district view.
 
+- **Private Local AI:** while it is hovered or selected, the Systems bridge goes dark: its two lamps go out and its coral edge dims to an unlit brown. Only that bridge has its own materials, so the others stay lit. The note still travels within the vault, not from LifeOS (landmarks do not animate across each other).
+
 ## Plaque contrast
 The quieter plaque outline (ink at half opacity over the cream plaque) works out at about 3.3 to 1 against the plaque face (computed from the colours, not measured in a browser). The plaques are non-interactive labels; the hovered and selected plaques keep the full ink outline.
 
 ## Still open
-Private Local AI's note stays within the vault and the bridge is not shown dark. Safari, Firefox, real phones and integrated GPUs are not checked.
+Private Local AI's note still starts in the vault rather than at LifeOS. Safari, Firefox, real phones and integrated GPUs are not checked.

@@ -1,18 +1,22 @@
 "use client";
 import { useMemo } from "react";
+import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { DISTRICTS, DISTRICT_ORDER, STUDIO } from "../layout";
 import type { District } from "../../identity";
 import { Kit, Model, useDisposal, type V3 } from "./kit";
+import { useOwn } from "./landmark";
+import { useLevel } from "./motion";
 import type { Palette } from "./palette";
 import { bridgeAngle } from "./studio";
 
 /*
  * Slender arched bridges from the Studio's podium to each district. The deck
  * edge carries the district's colour, so the way to each one reads before its
- * name does.
+ * name does. While Private Local AI is in focus the Systems bridge goes dark
+ * (its lamps out, its edge dimmed): nothing leaves the island.
  */
-function deck(k: Kit, p: Palette, edge: THREE.Material, a: V3, b: V3) {
+function deck(k: Kit, p: Palette, edge: THREE.Material, lamp: THREE.Material, a: V3, b: V3) {
   const dx = b[0] - a[0];
   const dz = b[2] - a[2];
   const run = Math.hypot(dx, dz);
@@ -45,16 +49,28 @@ function deck(k: Kit, p: Palette, edge: THREE.Material, a: V3, b: V3) {
       const lx = x + side[0] * 0.43;
       const lz = z + side[1] * 0.43;
       k.box(p.charcoal, [0.024, 0.5, 0.024], [lx, y, lz]);
-      k.sphere(p.lamp, 0.045, [lx, y + 0.53, lz], { seg: 10 });
+      k.sphere(lamp, 0.045, [lx, y + 0.53, lz], { seg: 10 });
     }
   }
 }
 
-export function Bridges({ palette }: { palette: Palette }) {
+const CORAL = new THREE.Color("#ee8466");
+const UNLIT = new THREE.Color("#6d6460");
+
+export function Bridges({ palette, dark, reduced }: { palette: Palette; dark: boolean; reduced: boolean }) {
+  // The Systems bridge has its own lamp and edge, so only it goes dark.
+  const lamp = useOwn(palette.lamp);
+  const edge = useOwn(palette.coral);
+  const off = useLevel(dark, reduced, 0.35, 0.5);
+  useFrame(() => {
+    const k = off.current;
+    lamp.setValues({ emissiveIntensity: 1.3 * (1 - k) });
+    edge.setValues({ color: UNLIT.clone().lerpColors(CORAL, UNLIT, k * 0.9) });
+  });
   const model = useMemo(() => {
     const k = new Kit();
     const edges: Record<District, THREE.Material> = {
-      systems: palette.coral,
+      systems: edge,
       algorithms: palette.powder,
       intelligence: palette.lavender,
     };
@@ -64,10 +80,10 @@ export function Bridges({ palette }: { palette: Palette }) {
       const r = STUDIO.radius - 0.2;
       const start: V3 = [Math.cos(angle) * r, STUDIO.top + 0.02, Math.sin(angle) * r];
       const end: V3 = [f.centre[0] + f.landing[0], f.centre[1] + f.landing[1] + 0.02, f.centre[2] + f.landing[2]];
-      deck(k, palette, edges[id], start, end);
+      deck(k, palette, edges[id], id === "systems" ? lamp : palette.lamp, start, end);
     }
     return k.build();
-  }, [palette]);
+  }, [palette, edge, lamp]);
   useDisposal(model);
   return <Model model={model} receive />;
 }
