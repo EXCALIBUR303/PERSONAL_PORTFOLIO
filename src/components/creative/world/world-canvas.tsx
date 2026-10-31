@@ -168,9 +168,30 @@ function Redraw({ keys }: { keys: unknown[] }) {
 /** Shadows are redrawn at most about 30 times a second: a moving car's shadow does not need more. */
 const SHADOW_INTERVAL = 30;
 
+/**
+ * A caster smaller than a few shadow-map texels leaves a speck nobody can see, but costs a draw call
+ * in the shadow pass all the same. Meshes are checked once, as they appear, because landmarks build in steps.
+ */
+const SHADOW_SPAN = 48;
+const MIN_CAST_TEXELS = 5;
+
+function trimCasters(scene: THREE.Scene, size: number, seen: WeakSet<THREE.Object3D>) {
+  const floor = (SHADOW_SPAN / size) * MIN_CAST_TEXELS;
+  const scale = new THREE.Vector3();
+  scene.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (!m.isMesh || !m.castShadow || seen.has(m) || (m as THREE.InstancedMesh).isInstancedMesh) return;
+    seen.add(m);
+    m.geometry.computeBoundingSphere();
+    m.getWorldScale(scale);
+    if ((m.geometry.boundingSphere?.radius ?? 0) * Math.max(scale.x, scale.y, scale.z) < floor) m.castShadow = false;
+  });
+}
+
 /** Draws the shadow map only on frames where something that casts a shadow has moved. */
-function ShadowUpdates() {
+function ShadowUpdates({ size }: { size: number }) {
   const last = useRef(0);
+  const seen = useRef(new WeakSet<THREE.Object3D>());
   useFrame((state) => {
     if (!takeShadows()) return;
     const now = performance.now();
@@ -181,6 +202,7 @@ function ShadowUpdates() {
       return;
     }
     last.current = now;
+    trimCasters(state.scene, size, seen.current);
     state.gl.shadowMap.needsUpdate = true;
   }, -2);
   return null;
@@ -220,18 +242,22 @@ function Probe({ tier }: { tier: Tier }) {
         const both = read();
         return { scene: scene_, withShadows: both };
       },
-      /** Meshes that cast a shadow, biggest first, to see where the shadow pass spends its calls. */
-      casters: () => {
-        const out: { x: number; y: number; z: number; tris: number; inst: number; r: number }[] = [];
+      /** Meshes that cast a shadow (or every visible mesh), biggest first, to see where the calls and triangles go. */
+      casters: (all = false) => {
+        const owner = (o: THREE.Object3D) => {
+          for (let n: THREE.Object3D | null = o; n; n = n.parent) if (n.name) return n.name;
+          return "";
+        };
+        const out: { of: string; x: number; y: number; z: number; tris: number; inst: number; r: number }[] = [];
         get().scene.traverse((o) => {
           const m = o as THREE.Mesh;
-          if (!m.isMesh || !m.castShadow || !m.visible) return;
+          if (!m.isMesh || (!all && !m.castShadow) || !m.visible) return;
           const g = m.geometry;
           const inst = (m as THREE.InstancedMesh).isInstancedMesh ? (m as THREE.InstancedMesh).count : 1;
           g.computeBoundingSphere();
           const tris = (g.index ? g.index.count : g.attributes.position.count) / 3;
           const p = m.getWorldPosition(new THREE.Vector3());
-          out.push({ x: +p.x.toFixed(1), y: +p.y.toFixed(1), z: +p.z.toFixed(1), tris: Math.round(tris * inst), inst, r: +(g.boundingSphere?.radius ?? 0).toFixed(2) });
+          out.push({ of: owner(m), x: +p.x.toFixed(1), y: +p.y.toFixed(1), z: +p.z.toFixed(1), tris: Math.round(tris * inst), inst, r: +(g.boundingSphere?.radius ?? 0).toFixed(2) });
         });
         return out.sort((a, b) => b.tris - a.tris);
       },
@@ -329,7 +355,7 @@ export default function WorldCanvas({ rig, tier, hot, selected, matching, visite
       {built > 2 && <StudyDistrict id="algorithms" palette={palette} hot={hot} selected={selected} matching={matching} reduced={reduced} />}
       {built > 3 && <StudyDistrict id="intelligence" palette={palette} hot={hot} selected={selected} matching={matching} reduced={reduced} />}
       <Redraw keys={[hot, selected, matching, paused, built]} />
-      <ShadowUpdates />
+      {settings.shadows && <ShadowUpdates size={settings.shadows} />}
       <ContextWatch onLost={onLost} />
       {built >= BUILD_STEPS && <Warmup onReady={ready} />}
       <FirstFrame ready={warm} />

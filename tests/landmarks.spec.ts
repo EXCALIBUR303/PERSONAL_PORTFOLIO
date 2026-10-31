@@ -47,16 +47,16 @@ test("every station can be selected in the 3D world without an error", async ({ 
   expect(errors).toEqual([]);
 });
 
-test("the scene stays inside its budget: 320 draw calls, 180k triangles, without the shadow pass", async ({ page }) => {
+test("the scene stays inside its budget: 320 draw calls, 110k triangles on the medium tier, without the shadow pass", async ({ page }) => {
   await page.goto("/?world=medium");
   await page.waitForSelector(".w-stage[data-ready]", { state: "attached", timeout: 30000 });
   await expect.poll(() => page.evaluate(() => !!(window as unknown as { __world?: object }).__world)).toBe(true);
   await page.waitForTimeout(1500);
   const { scene, withShadows } = await split(page);
   expect(scene.calls).toBeLessThanOrEqual(320);
-  expect(scene.triangles).toBeLessThanOrEqual(180_000);
+  expect(scene.triangles).toBeLessThanOrEqual(110_000);
   // The shadow pass is drawn only on frames where something moves; it must not grow without notice.
-  expect(withShadows.calls).toBeLessThanOrEqual(560);
+  expect(withShadows.calls).toBeLessThanOrEqual(520);
 });
 
 test("in each district view a station's name does not sit on its own landmark", async ({ page }) => {

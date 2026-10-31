@@ -56,7 +56,7 @@ export function Placed({ slug, active, reduced, children }: { slug: string; acti
     ink.setValues({ opacity: t * 0.95 });
   });
   return (
-    <group ref={group} position={p.base} scale={p.scale}>
+    <group ref={group} name={slug} position={p.base} scale={p.scale}>
       <mesh geometry={frame} material={ink} position={[0, 0.012, 0]} renderOrder={2} />
       {children}
     </group>

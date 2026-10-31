@@ -16,6 +16,8 @@ export type Part = { geometry: THREE.BufferGeometry; material: THREE.Material };
 export type LinePart = { geometry: THREE.BufferGeometry; material: THREE.LineBasicMaterial | THREE.LineDashedMaterial };
 
 const unitBox = new THREE.BoxGeometry(1, 1, 1);
+/** A rounded edge smaller than this is under a pixel at the closest framing, so the box stays plain (12 triangles, not hundreds). */
+const MIN_ROUND = 0.02;
 const rounded = new Map<string, THREE.BufferGeometry>();
 function roundedBox(w: number, h: number, d: number, r: number) {
   const key = `${w.toFixed(3)}:${h.toFixed(3)}:${d.toFixed(3)}:${r.toFixed(3)}`;
@@ -69,7 +71,7 @@ export class Kit {
   box(material: THREE.Material, size: V3, pos: V3, o: Turn & { r?: number } = {}) {
     const [w, h, d] = size;
     const rot: V3 = [o.rx ?? 0, o.ry ?? 0, o.rz ?? 0];
-    if (o.r) return this.add(material, roundedBox(w, h, d, o.r), [pos[0], pos[1] + h / 2, pos[2]], rot);
+    if (o.r && o.r >= MIN_ROUND) return this.add(material, roundedBox(w, h, d, o.r), [pos[0], pos[1] + h / 2, pos[2]], rot);
     return this.add(material, unitBox, [pos[0], pos[1] + h / 2, pos[2]], rot, [w, h, d]);
   }
 
