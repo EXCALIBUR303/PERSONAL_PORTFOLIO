@@ -1,5 +1,6 @@
 "use client";
 import { lazyView } from "./lazy-view";
+import { SceneWait } from "../skeleton/primitives";
 import { useState } from "react";
 import { Send } from "lucide-react";
 import { useMode } from "@/components/mode";
@@ -14,7 +15,7 @@ import { Callouts, useCallouts } from "./aura-callouts";
 import { SceneToolbar, useSceneControls } from "./scene-controls";
 import { useWebGL } from "./use-webgl";
 
-const AuraCanvas = lazyView(() => import("./three/aura-canvas"), () => <div className="s3-loading mono">Loading the 3D studio…</div>);
+const AuraCanvas = lazyView(() => import("./three/aura-canvas"), "Loading the 3D studio", "stage");
 /** Fetches the 3D canvas code early, so a scene built during a mode switch is ready at once. */
 export const preloadCanvas = () => AuraCanvas.preload();
 
@@ -125,7 +126,7 @@ export default function AuraScene() {
       ) : webgl === false ? (
         flat
       ) : (
-        <div className="s3-loading mono">Checking for 3D support…</div>
+        <SceneWait label="Checking for 3D support" />
       )}
       <details className="s3-parts-disclosure">
         <summary>

@@ -1,5 +1,6 @@
 "use client";
 import { lazyView } from "./lazy-view";
+import { SceneWait } from "../skeleton/primitives";
 import { useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, RotateCcw } from "lucide-react";
 import { useMode } from "@/components/mode";
@@ -8,7 +9,7 @@ import { questions, scoreQuestion, steps } from "./retrieval-data";
 import { SceneToolbar, useSceneControls } from "./scene-controls";
 import { useWebGL } from "./use-webgl";
 
-const VaultCanvas = lazyView(() => import("./three/vault-canvas"), () => <div className="s3-loading mono">Loading the 3D vault…</div>);
+const VaultCanvas = lazyView(() => import("./three/vault-canvas"), "Loading the 3D vault", "stage");
 /** Fetches the 3D canvas code early, so a scene built during a mode switch is ready at once. */
 export const preloadCanvas = () => VaultCanvas.preload();
 
@@ -74,7 +75,7 @@ export default function RetrievalScene() {
           fallback={<RetrievalFlat />}
         />
       ) : (
-        <div className="s3-loading mono">Checking for 3D support…</div>
+        <SceneWait label="Checking for 3D support" />
       )}
       <p className="lz-note s3-selection" aria-live="polite">
         {pick

@@ -1,5 +1,6 @@
 "use client";
 import { lazyView } from "./lazy-view";
+import { SceneWait } from "../skeleton/primitives";
 import { useCallback, useMemo, useState } from "react";
 import { Footprints } from "lucide-react";
 import { useMode } from "@/components/mode";
@@ -8,7 +9,7 @@ import { SceneToolbar, useSceneControls } from "./scene-controls";
 import { useWebGL } from "./use-webgl";
 import { places, profiles, route, routeSamples, type Place, type Profile } from "./pathable-data";
 
-const CampusCanvas = lazyView(() => import("./three/campus-canvas"), () => <div className="s3-loading mono">Loading the 3D campus…</div>);
+const CampusCanvas = lazyView(() => import("./three/campus-canvas"), "Loading the 3D campus", "stage");
 /** Fetches the 3D canvas code early, so a scene built during a mode switch is ready at once. */
 export const preloadCanvas = () => CampusCanvas.preload();
 
@@ -76,7 +77,7 @@ export default function PathAbleScene() {
           fallback={<PathAbleFlat />}
         />
       ) : (
-        <div className="s3-loading mono">Checking for 3D support…</div>
+        <SceneWait label="Checking for 3D support" />
       )}
       <div className="lz-chips" role="group" aria-label="Destination">
         {destinations.map((id) => (

@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { Briefcase, Sparkles } from "lucide-react";
-import { prewarmPortal, worldShift } from "@/lib/world-shift";
+import { prewarmPortal, shiftHeading, stayInMode, worldShift } from "@/lib/world-shift";
 
 export type SiteMode = "pro" | "creative";
 export const MODE_KEY = "portfolio-mode";
@@ -31,7 +31,9 @@ export function useMode(): [
   const setMode = useCallback(
     (next: SiteMode, origin?: { x: number; y: number }) => {
       const root = document.documentElement;
-      if (root.dataset.mode === next) return;
+      // Compare with where a running shift is heading, not only with the mode on the page (it changes partway in).
+      if (shiftHeading() === next) return;
+      if (root.dataset.mode === next && stayInMode()) return;
       const apply = () => {
         root.dataset.mode = next;
         try {
@@ -62,7 +64,8 @@ export default function ModeSwitcher() {
       const target = event.target as HTMLElement | null;
       if (target?.matches("input, textarea, select, [contenteditable]")) return;
       if (event.altKey && event.code === "KeyM") {
-        const next = read() === "pro" ? "creative" : "pro";
+        // Toggles from where a running shift is heading, so a second press turns it back.
+        const next = (shiftHeading() ?? read()) === "pro" ? "creative" : "pro";
         const button = document.querySelector<HTMLElement>(
           `[data-mode-option="${next}"]`,
         );

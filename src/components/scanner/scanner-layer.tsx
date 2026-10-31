@@ -5,6 +5,7 @@ import { onPrewarm } from "@/lib/world-shift";
 import { requestedStyle, setLayerReady, subscribeTransition, transition } from "@/lib/transition/state";
 import { useWebGL } from "@/components/scenes/use-webgl";
 import { preloadHeroScene } from "@/components/scenes/registry";
+import { probeWebGL } from "@/components/creative/world/quality";
 import ScannerFrame from "./scanner-frame";
 
 const ScannerCanvas = dynamic(() => import("./scanner-canvas"), { ssr: false });
@@ -69,6 +70,9 @@ export default function ScannerLayer() {
       // From Creative, the Professional hero scene is built on the way back:
       // fetching its code now means the switch never waits on a download.
       if (document.documentElement.dataset.mode === "creative") preloadHeroScene();
+      // From Professional, the studio map asks once whether the device has WebGL when it first mounts (a throwaway
+      // context, a few milliseconds); asking now keeps that out of the switch's capture frame.
+      else probeWebGL();
       if (lite) return;
       if (!transition.running) return setLoad(true);
       if (waiting) return;

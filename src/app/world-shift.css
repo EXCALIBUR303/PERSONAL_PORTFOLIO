@@ -240,6 +240,44 @@ html[data-scanner]::view-transition-new(ws-scanner) {
 html[data-scanner]::view-transition-group(*.ws-morph) {
   animation-timing-function: cubic-bezier(0.65, 0, 0.25, 1);
 }
+/*
+ * Professional regions cut into tiles on the way to Creative (lib/transition/regions.ts). Each is the old
+ * snapshot of one block, painted above the page's snapshots; GSAP paints --sc-cut-<id> with what is left of it,
+ * and the tiles that go become the scanner canvas's fragments. They exist only in the old page, so they have
+ * no pair to fade into: no animation of their own, and the same light as the page beneath.
+ */
+html[data-scanner="to-creative"]::view-transition-group(ws-pro-head),
+html[data-scanner="to-creative"]::view-transition-group(ws-pro-visual),
+html[data-scanner="to-creative"]::view-transition-group(ws-pro-lede),
+html[data-scanner="to-creative"]::view-transition-group(ws-pro-facts),
+html[data-scanner="to-creative"]::view-transition-group(ws-pro-actions) {
+  animation: none;
+}
+html[data-scanner="to-creative"]::view-transition-old(ws-pro-head),
+html[data-scanner="to-creative"]::view-transition-old(ws-pro-visual),
+html[data-scanner="to-creative"]::view-transition-old(ws-pro-lede),
+html[data-scanner="to-creative"]::view-transition-old(ws-pro-facts),
+html[data-scanner="to-creative"]::view-transition-old(ws-pro-actions)
+{
+  animation: none;
+  mix-blend-mode: normal;
+  filter: var(--sc-bottom-f, none);
+}
+html[data-scanner="to-creative"]::view-transition-old(ws-pro-head) {
+  clip-path: var(--sc-cut-head, none);
+}
+html[data-scanner="to-creative"]::view-transition-old(ws-pro-visual) {
+  clip-path: var(--sc-cut-visual, none);
+}
+html[data-scanner="to-creative"]::view-transition-old(ws-pro-lede) {
+  clip-path: var(--sc-cut-lede, none);
+}
+html[data-scanner="to-creative"]::view-transition-old(ws-pro-facts) {
+  clip-path: var(--sc-cut-facts, none);
+}
+html[data-scanner="to-creative"]::view-transition-old(ws-pro-actions) {
+  clip-path: var(--sc-cut-actions, none);
+}
 .sc-layer {
   position: fixed;
   inset: 0;

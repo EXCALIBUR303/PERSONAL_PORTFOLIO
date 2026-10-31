@@ -1,4 +1,5 @@
-import type { Box, Layout, Panel } from "./state";
+import { worldOutline } from "@/components/creative/world/outline";
+import type { Box, Layout, Panel, Row, WorldFootprint } from "./state";
 
 /**
  * Reads a page's structure for the scanner's particles: the bordered blocks on
@@ -132,5 +133,97 @@ function read(): Layout {
   };
   document.querySelectorAll(AVOID).forEach((el) => add(el.getBoundingClientRect()));
   document.querySelectorAll(".site-header, .c-header").forEach((el) => add(el.getBoundingClientRect()));
-  return { panels: chosen.map((c) => c.panel), avoid };
+  return { panels: chosen.map((c) => c.panel), avoid, world: readWorld(), rows: readRows() };
+}
+
+/**
+ * The studio map's islands and stations on screen, if the page has one. The
+ * world itself is drawn later (its canvas never mounts during a run), so this
+ * is computed from the world's own layout with the camera's opening pose, the
+ * same projection the map's station buttons use.
+ */
+function readWorld(): WorldFootprint | undefined {
+  const stage = document.querySelector<HTMLElement>(".w-stage");
+  if (!stage) return undefined;
+  const box = stage.getBoundingClientRect();
+  if (box.width < 200 || box.height < 160) return undefined;
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const world = worldOutline(box.width, box.height, !reduced);
+  const shift = (x: number, y: number): [number, number] => [x + box.left, y + box.top];
+  return {
+    islands: world.islands.map((island) => ({ id: island.id, points: island.points.map(([x, y]) => shift(x, y)) })),
+    feet: world.feet.filter((f) => f.visible).map((f) => ({ slug: f.slug, x: f.x + box.left, y: f.y + box.top })),
+  };
+}
+
+/** Blocks of Professional text whose lines become rows of fragments, in reading order. */
+const ROW_BLOCKS = ".hx-pro :is(h1, .hx-lede, .hx-proof, .hx-facts dd, .hx-actions a), main > :is(section, div) > :is(h1, h2)";
+/** At most this many lines are used, so a long page does not turn into a wall of marks. */
+const MAX_ROWS = 18;
+
+/**
+ * The baselines of the Professional text on screen: for each line of each block, where it starts, how long it
+ * is and the y it sits on (found with a Range over the text, so wrapped lines are separate rows). Fragments
+ * coming back from Creative line up on these, and the real text takes their place as a scanner passes.
+ */
+function readRows(): Row[] | undefined {
+  const W = innerWidth;
+  const H = innerHeight;
+  const rows: Row[] = [];
+  const blocks = document.querySelectorAll<HTMLElement>(ROW_BLOCKS);
+  if (!blocks.length) return undefined;
+  const range = document.createRange();
+  for (const block of blocks) {
+    if (rows.length >= MAX_ROWS) break;
+    const outer = block.getBoundingClientRect();
+    if (outer.bottom < 0 || outer.top > H || outer.width < 24) continue;
+    const tone = block.matches("h1, h2, .hx-actions a") ? "cobalt" : "ink";
+    const lines: { x: number; r: number; top: number; bottom: number }[] = [];
+    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (!node.textContent?.trim()) continue;
+      range.selectNodeContents(node);
+      for (const r of range.getClientRects()) {
+        if (r.width < 6 || r.height < 6) continue;
+        // Pieces on the same line (an emphasised phrase, for example) join into one row.
+        const line = lines.find((l) => Math.abs(l.bottom - r.bottom) < r.height * 0.4);
+        if (line) {
+          line.x = Math.min(line.x, r.left);
+          line.r = Math.max(line.r, r.right);
+        } else lines.push({ x: r.left, r: r.right, top: r.top, bottom: r.bottom });
+      }
+    }
+    for (const l of lines.sort((a, b) => a.bottom - b.bottom)) {
+      const y = l.bottom - (l.bottom - l.top) * 0.2;
+      const x = Math.max(8, l.x);
+      const w = Math.min(W - 8, l.r) - x;
+      if (y > 8 && y < H - 8 && w >= 24) rows.push({ x, y, w, tone });
+    }
+  }
+  range.detach?.();
+  return rows.length ? rows.slice(0, MAX_ROWS) : undefined;
+}
+
+/**
+ * Where the scanner locks on when leaving Creative: the selected station's foot if it is on screen, otherwise
+ * the middle of the map, otherwise the middle of the screen.
+ */
+export function findAnchor(layout: Layout): { x: number; y: number } {
+  const W = innerWidth;
+  const H = innerHeight;
+  const selected = document.querySelector<HTMLElement>('.w-pin[aria-pressed="true"]')?.dataset.station;
+  const onScreen = (x: number, y: number) => x > 0 && x < W && y > 0 && y < H;
+  // The station's marker as drawn now: selecting a station moves the camera, so the footprint (computed with the
+  // map's opening pose) no longer says where it is on screen.
+  const dot = selected ? document.querySelector<HTMLElement>(`.w-slot[data-slot="${CSS.escape(selected)}"] .w-dot`)?.getBoundingClientRect() : undefined;
+  if (dot && dot.width > 0 && onScreen(dot.left + dot.width / 2, dot.top + dot.height / 2)) return { x: dot.left + dot.width / 2, y: dot.top + dot.height / 2 };
+  const foot = selected ? layout.world?.feet.find((f) => f.slug === selected) : undefined;
+  if (foot && onScreen(foot.x, foot.y)) return { x: foot.x, y: foot.y };
+  const stage = document.querySelector<HTMLElement>(".w-stage")?.getBoundingClientRect();
+  if (stage && stage.width > 200 && stage.bottom > 0 && stage.top < H) {
+    const x = stage.left + stage.width / 2;
+    const y = Math.max(stage.top, 0) + (Math.min(stage.bottom, H) - Math.max(stage.top, 0)) / 2;
+    return { x, y };
+  }
+  return { x: W / 2, y: H / 2 };
 }

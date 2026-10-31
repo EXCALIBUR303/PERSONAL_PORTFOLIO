@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { useInView, useReducedMotion } from "motion/react";
+import { transition, whenStarted } from "@/lib/transition/state";
 
 /**
  * Small looping canvas sketches that stand in for each project's idea.
@@ -600,6 +601,57 @@ function palette(): Pal {
   };
 }
 
+/** Draws a sketch on its canvas: once when it is still or off screen, otherwise every frame. Returns its cleanup. */
+function sketch(cv: HTMLCanvasElement, kind: AnimKind, live: boolean) {
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const ctx = cv.getContext("2d");
+  if (!ctx) return undefined;
+  // Backing store follows the displayed width, so large posters stay crisp.
+  let scale = 0;
+  const fit = () => {
+    const next = Math.max(1, (cv.clientWidth || W) * dpr) / W;
+    if (Math.abs(next - scale) < 0.01) return;
+    scale = next;
+    cv.width = Math.round(W * scale);
+    cv.height = Math.round(H * scale);
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  };
+  fit();
+  const draw = DRAW[kind];
+  let pal = palette();
+  const paint = (t: number) => {
+    fit();
+    ctx.clearRect(0, 0, W, H);
+    ctx.save();
+    draw(ctx, t, pal);
+    ctx.restore();
+  };
+  // Repaint with fresh colours when the mode (and its tokens) changes.
+  const watcher = new MutationObserver(() => {
+    pal = palette();
+    if (!live) paint(3.2);
+  });
+  watcher.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-mode"],
+  });
+  if (!live) {
+    paint(3.2);
+    return () => watcher.disconnect();
+  }
+  let raf = 0;
+  const start = performance.now();
+  const frame = (now: number) => {
+    if (!document.hidden) paint((now - start) / 1000);
+    raf = requestAnimationFrame(frame);
+  };
+  raf = requestAnimationFrame(frame);
+  return () => {
+    cancelAnimationFrame(raf);
+    watcher.disconnect();
+  };
+}
+
 export default function MiniAnim({
   kind,
   label,
@@ -615,53 +667,21 @@ export default function MiniAnim({
   useEffect(() => {
     const cv = ref.current;
     if (!cv) return;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    const ctx = cv.getContext("2d");
-    if (!ctx) return;
-    // Backing store follows the displayed width, so large posters stay crisp.
-    let scale = 0;
-    const fit = () => {
-      const next = Math.max(1, (cv.clientWidth || W) * dpr) / W;
-      if (Math.abs(next - scale) < 0.01) return;
-      scale = next;
-      cv.width = Math.round(W * scale);
-      cv.height = Math.round(H * scale);
-      ctx.setTransform(scale, 0, 0, scale, 0, 0);
-    };
-    fit();
-    const draw = DRAW[kind];
-    let pal = palette();
-    const paint = (t: number) => {
-      fit();
-      ctx.clearRect(0, 0, W, H);
-      ctx.save();
-      draw(ctx, t, pal);
-      ctx.restore();
-    };
-    // Repaint with fresh colours when the mode (and its tokens) changes.
-    const watcher = new MutationObserver(() => {
-      pal = palette();
-      if (!inView || reduce) paint(3.2);
-    });
-    watcher.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["data-mode"],
-    });
-    if (!inView || reduce) {
-      paint(3.2);
-      return () => watcher.disconnect();
+    // Mounted by a mode switch: the page is being captured, and reading the canvas's size now would make the browser
+    // lay out the whole new page a second time inside that frame. The sketch is hidden behind the scanner until the
+    // transition's own timeline runs, so it is drawn from then.
+    if (transition.running && !transition.started) {
+      let stop: (() => void) | undefined;
+      let live = true;
+      whenStarted(() => {
+        if (live) stop = sketch(cv, kind, inView && !reduce);
+      });
+      return () => {
+        live = false;
+        stop?.();
+      };
     }
-    let raf = 0;
-    const start = performance.now();
-    const frame = (now: number) => {
-      if (!document.hidden) paint((now - start) / 1000);
-      raf = requestAnimationFrame(frame);
-    };
-    raf = requestAnimationFrame(frame);
-    return () => {
-      cancelAnimationFrame(raf);
-      watcher.disconnect();
-    };
+    return sketch(cv, kind, inView && !reduce);
   }, [kind, inView, reduce]);
   return (
     <canvas

@@ -1,5 +1,6 @@
 "use client";
 import { lazyView } from "./lazy-view";
+import { SceneWait } from "../skeleton/primitives";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Pause, Play } from "lucide-react";
 import { useMode } from "@/components/mode";
@@ -9,7 +10,7 @@ import { SceneToolbar, useSceneControls } from "./scene-controls";
 import { useWebGL } from "./use-webgl";
 import { describeBay, steps, viewFor, type Mode } from "./smartpark-data";
 
-const GarageCanvas = lazyView(() => import("./three/garage-canvas"), () => <div className="s3-loading mono">Loading the 3D garage…</div>);
+const GarageCanvas = lazyView(() => import("./three/garage-canvas"), "Loading the 3D garage", "stage");
 /** Fetches the 3D canvas code early, so a scene built during a mode switch is ready at once. */
 export const preloadCanvas = () => GarageCanvas.preload();
 
@@ -80,7 +81,7 @@ export default function SmartParkScene() {
           fallback={<div className="s3-loading mono">The 3D garage could not start. Use the steps below.</div>}
         />
       ) : (
-        <div className="s3-loading mono">Checking for 3D support…</div>
+        <SceneWait label="Checking for 3D support" />
       )}
       <p className="lz-note s3-selection" aria-live="polite">
         {selected ? describeBay(selected, view) : "Select any bay in the garage to read its state. Bay A07 is the one both cars want."}

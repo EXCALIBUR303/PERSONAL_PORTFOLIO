@@ -2,9 +2,9 @@
 import { useLayoutEffect, useRef, useSyncExternalStore } from "react";
 import { createDrawable, createTimeline, stagger } from "animejs";
 import {
+  TIMINGS,
   apertureRadius,
-  clamp01,
-  easeOut,
+  collectRadius,
   subscribeProgress,
   subscribeTransition,
   slit,
@@ -19,8 +19,9 @@ import {
  *
  *   Going to Creative the aperture forms at the centre, its vertical diameter
  *   lights up and it splits: each half leads its scanner outward to the edge.
- *   Coming back the two halves enter from the edges, close in along the
- *   alignment axis and lock into one aperture at the centre, which then clears.
+ *   Coming back a reticle locks on an anchor in the world and a dashed ring forms around it for the fragments
+ *   to gather on; then the two halves enter from the edges as brackets, close in over the Professional text
+ *   and lock into one aperture at the centre, which then clears.
  *
  * Each scanner carries the outer half of the ring on its line, so the two
  * directions are one shape opening and closing.
@@ -35,8 +36,8 @@ import {
  * placed by CSS variables GSAP paints (--sc-l, --sc-r), not by Anime.js.
  *
  * Timeline time is normalised: 1000 = the whole cue, or the whole transition,
- * so the phase table in lib/transition/state.ts reads directly as positions
- * (aim 0 to 200, scan 200 to 700, settle 700 to 1000).
+ * so the phase table in lib/transition/state.ts reads directly as positions. Each direction has its own
+ * table (TIMINGS), and the drawn beats below are placed with `at()` from the table rather than from fixed times.
  */
 const NS = 1000;
 type Palette = {
@@ -96,10 +97,10 @@ function Frame() {
   const readout = useRef<SVGTextElement>(null);
   const leftX = useRef<SVGTextElement>(null);
   const rightX = useRef<SVGTextElement>(null);
-  const beam = useRef<SVGGElement>(null);
   // Read once: a run keeps the geometry it started with.
-  const { width: W, height: H, direction, ox, oy } = transition;
+  const { width: W, height: H, direction, ox, oy, anchor, regions } = transition;
   const out = direction === "to-creative";
+  const ringR = collectRadius(W, H);
   const c = palette[direction];
   const cx = W / 2;
   const cy = H / 2;
@@ -118,6 +119,11 @@ function Frame() {
     // The cue: the reticle closes on the switch and a line reaches for the centre.
     // composition "none": the two timelines share a few targets (the link and the
     // reticle) and must not cancel each other; the seek order below decides.
+    // A position on the timeline (0 to 1000) from the direction's own table.
+    const phases = TIMINGS[direction].phases;
+    const at = (phase: "aim" | "scan" | "settle", f = 0) => (phases[phase][0] + f * (phases[phase][1] - phases[phase][0])) * NS;
+    const scanStart = at("scan");
+    const scanLen = at("scan", 1) - scanStart;
     const cue = createTimeline({ autoplay: false, defaults: { ease: "outCubic", composition: "none" } })
       .set(draw(".sc-reticle-arm, .sc-link"), { draw: "0 0" }, 0)
       .add(q(".sc-reticle"), { scale: [1.9, 1], rotate: [45, 0], opacity: [0, 1], duration: 700 }, 0)
@@ -126,9 +132,9 @@ function Frame() {
 
     const main = createTimeline({ autoplay: false, defaults: { ease: "inOutQuad", composition: "none" } })
       // Starting state of everything this timeline draws or reveals later.
-      .set(draw(".sc-fine, .sc-halo-arc, .sc-tick, .sc-plane-core, .sc-lock, .sc-corner, .sc-stub"), { draw: "0 0" }, 0)
+      .set(draw(".sc-fine, .sc-halo-arc, .sc-tick, .sc-plane-core, .sc-lock, .sc-corner, .sc-stub, .sc-region-mark, .sc-collect"), { draw: "0 0" }, 0)
       .set(draw(".sc-seg-a, .sc-seg-b"), { draw: "0 0" }, 0)
-      .set(q(".sc-label, .sc-iris, .sc-inner, .sc-dot, .sc-chev, .sc-plane-glow, .sc-hbeam"), { opacity: 0 }, 0)
+      .set(q(".sc-label, .sc-iris, .sc-inner, .sc-dot, .sc-chev, .sc-plane-glow, .sc-anchor"), { opacity: 0 }, 0)
       // The link finishes reaching the aperture, then the reticle and link let go.
       .add(draw(".sc-link"), { draw: ["0 0.35", "0 1"], duration: 120, ease: "outQuad" }, 0)
       .add(q(".sc-link, .sc-reticle"), { opacity: [1, 0], duration: 110 }, 130)
@@ -144,7 +150,7 @@ function Frame() {
         main
           .add(target, { draw: [mid(from), span(from)], duration: 150, ease: "outCubic" }, 40)
           // During the scan the ring keeps turning as its halves travel.
-          .add(target, { draw: [span(from), span(to)], duration: 500, ease: "linear" }, 200);
+          .add(target, { draw: [span(from), span(to)], duration: scanLen, ease: "linear" }, scanStart);
       }
 
     if (out) {
@@ -167,38 +173,47 @@ function Frame() {
         .add(q(".sc-inner"), { rotate: [0, 80], scale: [1, 1.5], opacity: [1, 0], duration: 140, ease: "inQuad" }, 205)
         .add(q(".sc-label"), { opacity: [1, 0], duration: 80 }, 280)
         .add(q(".sc-chev"), { opacity: [1, 0], duration: 80 }, 420)
+        // The planes read the page: the regions they will cut are marked at their corners, and let go as the tiles lift.
+        .add(draw(".sc-region-mark"), { draw: ["0 0", "0 1"], duration: 110, delay: stagger(6) }, 40)
+        .add(q(".sc-region-mark"), { opacity: [1, 0], duration: 140, delay: stagger(14) }, 380)
         // Settle: the halves have left the screen.
         .add(q(".sc-half, .sc-plane"), { opacity: [1, 0], duration: 60 }, 700);
     } else {
       main
-        // Aim: the scanner lines draw down at the edges, a faint target marks
-        // where the halves will lock, and the alignment axis reaches out from it.
-        .add(draw(".sc-plane-core"), { draw: ["0 0", "0 1"], duration: 140, ease: "outQuad" }, 30)
-        .add(q(".sc-plane-glow"), { opacity: [0, 1], duration: 80 }, 100)
-        .add(q(".sc-inner"), { opacity: [0, 0.45], rotate: [-30, 0], duration: 160 }, 20)
-        .add(q(".sc-dot"), { opacity: [0, 0.6], scale: [0, 1], duration: 80 }, 60)
-        .add(draw(".sc-stub"), { draw: ["0 0", "0 1"], duration: 80 }, 80)
-        .add(q(".sc-hbeam"), { opacity: [0, 1], duration: 60 }, 80)
-        .add(q(".sc-chev"), { opacity: [0, 1], duration: 60 }, 120)
-        // Scan: the halves close in (CSS) while the target turns slowly.
-        .add(q(".sc-inner"), { rotate: [0, 90], duration: 500, ease: "linear" }, 200)
-        .add(q(".sc-chev"), { opacity: [1, 0], duration: 80 }, 560)
-        // Settle: the scanners meet, the halves close and the aperture locks, then the layout's
+        // Anchor: a reticle locks on the point of the world the fragments will gather around, and a dashed ring
+        // draws around it (the fragments rise from the islands and stations onto it).
+        .add(q(".sc-anchor"), { opacity: [0, 1], scale: [1.7, 1], rotate: [30, 0], duration: 110, ease: "outCubic" }, 10)
+        .add(draw(".sc-collect"), { draw: ["0 0", "0 1"], duration: at("aim", 0.7) - 60, ease: "inOutSine" }, 60)
+        .add(q(".sc-dot"), { opacity: [0, 0.8], scale: [0, 1], duration: 80 }, 50)
+        // Align: the ring has done its work as the fragments leave it for the rows of text.
+        .add(q(".sc-collect"), { opacity: [1, 0], duration: 140 }, at("aim", 0.92))
+        .add(q(".sc-anchor"), { opacity: [1, 0], duration: 120 }, at("aim", 0.96))
+        // The scanner lines draw down at the edges and a faint target marks where the halves will lock.
+        .add(draw(".sc-plane-core"), { draw: ["0 0", "0 1"], duration: 120, ease: "outQuad" }, scanStart - 90)
+        .add(q(".sc-plane-glow"), { opacity: [0, 1], duration: 80 }, scanStart - 40)
+        .add(q(".sc-inner"), { opacity: [0, 0.45], rotate: [-30, 0], duration: 160 }, at("aim", 0.55))
+        .add(draw(".sc-stub"), { draw: ["0 0", "0 1"], duration: 80 }, at("aim", 0.8))
+        .add(q(".sc-chev"), { opacity: [0, 1], duration: 60 }, scanStart - 20)
+        // Close: the brackets come in while the target turns slowly.
+        .add(q(".sc-inner"), { rotate: [0, 90], duration: scanLen, ease: "linear" }, scanStart)
+        .add(q(".sc-chev"), { opacity: [1, 0], duration: 80 }, at("scan", 0.75))
+        // Settle: the brackets meet, the halves close and the aperture locks, then the layout's
         // corners are marked and everything clears.
-        .add(q(".sc-plane, .sc-hbeam"), { opacity: [1, 0], duration: 50 }, 690)
-        .add(draw(".sc-lock"), { draw: ["0 0", "0 1"], duration: 70, ease: "outQuad" }, 700)
-        .add(q(".sc-iris"), { opacity: [0, 1], scale: [1.5, 1], rotate: [-120, 0], duration: 100, ease: "outBack(2)" }, 700)
-        .add(q(".sc-inner"), { opacity: [0.45, 1], duration: 60 }, 700)
-        .add(q(".sc-dot"), { opacity: [0.6, 1], scale: [1, 1.8, 1], duration: 110 }, 705)
-        .add(draw(".sc-corner"), { draw: ["0 0", "0 1"], duration: 90, delay: stagger(12) }, 740)
-        .add(q(".sc-label"), { opacity: [1, 0], duration: 80 }, 820)
-        .add(q(".sc-half, .sc-core"), { scale: [1, 0.86], opacity: [1, 0], duration: 120, ease: "inQuad" }, 860)
-        .add(q(".sc-corner"), { opacity: [1, 0], duration: 80 }, 900);
+        .add(q(".sc-plane"), { opacity: [1, 0], duration: 50 }, at("settle", -0.06))
+        .add(draw(".sc-lock"), { draw: ["0 0", "0 1"], duration: 70, ease: "outQuad" }, at("settle"))
+        .add(q(".sc-iris"), { opacity: [0, 1], scale: [1.5, 1], rotate: [-120, 0], duration: 100, ease: "outBack(2)" }, at("settle"))
+        .add(q(".sc-inner"), { opacity: [0.45, 1], duration: 60 }, at("settle"))
+        .add(q(".sc-dot"), { opacity: [0.8, 1], scale: [1, 1.8, 1], duration: 110 }, at("settle", 0.03))
+        .add(draw(".sc-corner"), { draw: ["0 0", "0 1"], duration: 70, delay: stagger(10) }, at("settle", 0.1))
+        // Everything here must have finished by the end of the timeline (1000): a fade still running then would be cut
+        // off by the end of the view transition and the frame would vanish in one step.
+        .add(q(".sc-label"), { opacity: [1, 0], duration: 60 }, at("settle", 0.3))
+        .add(q(".sc-half, .sc-core"), { scale: [1, 0.9], opacity: [1, 0], duration: 90, ease: "outQuad" }, at("settle", 0.4))
+        .add(q(".sc-corner"), { opacity: [1, 0], duration: 70 }, at("settle", 0.55));
     }
 
     const pct = (v: number) => String(Math.round(v * 100)).padStart(3, "0");
     const coord = (v: number) => String(Math.round(Math.min(Math.max(v, 0), W))).padStart(4, "0");
-    const beamLines = beam.current ? [...beam.current.querySelectorAll("line")] : [];
     const seek = () => {
       // Whichever timeline is current is applied last, so it wins on shared targets.
       if (transition.started) {
@@ -214,17 +229,6 @@ function Frame() {
       const apart = r - l > 170;
       if (leftX.current) leftX.current.textContent = apart ? `x ${coord(l)}` : "";
       if (rightX.current) rightX.current.textContent = apart ? `x ${coord(r)}` : "";
-      // Coming back, the alignment axis reaches out from the centre and then
-      // spans the closing slit.
-      if (!out && beamLines.length) {
-        const k = easeOut(clamp01((transition.progress - 0.08) / 0.12));
-        const x1 = (cx - (cx - l) * k).toFixed(1);
-        const x2 = (cx + (r - cx) * k).toFixed(1);
-        beamLines.forEach((line) => {
-          line.setAttribute("x1", x1);
-          line.setAttribute("x2", x2);
-        });
-      }
     };
     seek();
     root.dataset.armed = "true";
@@ -234,7 +238,7 @@ function Frame() {
       cue.revert();
       main.revert();
     };
-  }, [out, W, cx]);
+  }, [out, direction, W, cx]);
 
   /** A half of the aperture's ring, drawn top to bottom, centred on its rider's line. */
   const halfArc = (r: number, side: "l" | "r") =>
@@ -257,8 +261,8 @@ function Frame() {
         ))}
       </defs>
 
-      {/* the link from the switch to the centre */}
-      <path className="sc-link" d={`M ${ox} ${oy} L ${cx} ${cy}`} stroke={out ? c.major : c.core} strokeWidth={1.5} />
+      {/* the link from the switch to the centre, or to the anchor coming back */}
+      <path className="sc-link" d={`M ${ox} ${oy} L ${out ? cx : anchor.x} ${out ? cy : anchor.y}`} stroke={out ? c.major : c.core} strokeWidth={1.5} />
 
       {/* reticle locking on to the switch */}
       <g className="sc-reticle sc-spin">
@@ -279,11 +283,47 @@ function Frame() {
         ))}
       </g>
 
-      {/* coming back: the alignment axis between the closing scanners */}
+      {/* going out: the corners of each Professional region the planes will cut into tiles */}
+      {out &&
+        regions.map((r) => {
+          const k = Math.min(14, r.w / 3, r.h / 3);
+          const x0 = Math.max(2, r.x - 4);
+          const y0 = Math.max(2, r.y - 4);
+          const x1 = Math.min(W - 2, r.x + r.w + 4);
+          const y1 = Math.min(H - 2, r.y + r.h + 4);
+          return (
+            <g key={r.id} className="sc-region">
+              {[
+                [x0, y0, 1, 1],
+                [x1, y0, -1, 1],
+                [x0, y1, 1, -1],
+                [x1, y1, -1, -1],
+              ].map(([x, y, dx, dy], i) => (
+                <path key={i} className="sc-region-mark" d={`M ${x} ${y + dy * k} L ${x} ${y} L ${x + dx * k} ${y}`} stroke={c.plane} strokeWidth={2} />
+              ))}
+            </g>
+          );
+        })}
+
+      {/* coming back: the anchor the scanner locks on, and the ring the fragments gather on */}
       {!out && (
-        <g ref={beam} className="sc-hbeam">
-          <line x1={cx} y1={cy} x2={cx} y2={cy} stroke={c.halo} strokeWidth={small ? 6 : 9} strokeOpacity={0.45} />
-          <line x1={cx} y1={cy} x2={cx} y2={cy} stroke={c.segA} strokeWidth={1.5} strokeDasharray="10 6" />
+        <g>
+          <g className="sc-anchor sc-spin">
+            {[
+              [-1, -1],
+              [1, -1],
+              [-1, 1],
+              [1, 1],
+            ].map(([sx, sy], i) => (
+              <path
+                key={i}
+                d={`M ${anchor.x + sx * 22} ${anchor.y + sy * 9} L ${anchor.x + sx * 22} ${anchor.y + sy * 22} L ${anchor.x + sx * 9} ${anchor.y + sy * 22}`}
+                stroke={c.core}
+                strokeWidth={2.5}
+              />
+            ))}
+          </g>
+          <circle className="sc-collect" cx={anchor.x} cy={anchor.y} r={ringR} stroke={c.core} strokeWidth={1.5} strokeDasharray="4 8" />
         </g>
       )}
 
@@ -373,6 +413,14 @@ function Frame() {
               <path className="sc-seg-a" d={halfArc(R - 2, rider)} stroke={c.segA} strokeWidth={seg} />
               <path className="sc-seg-b" d={halfArc(R - 2, rider)} stroke={c.segB} strokeWidth={seg} />
             </g>
+            {/* coming back the scanners are brackets: short caps at the ends of the line, opening toward what they close on */}
+            {!out && (
+              <g className="sc-plane">
+                {[28, H - 28].map((y) => (
+                  <path key={y} d={`M 0 ${y} L ${travel * 16} ${y}`} stroke={c.plane} strokeWidth={small ? 2 : 2.5} />
+                ))}
+              </g>
+            )}
             {/* chevrons ahead of the scanner (and its half, going out), pointing the way it travels */}
             <g className="sc-chev">
               {[0, 12].map((step) => {

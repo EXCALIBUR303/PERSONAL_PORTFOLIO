@@ -52,7 +52,9 @@ export function CreativeContact() {
 
   useEffect(() => {
     if (step !== "topic") field.current?.focus({ preventScroll: true });
-    log.current?.scrollTo({ top: log.current.scrollHeight });
+    // The opening line needs no scrolling, and reading the log's height on mount would lay out the whole page (inside
+    // a mode switch's capture frame, a second time).
+    if (lines.length > 1) log.current?.scrollTo({ top: log.current.scrollHeight });
   }, [step, lines]);
 
   const say = (...next: Line[]) => setLines((current) => [...current, ...next]);

@@ -1,5 +1,6 @@
 "use client";
 import { lazyView } from "./lazy-view";
+import { SceneWait } from "../skeleton/primitives";
 import { useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, Truck } from "lucide-react";
 import { useMode } from "@/components/mode";
@@ -16,7 +17,7 @@ import LastMileFlat from "./flat/lastmile-scene";
 import { SceneToolbar, useSceneControls } from "./scene-controls";
 import { useWebGL } from "./use-webgl";
 
-const CityNetCanvas = lazyView(() => import("./three/citynet-canvas"), () => <div className="s3-loading mono">Loading the 3D district…</div>);
+const CityNetCanvas = lazyView(() => import("./three/citynet-canvas"), "Loading the 3D district", "stage");
 /** Fetches the 3D canvas code early, so a scene built during a mode switch is ready at once. */
 export const preloadCanvas = () => CityNetCanvas.preload();
 
@@ -78,7 +79,7 @@ export default function LastMileScene() {
           fallback={<LastMileFlat />}
         />
       ) : (
-        <div className="s3-loading mono">Checking for 3D support…</div>
+        <SceneWait label="Checking for 3D support" />
       )}
       {stage === 1 && (
         <div className="lz-seg" role="group" aria-label="Selection">

@@ -2,7 +2,6 @@
 import { lazyView } from "./lazy-view";
 import type { SceneId } from "./catalog";
 
-const loading = () => <div className="s3-loading mono">Loading scene…</div>;
 
 /**
  * Loads a scene's code and its 3D canvas code together, so the scene is built
@@ -15,7 +14,7 @@ const scene = (
     const loaded = await load();
     await loaded.preloadCanvas();
     return loaded;
-  }, loading);
+  }, "Loading the scene");
 
 // Each scene is its own chunk, so only the one on screen is downloaded.
 export const views: Record<SceneId, ReturnType<typeof scene>> = {

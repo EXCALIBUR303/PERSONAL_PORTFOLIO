@@ -182,3 +182,33 @@ test("the earlier portal ride is still available on request", async ({ page }) =
   await expect.poll(() => leftovers(page), { timeout: 12_000 }).toEqual([]);
   expect(await seen(page)).not.toContain("to-creative");
 });
+
+test("a transition that never finishes is ended by the watchdog and leaves the page usable", async ({ page }) => {
+  // A browser whose view transition never becomes ready or finished: the mode must still change and nothing may linger.
+  await page.addInitScript(() => {
+    Object.defineProperty(document, "startViewTransition", {
+      configurable: true,
+      value: () => ({ ready: new Promise(() => {}), finished: new Promise(() => {}), skipTransition() {} }),
+    });
+  });
+  await prepare(page);
+  await page.getByRole("button", { name: "Creative" }).click();
+  await expect(html(page)).toHaveAttribute("data-mode", "creative", { timeout: 8_000 });
+  await expect.poll(() => leftovers(page), { timeout: 4_000 }).toEqual([]);
+  await expect(page.locator(".sc-frame-svg")).toHaveCount(0);
+  // The page answers: the switch works again.
+  await page.getByRole("button", { name: "Professional" }).click();
+  await expect(html(page)).toHaveAttribute("data-mode", "pro", { timeout: 8_000 });
+});
+
+test("hiding the tab during a run ends it at once instead of freezing it mid-motion", async ({ page }) => {
+  await prepare(page);
+  await page.getByRole("button", { name: "Creative" }).click();
+  await page.waitForTimeout(250);
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await expect(html(page)).toHaveAttribute("data-mode", "creative");
+  await expect.poll(() => leftovers(page), { timeout: 2_000 }).toEqual([]);
+});

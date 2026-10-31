@@ -1,5 +1,6 @@
 "use client";
 import { lazyView } from "./lazy-view";
+import { SceneWait } from "../skeleton/primitives";
 import { useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import { useMode } from "@/components/mode";
@@ -23,7 +24,7 @@ import {
 import { SceneToolbar, useSceneControls } from "./scene-controls";
 import { useWebGL } from "./use-webgl";
 
-const EngineCanvas = lazyView(() => import("./three/engine-canvas"), () => <div className="s3-loading mono">Loading the 3D engine…</div>);
+const EngineCanvas = lazyView(() => import("./three/engine-canvas"), "Loading the 3D engine", "stage");
 /** Fetches the 3D canvas code early, so a scene built during a mode switch is ready at once. */
 export const preloadCanvas = () => EngineCanvas.preload();
 
@@ -401,7 +402,7 @@ export default function MaintenanceScene() {
           health={step === 4 ? label / RUL_CAP : null}
         />
       ) : webgl === null ? (
-        <div className="s3-loading mono">Checking for 3D support…</div>
+        <SceneWait label="Checking for 3D support" />
       ) : null}
 
       <ol className="rul-steps" aria-label="Pipeline steps">

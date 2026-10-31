@@ -3,7 +3,7 @@
  * draws: `cue` (0 to 1, the short acknowledgement before the page snapshot is
  * taken) and `progress` (0 to 1, the transition itself). Renderers are pure
  * functions of them and of `direction`, so any frame can be reproduced by
- * setting the numbers, and the choreography lives in one table (PHASES).
+ * setting the numbers, and the choreography lives in one table (TIMINGS).
  *
  * Who owns what during a transition:
  *   GSAP            the master timeline: moves `cue` and `progress`, paints the
@@ -21,28 +21,61 @@ export type TransitionStyle = "scanner" | "portal" | "ring" | "none";
 
 /** The acknowledgement beat before the page is captured, in seconds. */
 export const CUE_SECONDS = 0.14;
-/** The transition itself, in seconds: about 2 s from click to rest with the cue and capture. */
-export const SCANNER_SECONDS = 1.8;
-
 /**
- * The beats of the transition as fractions of `progress`.
- *   aim     going to Creative the aperture forms and the page's structure is
- *           marked; coming back the two scanner halves enter and the particles
- *           gather on the alignment axis
- *   scan    the scanners cross the viewport; particles are released (or
- *           placed) as a scanner passes them
- *   settle  particles finish assembling and clear; coming back the aperture
- *           locks; the overlay clears
+ * The two directions are separate choreographies, so each has its own length and its own beats. Every
+ * renderer reads them from here (nothing else holds a duration), and any of them can be changed in one place.
+ *
+ * `phases` are the three structural beats every layer shares, as fractions of `progress`:
+ *   aim     the instrument forms and, going back, the fragments are collected and aligned
+ *   scan    the two scanners cross the viewport (`slit()` and `passProgress()` follow this window)
+ *   settle  the new page is fully revealed; the aperture locks; the overlay clears
+ * `beats` are the narrative steps inside them, used by the particles and the drawn frame.
  */
-export const PHASES = {
-  aim: [0, 0.2],
-  scan: [0.2, 0.7],
-  settle: [0.7, 1],
-} as const;
-export type Phase = keyof typeof PHASES;
+export type Beat = readonly [number, number];
+export type Timing = {
+  /** Length of the main timeline, in seconds (the cue before it and the capture are extra). */
+  seconds: number;
+  phases: { aim: Beat; scan: Beat; settle: Beat };
+  beats: Record<string, Beat>;
+};
+export const TIMINGS: Record<Direction, Timing> = {
+  // Professional to Creative: lock, decompose (the planes cut selected regions into tiles), portal (the aperture
+  // opens into a tunnel and Creative arrives from depth), assemble (tiles emerge and land on the map), resolve.
+  "to-creative": {
+    seconds: 1.9,
+    phases: { aim: [0, 0.2], scan: [0.2, 0.7], settle: [0.7, 1] },
+    beats: {
+      lock: [0, 0.12],
+      decompose: [0.2, 0.62],
+      portal: [0.16, 0.66],
+      assemble: [0.4, 0.88],
+      resolve: [0.86, 1],
+    },
+  },
+  // Creative to Professional: anchor (a scanner locks on a point of the world), collect (the world gives up
+  // fragments that gather on a ring), align (they travel to the baselines of the Professional text), close
+  // (brackets close in and the rows become type), lock, resolve. There is no tunnel.
+  "to-pro": {
+    seconds: 1.8,
+    phases: { aim: [0, 0.34], scan: [0.34, 0.82], settle: [0.82, 1] },
+    beats: {
+      anchor: [0, 0.12],
+      collect: [0.06, 0.34],
+      align: [0.26, 0.58],
+      close: [0.34, 0.82],
+      lock: [0.8, 0.94],
+      resolve: [0.9, 1],
+    },
+  },
+};
+export type Phase = "aim" | "scan" | "settle";
+export const timing = (direction: Direction = transition.direction) => TIMINGS[direction];
+export const secondsFor = (direction: Direction = transition.direction) => TIMINGS[direction].seconds;
 
-export const phaseOf = (progress: number): Phase =>
-  (Object.keys(PHASES) as Phase[]).find((p) => progress < PHASES[p][1]) ?? "settle";
+export const phaseOf = (progress: number, direction: Direction = transition.direction): Phase => {
+  const { phases } = TIMINGS[direction];
+  return (Object.keys(phases) as Phase[]).find((p) => progress < phases[p][1]) ?? "settle";
+};
 
 export const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
@@ -60,8 +93,29 @@ export type Panel = {
 };
 /** A box particles keep clear of (text, buttons, the header). */
 export type Box = { x: number; y: number; w: number; h: number };
-/** What a page looks like to the particles: its blocks, and the boxes to keep clear of. */
-export type Layout = { panels: Panel[]; avoid: Box[] };
+/**
+ * Where the 3D world's islands and stations will be drawn, in viewport pixels,
+ * for a page that has the studio map on screen (Creative). Fragments land on
+ * these, so the world is assembled from them.
+ */
+export type WorldFootprint = {
+  islands: { id: "studio" | "systems" | "algorithms" | "intelligence"; points: [number, number][] }[];
+  feet: { slug: string; x: number; y: number }[];
+};
+/** A line of Professional text, as the rule it sits on: where it starts, how long it is and its tone. */
+export type Row = { x: number; y: number; w: number; tone: "ink" | "cobalt" };
+/**
+ * One piece of a Professional region that the scanner cuts away: a rectangle in viewport pixels, the progress
+ * at which the plane has cut it free, and a tone for the fragment it becomes.
+ */
+export type Tile = { x: number; y: number; w: number; h: number; pass: number; tone: number };
+/** A named Professional block (headline, lede, facts, scene) whose old snapshot is cut into tiles. */
+export type Region = { id: string; x: number; y: number; w: number; h: number; tiles: Tile[] };
+/**
+ * What a page looks like to the particles: its blocks, the boxes to keep clear of, and, for a page that has
+ * them, the world's islands and stations (Creative) or the baselines of its text (Professional).
+ */
+export type Layout = { panels: Panel[]; avoid: Box[]; world?: WorldFootprint; rows?: Row[] };
 const emptyLayout = (): Layout => ({ panels: [], avoid: [] });
 
 /**
@@ -70,9 +124,18 @@ const emptyLayout = (): Layout => ({ panels: [], avoid: [] });
  */
 export const apertureRadius = (width: number, height: number) =>
   Math.round(Math.min(340, Math.max(110, Math.min(height * 0.38, width * (width < height ? 0.42 : 0.27)))));
+/** Radius of the ring the fragments gather on around the anchor, coming back to Professional. */
+export const collectRadius = (width: number, height: number) => Math.max(90, Math.min(250, Math.min(width, height) * 0.28));
 /** 0 to 1 across one phase. */
-export const within = (progress: number, phase: Phase) =>
-  clamp01((progress - PHASES[phase][0]) / (PHASES[phase][1] - PHASES[phase][0]));
+export const within = (progress: number, phase: Phase, direction: Direction = transition.direction) => {
+  const [a, b] = TIMINGS[direction].phases[phase];
+  return clamp01((progress - a) / (b - a));
+};
+/** 0 to 1 across a narrative beat of the direction. */
+export const beat = (progress: number, name: string, direction: Direction = transition.direction) => {
+  const [a, b] = TIMINGS[direction].beats[name];
+  return clamp01((progress - a) / (b - a));
+};
 export const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
 export const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 
@@ -107,6 +170,12 @@ export const transition = {
    */
   oldLayout: emptyLayout(),
   newLayout: emptyLayout(),
+  /** Going to Creative: the Professional regions being cut into tiles (named for the view transition). */
+  regions: [] as Region[],
+  /** Coming back: the point the scanner locks on (the selected station, the map's centre or the screen's), in viewport pixels. */
+  anchor: { x: 720, y: 450 },
+  /** Visual quality of this run, decided before it starts (lib/transition/quality.ts). */
+  tier: "high" as "high" | "medium" | "low",
 };
 
 /** Extra distance past the edges, so a scanner fully leaves or enters the view. */
@@ -145,7 +214,7 @@ export function passProgress(x: number, direction = transition.direction, width 
     direction === "to-creative"
       ? Math.abs(x - width / 2) / half
       : (x < width / 2 ? x + MARGIN : width + MARGIN - x) / half;
-  const [a, b] = PHASES.scan;
+  const [a, b] = TIMINGS[direction].phases.scan;
   return a + easeInOutInverse(clamp01(f)) * (b - a);
 }
 

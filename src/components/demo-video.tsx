@@ -4,6 +4,7 @@ import { ArrowUpRight, Maximize2, Pause, Play } from "lucide-react";
 import type { Project } from "@/data/projects";
 import { demoClassInfo } from "@/data/demo-class";
 import { hasVideo, mediaFor } from "@/data/demo-media";
+import { MediaSkeleton, SkeletonCover } from "./skeleton/primitives";
 
 /**
  * A project's demonstration video: a 16:9 frame with a poster, play and pause, captions, full screen and a
@@ -18,8 +19,12 @@ export default function DemoVideo({ project }: { project: Project }) {
   const [started, setStarted] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [failed, setFailed] = useState(false);
+  // The poster (before play) or the first frame (after) has arrived; until then the frame holds a skeleton.
+  const [posterLoaded, setPosterLoaded] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
   if (!media) return null;
   const ready = hasVideo(media) && !failed;
+  const waiting = ready && (started ? !videoLoaded : !!media.poster && !posterLoaded);
   const info = demoClassInfo[media.demoClass];
 
   const toggle = () => {
@@ -45,13 +50,13 @@ export default function DemoVideo({ project }: { project: Project }) {
         <h3 id={`dv-${project.slug}`}>Watch: {media.title}</h3>
         <span className="dv-class mono">{info.label}</span>
       </header>
-      <div className="dv-frame" ref={frame}>
+      <div className="dv-frame" ref={frame} aria-busy={waiting || undefined}>
         {ready ? (
           <>
             {!started && media.poster && (
               // The poster is a plain image until the visitor asks for the video.
               // eslint-disable-next-line @next/next/no-img-element
-              <img className="dv-poster" src={media.poster} alt={`Poster for the ${media.title} demonstration`} loading="lazy" />
+              <img className="dv-poster" src={media.poster} alt={`Poster for the ${media.title} demonstration`} loading="lazy" onLoad={() => setPosterLoaded(true)} onError={() => setPosterLoaded(true)} />
             )}
             {started && (
               <video
@@ -63,12 +68,14 @@ export default function DemoVideo({ project }: { project: Project }) {
                 poster={media.poster ?? undefined}
                 onPlay={() => setPlaying(true)}
                 onPause={() => setPlaying(false)}
+                onLoadedData={() => setVideoLoaded(true)}
                 onError={() => setFailed(true)}
               >
                 <source src={media.video ?? undefined} type="video/mp4" />
                 <track kind="captions" srcLang="en" label="English" src={media.captions ?? undefined} default />
               </video>
             )}
+            <SkeletonCover ready={!waiting} skeleton={<MediaSkeleton />} label={started ? "Loading the video" : "Loading the poster"} tone="dark" />
             <div className="dv-bar">
               <button type="button" onClick={toggle} aria-label={playing ? `Pause the ${media.title} video` : `Play the ${media.title} video`}>
                 {playing ? <Pause size={16} aria-hidden="true" /> : <Play size={16} aria-hidden="true" />}

@@ -1,0 +1,239 @@
+/*
+ * Loading skeletons (src/components/skeleton). A skeleton has the footprint of
+ * the content it stands for, shimmers only while it waits, and leaves with a
+ * wipe the moment the content is ready. Reduced motion: no shimmer, and a short
+ * fade instead of the wipe.
+ */
+@property --sk-wipe {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
+
+.sk-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+  clip-path: inset(0 0 0 var(--sk-wipe));
+  transition: --sk-wipe 320ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+.sk-layer[data-phase="idle"] {
+  opacity: 0;
+}
+.sk-layer[data-phase="wiping"] {
+  --sk-wipe: 100%;
+}
+.sk-svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+/* One highlight crosses the whole region, so the light passes through every shape together. */
+.sk-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgb(255 252 244 / 0.5) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: sk-sweep 1.6s ease-in-out 0.15s infinite;
+  will-change: transform;
+}
+/* The leading edge of the wipe: a hairline in cobalt, with a soft feather behind it. */
+.sk-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--sk-wipe);
+  width: 0;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.sk-layer[data-phase="wiping"] .sk-edge {
+  opacity: 1;
+  box-shadow:
+    -1px 0 0 0 #2f4bf5,
+    -24px 0 24px -4px rgb(235 230 216 / 0.8);
+}
+.sk-status {
+  position: absolute;
+  left: 16px;
+  bottom: 14px;
+  z-index: 4;
+  margin: 0;
+  padding: 4px 11px;
+  font-size: 11px;
+  color: var(--c-ink, var(--m-ink, #17171d));
+  background: rgb(255 253 247 / 0.92);
+  border: 1.5px solid var(--c-ink, var(--m-ink, #17171d));
+  border-radius: 999px;
+  animation: w-wait-in 0.3s both;
+}
+.sk-status button {
+  margin-left: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk-shimmer {
+    display: none;
+  }
+  .sk-layer {
+    clip-path: none;
+    transition: opacity 120ms linear;
+  }
+  .sk-layer[data-phase="wiping"] {
+    opacity: 0;
+  }
+  .sk-edge {
+    display: none;
+  }
+}
+@keyframes sk-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  80%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/*
+ * Skeletons for content that is not the Creative map (components/skeleton/primitives.tsx). The tones follow the
+ * mode: ivory in Professional, a warmer neutral in Creative. Shapes are plain surfaces with a hairline; the one
+ * shimmer and the one wipe above are shared.
+ */
+.sk-swap {
+  position: relative;
+}
+.sk-cover {
+  --sk-surface: #ece9e0;
+  --sk-line: rgb(23 23 29 / 0.08);
+  --sk-ink: rgb(23 23 29 / 0.28);
+}
+html[data-mode="creative"] .sk-cover {
+  --sk-surface: #ebe6d8;
+  --sk-line: rgb(23 23 29 / 0.1);
+}
+.sk-cover[data-tone="dark"] {
+  --sk-surface: #2b2b34;
+  --sk-line: rgb(255 255 255 / 0.08);
+  --sk-ink: rgb(255 255 255 / 0.32);
+}
+/* A skeleton that is still the only thing in the region gives it its size; once the content is there it
+   covers the content instead and the wipe takes it away. */
+.sk-cover[data-flow="flow"] {
+  position: relative;
+  inset: auto;
+}
+.sk-cover[data-flow="overlay"] {
+  background: var(--sk-surface);
+}
+.sk-ph {
+  display: block;
+  flex: none;
+  background: var(--sk-surface);
+  border-radius: 6px;
+}
+.sk-line {
+  border-radius: 4px;
+}
+.sk-chip {
+  height: 32px;
+  border-radius: 999px;
+}
+.sk-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 32px;
+}
+.sk-scene {
+  display: grid;
+  gap: 10px;
+  color: var(--sk-ink);
+}
+.sk-vp {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  min-height: 260px;
+  max-height: 460px;
+  border: 1.5px solid var(--sk-line);
+  border-radius: 8px;
+  overflow: hidden;
+  background:
+    linear-gradient(var(--sk-line) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, var(--sk-line) 1px, transparent 1px) 0 0 / 24px 24px,
+    var(--sk-surface);
+}
+@media (max-width: 560px) {
+  .sk-vp {
+    aspect-ratio: 1 / 1;
+    min-height: 0;
+  }
+}
+.sk-model {
+  width: min(46%, 220px);
+  height: auto;
+}
+.sk-doc-rows {
+  display: grid;
+  gap: 12px;
+  width: min(72%, 420px);
+}
+.sk-doc-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sk-doc-lines {
+  display: grid;
+  flex: 1;
+  gap: 6px;
+}
+.sk-media {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  gap: 10px;
+  padding: 12px;
+  background: var(--sk-surface);
+}
+.sk-media-poster {
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--sk-line);
+}
+.sk-media-play {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--sk-ink);
+  opacity: 0.5;
+}
+.sk-media-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sk-media-bar .sk-line {
+  flex: 1;
+}
+.sk-media-caps {
+  display: grid;
+  gap: 6px;
+}
+.sk-status {
+  bottom: 12px;
+}

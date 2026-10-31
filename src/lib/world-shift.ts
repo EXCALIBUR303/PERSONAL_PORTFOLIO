@@ -2,15 +2,19 @@
 import { gsap } from "gsap";
 import { flushSync } from "react-dom";
 import {
-  SCANNER_MS,
   clearMorphTimings,
+  clearScannerVars,
   cueTimeline,
   gridOrigin,
   paintScanner,
+  resetCuts,
+  scannerMs,
   scannerTimeline,
   writeMorphTimings,
 } from "./transition/scanner";
-import { measureLayout } from "./transition/layout";
+import { findAnchor, measureLayout } from "./transition/layout";
+import { clearRegions, nameRegions, planRegions } from "./transition/regions";
+import { QUALITY, RunProbe, chooseTier, countFor, recordRun } from "./transition/quality";
 import {
   dropStarted,
   emitProgress,
@@ -60,6 +64,30 @@ let active: Transition | null = null;
 let timeline: gsap.core.Timeline | null = null;
 let cue: gsap.core.Tween | null = null;
 let lastShift = { mode: "", at: -Infinity, delay: 0, scanner: false };
+/** The mode the running shift is heading for (null when none runs). */
+let heading: string | null = null;
+
+/**
+ * Where a switch would end up: the mode a running shift is heading for, else the mode on the page. The mode is
+ * applied only once the old page has been captured, so for the first part of a run the page still shows the mode
+ * being left, and a click asking to stay in it must not be taken as "already there".
+ */
+export const shiftHeading = () => heading ?? document.documentElement.dataset.mode ?? null;
+
+/**
+ * A visitor asks for the mode the page still shows while a run toward the other one has not applied it yet. If the
+ * run is still in its cue (nothing captured), it is dropped and the page simply stays; returns false when it is past
+ * that (the capture's update will apply the other mode), and the caller starts a shift back.
+ */
+export function stayInMode(): boolean {
+  if (!cue) return false;
+  cancel(document.documentElement);
+  return true;
+}
+/** Removes the guards (watchdog, hidden-page listener) of the run in progress. */
+let guardOff: (() => void) | null = null;
+/** A run that has not finished this long after the click is ended by force. */
+export const WATCHDOG_MS = 3200;
 
 export const SHIFT_MS = 760;
 /** Length of the portal ride, in seconds. */
@@ -152,6 +180,7 @@ const VARS = [
   "--sc-l", "--sc-r", "--sc-cl", "--sc-cr", "--sc-top-t", "--sc-top-f", "--sc-bottom-f",
 ];
 function clear(root: HTMLElement) {
+  heading = null;
   delete root.dataset.shift;
   delete root.dataset.portal;
   delete root.dataset.scanner;
@@ -162,6 +191,10 @@ function clear(root: HTMLElement) {
     el.style.removeProperty("view-transition-class");
     if (!el.getAttribute("style")) el.removeAttribute("style");
   }
+  clearRegions();
+  clearScannerVars();
+  resetCuts();
+  if (!root.getAttribute("style")) root.removeAttribute("style");
   clearMorphTimings();
 }
 
@@ -234,6 +267,8 @@ function sectionInView() {
 
 /** Stops whatever is running and clears its traces, so a new shift starts clean. */
 function cancel(root: HTMLElement) {
+  guardOff?.();
+  guardOff = null;
   cue?.kill();
   cue = null;
   timeline?.kill();
@@ -265,6 +300,7 @@ export function worldShift(next: string, apply: () => void, origin?: Origin) {
     return;
   }
 
+  heading = next;
   const x = origin?.x ?? innerWidth - 80;
   const y = origin?.y ?? 32;
   const section = sectionInView();
@@ -295,6 +331,9 @@ function scannerShift(
   keepFocus: boolean,
 ) {
   const direction: Direction = next === "creative" ? "to-creative" : "to-pro";
+  const tier = chooseTier();
+  const quality = QUALITY[tier];
+  const oldLayout = measureLayout();
   Object.assign(transition, {
     running: true,
     run: transition.run + 1,
@@ -309,12 +348,54 @@ function scannerShift(
     height: innerHeight,
     oldOrigin: gridOrigin(),
     newOrigin: gridOrigin(),
-    oldLayout: measureLayout(),
+    oldLayout,
     newLayout: { panels: [], avoid: [] },
+    tier,
+    regions: [],
+    anchor: { x: innerWidth / 2, y: innerHeight / 2 },
   });
+  // Going out, selected Professional regions are cut into tiles (phones cut two of them); coming back, the
+  // scanner locks on a point of the world (the selected station, the map's centre or the screen's).
+  if (direction === "to-creative")
+    transition.regions = planRegions(
+      Math.min(quality.regions, innerWidth < 640 ? 2 : 5),
+      Math.round(countFor(innerWidth) * quality.fragments * 0.85),
+      innerWidth,
+      innerHeight,
+    );
+  else transition.anchor = findAnchor(oldLayout);
+  const probe = new RunProbe();
+  // However the run ends, the visitor must end up in the mode they chose with the page free to use. If it has not
+  // finished in WATCHDOG_MS, or the tab is hidden while it runs (frames stop, so it would resume mid-motion later),
+  // it is ended at once and the mode is applied if the transition had not got that far.
+  let applied = false;
+  const finishNow = () => {
+    if (!transition.running) return;
+    cancel(root);
+    if (!applied) {
+      applied = true;
+      lastShift = { mode: next, at: performance.now(), delay: 0, scanner: false };
+      flushSync(apply);
+      settleFocus(next, keepFocus);
+    }
+  };
+  const onHidden = () => document.hidden && finishNow();
+  // A resize changes the geometry every layer was built for (the viewport, the page's structure), so the run ends
+  // rather than draw a scanner that no longer fits. A phone's address bar showing or hiding is not a resize.
+  const onResize = () => {
+    if (Math.abs(innerWidth - transition.width) > 1 || Math.abs(innerHeight - transition.height) > 140) finishNow();
+  };
+  const watchdog = window.setTimeout(finishNow, WATCHDOG_MS);
+  document.addEventListener("visibilitychange", onHidden);
+  window.addEventListener("resize", onResize);
+  guardOff = () => {
+    window.clearTimeout(watchdog);
+    document.removeEventListener("visibilitychange", onHidden);
+    window.removeEventListener("resize", onResize);
+  };
   root.dataset.shift = next;
   root.dataset.scanner = direction;
-  root.style.setProperty("--ws-ms", `${SCANNER_MS}ms`);
+  root.style.setProperty("--ws-ms", `${scannerMs(direction)}ms`);
   paintScanner(root);
   emitTransition();
   emitProgress();
@@ -327,13 +408,29 @@ function scannerShift(
     const morphs = new Map(cards);
     morphs.set("ws-header", transition.width / 2);
     writeMorphTimings(morphs, direction);
+    performance.mark("ws:cue-end");
+    nameRegions(transition.regions);
+    performance.mark("ws:regions-named");
+    // The marks cost nothing and show in a performance trace: where the capture frame's time goes (the other mode's
+    // render, naming the shared elements, reading the new page's structure).
     const update = () => {
+      performance.mark("ws:update");
+      applied = true;
       lastShift = { mode: next, at: performance.now(), delay: 0, scanner: true };
+      // The switch that was used is part of the header being replaced. Removing the focused element makes the browser
+      // bring the old page's style and layout up to date first, a full pass inside the capture frame that is thrown
+      // away at once. The old page has been captured by now, so letting go of focus changes nothing on screen, and
+      // settleFocus moves it to the same option in the new header.
+      const focused = document.activeElement as HTMLElement | null;
+      if (focused?.closest?.("[data-mode-option]")) focused.blur();
       flushSync(apply);
+      performance.mark("ws:rendered");
       if (section) document.getElementById(section)?.scrollIntoView({ block: "start", behavior: "instant" });
       nameCards(slugsOf(cards));
       transition.newOrigin = gridOrigin();
+      performance.mark("ws:named");
       transition.newLayout = measureLayout();
+      performance.mark("ws:measured");
       settleFocus(next, keepFocus);
     };
     const vt = start(update);
@@ -342,15 +439,19 @@ function scannerShift(
       .then(() => {
         if (active !== vt) return;
         transition.started = true;
-        timeline = scannerTimeline(root);
+        timeline = scannerTimeline(root, { tick: (now) => probe.tick(now), stalled: finishNow });
         flushStarted();
       })
       .catch(() => {});
     vt.finished.finally(() => {
       if (active !== vt) return;
       active = null;
+      guardOff?.();
+      guardOff = null;
       timeline?.kill();
       timeline = null;
+      // A run that played to its end tells the next one how this device coped (lib/transition/quality.ts).
+      if (transition.progress >= 0.97) recordRun(probe.finish());
       endScannerRun();
       clear(root);
     });

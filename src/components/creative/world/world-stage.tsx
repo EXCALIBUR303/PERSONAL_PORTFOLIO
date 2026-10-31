@@ -17,10 +17,12 @@ import { projects } from "@/data/projects";
 import { subscribeTransition, transition } from "@/lib/transition/state";
 import { micro } from "../../motion-config";
 import { lazyView } from "../../scenes/lazy-view";
+import StudioSkeleton from "../../skeleton/studio-skeleton";
+import { useSkeletonGate } from "../../skeleton/use-skeleton-gate";
 import { districts, toneFor, type District } from "../identity";
 import { tierWords, type Station } from "../studio/stations";
 import { easeInCubic, easeInOutCubic, easeOutCubic, Projector, type Pose } from "./camera";
-import { boxOf, PLACEMENTS, plateOf, PLATES, poseFor, STUDIO, type Shot, type Stage } from "./layout";
+import { boxOf, establishingPose, PLACEMENTS, plateOf, PLATES, poseFor, STUDIO, type Shot, type Stage } from "./layout";
 import { guessTier, readOverride, type Tier } from "./quality";
 import { Rig } from "./rig";
 
@@ -31,7 +33,7 @@ import { Rig } from "./rig";
  * reaches it and screen readers read it, with or without WebGL. The camera rig
  * places the buttons and labels with the same projection the canvas draws with.
  */
-const WorldCanvas = lazyView(() => import("./world-canvas"), () => null);
+const WorldCanvas = lazyView(() => import("./world-canvas"), null);
 
 export type ScreenSpot = { x: number; y: number; visible: boolean };
 type Layout = "wide" | "tablet" | "phone";
@@ -117,6 +119,8 @@ export default function WorldStage({
   const [ready, setReady] = useState(false);
   const tier = useTier();
   const running = useTransitionRunning();
+  // The skeleton's clock starts when the visitor can see the map, which is after a mode transition has ended.
+  const gate = useSkeletonGate(ready, running);
   const [mountCanvas, setMountCanvas] = useState(false);
   const rig = useMemo(() => new Rig(poseFor({ kind: "overview" }, { width: 1200, height: 720, insetRight: 0 })), []);
 
@@ -319,7 +323,7 @@ export default function WorldStage({
       first.current = false;
       if (!reduced && shot.kind === "overview") {
         establishing.current = true;
-        rig.snap({ ...goal, dist: goal.dist * 1.34, el: goal.el + 0.17, az: goal.az - 0.34 });
+        rig.snap(establishingPose(goal));
       } else rig.snap(goal);
       return;
     }
@@ -413,6 +417,7 @@ export default function WorldStage({
         className="w-stage"
         ref={frame}
         data-ready={ready || undefined}
+        aria-busy={!ready || undefined}
         data-paused={paused || undefined}
         data-shot={shot.kind}
         onPointerMove={onLean}
@@ -441,9 +446,12 @@ export default function WorldStage({
           </div>
         )}
         <div className="w-vignette" aria-hidden="true" />
-        {!ready && (
-          <p className="w-wait mono" aria-hidden="true">
-            Building the studio…
+        {measured && gate.phase !== "done" && gate.phase !== "idle" && (
+          <StudioSkeleton width={measured.w} height={measured.h} phase={gate.phase} opening={!reduced} />
+        )}
+        {(gate.status || gate.slow) && (
+          <p className="sk-status mono" role="status">
+            {gate.slow ? "The 3D studio is taking longer than usual." : "Building the 3D studio"}
           </p>
         )}
         {zoomed && (

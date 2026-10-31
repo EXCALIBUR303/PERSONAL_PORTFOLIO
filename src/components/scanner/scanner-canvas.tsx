@@ -3,17 +3,22 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useSyncExternalStore } fro
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import {
+  TIMINGS,
+  apertureRadius,
+  scanFraction,
   clamp01,
   easeInOut,
   easeOut,
   passProgress,
   setLayerReady,
   slit,
+  subscribeProgress,
   subscribeTransition,
   transition,
   within,
   type Layout,
 } from "@/lib/transition/state";
+import { QUALITY } from "@/lib/transition/quality";
 import { KINDS, assignEnds, countFor, startRun, type Particle } from "./particle-layout";
 
 /**
@@ -40,10 +45,16 @@ const D = 1000;
 const OUTLINE = 1.22;
 /** Progress a released particle takes to land (going out). */
 const RELEASE = 0.2;
-/** Progress the gather onto the axis takes, and a placement (coming back). */
-const GATHER = 0.15;
+/** Progress a placement onto the grid takes (coming back). */
 const SNAP = 0.07;
 
+const Z_AXIS = new THREE.Vector3(0, 0, 1);
+/** How deep (behind the screen) a tile goes while it is inside the tunnel. */
+const TUNNEL_Z = -520;
+/** Progress a tile takes to lift off the page before it dives. */
+const LIFT = 0.04;
+/** What a tile shrinks to as it enters the mouth of the tunnel. */
+const MOUTH_SCALE = 0.22;
 const GEOMETRIES = [
   () => new THREE.BoxGeometry(1, 1, 1),
   () => new THREE.OctahedronGeometry(0.74),
@@ -244,10 +255,11 @@ function Particles({ capacity }: { capacity: number }) {
   }, [capacity]);
   // Scratch objects, reused every frame.
   const scratch = useMemo(
-    () => ({ m: new THREE.Matrix4(), q: new THREE.Quaternion(), v: new THREE.Vector3(), s: new THREE.Vector3(), c: new THREE.Color() }),
+    () => ({ m: new THREE.Matrix4(), q: new THREE.Quaternion(), v: new THREE.Vector3(), s: new THREE.Vector3(), c: new THREE.Color(), lay: new THREE.Quaternion() }),
     [],
   );
 
+  const setDpr = useThree((st) => st.setDpr);
   useFrame(({ camera, size, gl }) => {
     const cam = camera as THREE.PerspectiveCamera;
     const W = size.width;
@@ -264,12 +276,25 @@ function Particles({ capacity }: { capacity: number }) {
     // Build the run's particles on its first frame; destinations once the new page exists.
     let run = current.current;
     if (!run || run.run !== transition.run) {
-      const parts = startRun({ W, H, direction: transition.direction, oldLayout: transition.oldLayout, oldOrigin: transition.oldOrigin });
+      // The pixel ratio follows the run's quality tier, once at the start of a run and only if it changed.
+      const wanted = Math.min(window.devicePixelRatio || 1, QUALITY[transition.tier].dprCap);
+      if (Math.abs(gl.getPixelRatio() - wanted) > 0.01) setDpr(wanted);
+      const parts = startRun({
+        W,
+        H,
+        direction: transition.direction,
+        oldLayout: transition.oldLayout,
+        oldOrigin: transition.oldOrigin,
+        regions: transition.regions,
+        anchor: transition.anchor,
+        fragments: QUALITY[transition.tier].fragments,
+      });
       run = {
         run: transition.run,
         parts,
         byKind: group(parts, capacity),
-        startColours: parts.map((q) => new THREE.Color(q.startColour)),
+        // A flat tile of paper is lit like a surface, so it is lifted to read as paper rather than grey.
+        startColours: parts.map((q) => new THREE.Color(q.startColour).multiplyScalar(q.plate ? 1.5 : 1)),
         endColours: parts.map((q) => new THREE.Color(q.endColour)),
         axes: parts.map((q) => new THREE.Vector3(q.axis.x, q.axis.y, q.axis.z).normalize()),
         ended: false,
@@ -278,7 +303,14 @@ function Particles({ capacity }: { capacity: number }) {
       current.current = run;
     }
     if (!run.ended && transition.started) {
-      assignEnds(run.parts, { W, H, direction: transition.direction, newLayout: transition.newLayout, newOrigin: transition.newOrigin });
+      assignEnds(run.parts, {
+        W,
+        H,
+        direction: transition.direction,
+        newLayout: transition.newLayout,
+        newOrigin: transition.newOrigin,
+        anchor: transition.anchor,
+      });
       run.byKind = group(run.parts, capacity);
       run.endColours = run.parts.map((q) => new THREE.Color(q.endColour));
       if (out) run.fields = fieldsOf(transition.newLayout, W, H);
@@ -291,81 +323,196 @@ function Particles({ capacity }: { capacity: number }) {
     cam.position.set(0, 0, D);
     cam.lookAt(0, 0, 0);
 
-    const { m, q: quat, v, s, c } = scratch;
+    const { m, q: quat, v, s, c, lay } = scratch;
+    const edges = QUALITY[transition.tier].outlines;
     for (let k = 0; k < KINDS; k++) {
       const mesh = meshes.current[k];
       const line = outlines.current[k];
       if (!mesh || !line) continue;
       const list = run.byKind[k];
       mesh.count = list.length;
-      line.count = list.length;
+      line.count = edges ? list.length : 0;
       list.forEach((index, slot) => {
         const q = run.parts[index];
         let x: number;
         let y: number;
         let z: number;
         let angle: number;
-        let scale: number;
+        // The size of the shape along its three axes (before the outline), and how far it has settled onto its outline.
+        let sx: number;
+        let sy: number;
+        let sz: number;
         let mix: number;
+        let land = 0;
+        // Turn about the z axis (a dash lying along an outline or a row), applied after the tumble.
+        let rot = 0;
+        let flat = false;
         if (out) {
-          // Markers light up from the centre outward as the aperture forms.
-          const appear = transition.started ? backOut(clamp01((aim - q.order * 0.55) / 0.4)) : 0;
-          const r = clamp01((p - q.pass) / RELEASE);
-          if (r <= 0) {
-            // Waiting on the grid; brightening as the scanner approaches.
-            const near = smooth(q.pass - 0.05, q.pass, p);
-            x = q.start.x;
-            y = q.start.y;
-            z = 0;
-            angle = 0;
-            scale = q.startSize * appear * (1 + 0.45 * near);
-            mix = 0;
+          if (q.plate) {
+            // A tile cut from a Professional region. It lifts off the page the moment its piece of the snapshot is cut away,
+            // dives into the mouth of the tunnel (small and deep), and comes out along the line to where it lands.
+            const a0 = q.pass + LIFT;
+            const avail = Math.max(0.12, 0.9 - a0);
+            const i1 = a0 + avail * 0.46;
+            const e1 = a0 + avail;
+            const lift = smooth(q.pass, a0, p);
+            const u = inOutCubic(clamp01((p - a0) / (i1 - a0)));
+            const w = easeOut(clamp01((p - i1) / (e1 - i1)));
+            const thick = Math.max(3, Math.min(q.startW, q.startH) * 0.07);
+            const landL = q.endSize * q.endStretch;
+            const landT = q.endSize * (q.endStretch > 1 ? 0.3 : 1);
+            if (p < q.pass) {
+              // Still part of the page: the real snapshot shows it.
+              x = q.start.x;
+              y = q.start.y;
+              z = 0;
+              sx = sy = sz = 0.0001;
+            } else if (p < a0) {
+              x = q.start.x;
+              y = q.start.y - 14 * lift;
+              z = 70 * lift;
+              sx = q.startW * (1 + 0.04 * lift);
+              sy = q.startH * (1 + 0.04 * lift);
+              sz = thick;
+            } else if (p < i1) {
+              x = lerp(q.start.x, q.mouth.x, u);
+              y = lerp(q.start.y - 14, q.mouth.y, u) - Math.sin(Math.PI * u) * q.lift * 0.4;
+              z = lerp(70, TUNNEL_Z, u);
+              const k = lerp(1, MOUTH_SCALE, u);
+              sx = q.startW * k;
+              sy = q.startH * k;
+              sz = thick * k;
+            } else {
+              x = lerp(q.mouth.x, q.end.x, w);
+              y = lerp(q.mouth.y, q.end.y, w) - Math.sin(Math.PI * w) * q.lift * 0.3;
+              z = lerp(TUNNEL_Z, 0, w);
+              sx = lerp(q.startW * MOUTH_SCALE, landL, w);
+              sy = lerp(q.startH * MOUTH_SCALE, landT, w);
+              sz = lerp(thick * MOUTH_SCALE, landT, w);
+              land = smooth(0.55, 1, w);
+            }
+            // A small turn as it lifts, more in the tunnel, none by the time it lands.
+            angle = q.spin * (0.15 * lift + 0.9 * u) * (1 - w);
+            mix = p > i1 ? smooth(0, 0.7, w) : 0;
+            flat = true;
           } else {
-            // Released: carried outward with the scanner, lifted toward the
-            // viewer, then down onto its place on a Creative block.
-            const e = easeOut(r);
-            const dir = Math.sign(q.start.x - C.x) || 1;
-            x = bezier(q.start.x, q.start.x + dir * 60, q.end.x, q.end.x, e);
-            y = bezier(q.start.y, q.start.y - q.lift, q.end.y - q.lift * 0.35, q.end.y, e);
-            z = bezier(0, 160, 100, 0, e);
-            angle = q.spin * (1 - (1 - e) * (1 - e));
-            scale = lerp(q.startSize, q.endSize, e) * (1 + 0.3 * Math.sin(Math.PI * e));
-            mix = smooth(0.08, 0.5, e);
+            // Markers light up from the centre outward as the aperture forms.
+            const appear = transition.started ? backOut(clamp01((aim - q.order * 0.55) / 0.4)) : 0;
+            const r = clamp01((p - q.pass) / RELEASE);
+            let scale: number;
+            if (r <= 0) {
+              // Waiting on the grid; brightening as the scanner approaches.
+              const near = smooth(q.pass - 0.05, q.pass, p);
+              x = q.start.x;
+              y = q.start.y;
+              z = 0;
+              angle = 0;
+              scale = q.startSize * appear * (1 + 0.45 * near);
+              mix = 0;
+            } else {
+              // Released: carried outward with the scanner, lifted toward the
+              // viewer, then down onto its place on a Creative block.
+              const e = easeOut(r);
+              const dir = Math.sign(q.start.x - C.x) || 1;
+              x = bezier(q.start.x, q.start.x + dir * 60, q.end.x, q.end.x, e);
+              y = bezier(q.start.y, q.start.y - q.lift, q.end.y - q.lift * 0.35, q.end.y, e);
+              z = bezier(0, 160, 100, 0, e);
+              angle = q.spin * (1 - (1 - e) * (1 - e));
+              scale = lerp(q.startSize, q.endSize, e) * (1 + 0.3 * Math.sin(Math.PI * e));
+              mix = smooth(0.08, 0.5, e);
+              land = smooth(0.55, 1, e);
+            }
+            sx = sy = sz = scale;
           }
           // The assembled outlines clear from the centre outward once the page is revealed.
-          scale *= 1 - smooth(0.84 + 0.1 * q.order, 0.92 + 0.08 * q.order, p);
+          const clear = 1 - smooth(0.84 + 0.1 * q.order, 0.92 + 0.08 * q.order, p);
+          sx *= clear;
+          sy *= clear;
+          sz *= clear;
         } else {
-          // Shapes appear on Creative's blocks during the cue, are gathered onto
-          // the axis, and are placed onto Professional's structure as a scanner passes.
+          // Coming back. Fragments pop out of the world's islands and stations during the cue, gather on a ring around
+          // the anchor (collect), travel to the baselines of the Professional text (align), and are set as type when a
+          // bracket passes: a row's ticks drop onto the line and give way to the real text; the rest are placed on the
+          // page's grid as the bracket closes.
+          const collect = TIMINGS["to-pro"].beats.collect;
           const pop = backOut(clamp01((transition.cue - q.seed * 0.45) / 0.55));
-          const fromAxis = Math.min(1, Math.abs(q.start.y - C.y) / C.y);
-          const g = inOutCubic(clamp01((p - 0.04 * (1 - fromAxis)) / GATHER));
-          const placed = expoOut(clamp01((p - q.pass) / SNAP));
-          const sway = Math.sin(Math.PI * g) * (q.seed - 0.5) * 24;
-          const gx = lerp(q.start.x, q.slot.x, g) + sway;
-          const gy = lerp(q.start.y, q.slot.y, g);
-          x = lerp(gx, q.end.x, placed);
-          y = lerp(gy, q.end.y, placed);
-          z = Math.sin(Math.PI * placed) * 60;
-          angle = q.spin * (1 - g);
-          scale = lerp(q.startSize * pop, q.startSize * 0.85, g);
-          scale = lerp(scale, q.endSize, placed);
-          mix = placed;
-          scale *= 1 - smooth(0.78 + 0.14 * q.order, 0.86 + 0.13 * q.order, p);
+          const c1End = collect[0] + q.order * 0.12 + 0.2;
+          const c1 = inOutCubic(clamp01((p - collect[0] - q.order * 0.12) / 0.2));
+          const arc = Math.sin(Math.PI * c1);
+          const bx = lerp(q.start.x, q.slot.x, c1) + (q.seed - 0.5) * 28 * arc;
+          const by = lerp(q.start.y, q.slot.y, c1) - q.lift * 0.25 * arc;
+          // A depth below 1 means the fragment is inside the aperture: smaller and further away.
+          let inside = 0;
+          let g: number;
+          if (q.row) {
+            // From the ring a tick goes in through the aperture (the anchor), then out along the line to its row.
+            const t1 = q.arrive;
+            const t0 = Math.max(c1End, t1 - 0.22);
+            const u = clamp01((p - t0) / Math.max(0.04, t1 - t0));
+            const into = inOutCubic(clamp01(u / 0.45));
+            const out2 = easeOut(clamp01((u - 0.45) / 0.55));
+            const px = lerp(bx, transition.anchor.x, into);
+            const py = lerp(by, transition.anchor.y, into);
+            x = lerp(px, q.end.x, out2);
+            y = lerp(py, q.end.y, out2);
+            inside = into * (1 - out2);
+            g = out2;
+          } else {
+            g = expoOut(clamp01((p - q.pass) / SNAP));
+            x = lerp(bx, q.end.x, g);
+            y = lerp(by, q.end.y, g);
+          }
+          z = q.lift * 0.45 * arc * (1 - inside) - 220 * inside + Math.sin(Math.PI * g) * (q.row ? 0 : 60);
+          // The tumble damps to nothing by the time it reaches the ring.
+          angle = q.spin * (1 - c1);
+          // A dash lies along its island's outline, then along the ring, then flat on its row.
+          const ringTangent = Math.atan2(q.slot.y - transition.anchor.y, q.slot.x - transition.anchor.x) + Math.PI / 2;
+          const startRot = -q.startAngle;
+          const toRing = -ringTangent;
+          rot = lerp(startRot, toRing + Math.round((startRot - toRing) / Math.PI) * Math.PI, c1);
+          rot = lerp(rot, q.row ? 0 : toRing, g);
+          const stretch = lerp(lerp(q.startStretch, Math.max(1.6, q.startStretch * 0.7), c1), q.endStretch, g);
+          const dash = smooth(1, 2.5, stretch);
+          let scale = lerp(q.startSize * pop, q.startSize * 0.9, c1);
+          scale = lerp(scale, q.endSize, g) * (1 - 0.55 * inside);
+          // A row's tick drops two pixels onto the line and goes as the bracket reaches it; the rest clear at the end.
+          const set = q.row ? smooth(q.pass, q.pass + 0.05, p) : 0;
+          y += 2 * set;
+          scale *= 1 - set;
+          if (!q.row) scale *= 1 - smooth(0.78 + 0.14 * q.order, 0.86 + 0.13 * q.order, p);
+          sx = scale * stretch;
+          // A row's tick is a rule about 3 px thick, so it reads at a glance; other dashes stay finer.
+          sy = scale * lerp(1, q.row ? 0.42 : 0.3, dash);
+          sz = sy;
+          mix = g;
         }
         quat.setFromAxisAngle(run.axes[index], angle);
+        if (rot) quat.multiply(lay.setFromAxisAngle(Z_AXIS, rot));
+        if (land > 0 && q.endStretch > 1) {
+          quat.slerp(lay.setFromAxisAngle(Z_AXIS, -q.endAngle), land);
+          if (!flat) {
+            const f = sx;
+            sx = f * lerp(1, q.endStretch, land);
+            sy = f * lerp(1, 0.3, land);
+            sz = sy;
+          }
+        }
+        s.set(Math.max(0.0001, sx), Math.max(0.0001, sy), Math.max(0.0001, sz));
         v.set(x - W / 2, H / 2 - y, z);
-        s.setScalar(Math.max(0.0001, scale));
         m.compose(v, quat, s);
         mesh.setMatrixAt(slot, m);
-        s.multiplyScalar(OUTLINE);
-        m.compose(v, quat, s);
-        line.setMatrixAt(slot, m);
+        if (edges) {
+          // A thin ink edge around flat tiles (a uniform grow would swell them); fragments grow by a ratio.
+          if (flat) s.set(sx + 2.4, sy + 2.4, sz + 2.4);
+          else s.multiplyScalar(OUTLINE);
+          m.compose(v, quat, s);
+          line.setMatrixAt(slot, m);
+        }
         c.copy(run.startColours[index]).lerp(run.endColours[index], mix);
         mesh.setColorAt(slot, c);
       });
       mesh.instanceMatrix.needsUpdate = true;
-      line.instanceMatrix.needsUpdate = true;
+      if (edges) line.instanceMatrix.needsUpdate = true;
       if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     }
 
@@ -453,6 +600,94 @@ function Warmup() {
   return null;
 }
 
+/**
+ * The dimension of the aperture: octagonal frames behind it, at depth, that
+ * rush past the viewer as the scanners part, so the opening reads as a space
+ * to move through rather than a flat ring. Only going to Creative has them
+ * (coming back is flat, aligned precision). One merged set of line segments;
+ * each frame's position and fade is a function of `progress`.
+ *
+ * Frames sit at z = 0, -140, ... and are pulled toward the viewer; a frame at
+ * z shows at radius r * D / (D - z), so the screen radius grows as it nears.
+ */
+const FRAME_GAP = 140;
+function DepthFrames() {
+  const count = useThree((s) => (s.size.width < 640 ? 3 : 5));
+  const ref = useRef<THREE.LineSegments>(null);
+  const geometry = useMemo(() => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(count * 8 * 2 * 3), 3));
+    g.setAttribute("color", new THREE.BufferAttribute(new Float32Array(count * 8 * 2 * 4), 4));
+    return g;
+  }, [count]);
+  const material = useMemo(
+    () => new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, depthTest: false, depthWrite: false }),
+    [],
+  );
+  useEffect(
+    () => () => {
+      geometry.dispose();
+      material.dispose();
+    },
+    [geometry, material],
+  );
+  useFrame(({ size }) => {
+    const line = ref.current;
+    if (!line) return;
+    const shown = Math.min(count, QUALITY[transition.tier].frames);
+    const out = transition.running && transition.direction === "to-creative" && transition.started && shown > 0;
+    line.visible = out;
+    if (!out) return;
+    geometry.setDrawRange(0, shown * 16);
+    const W = size.width;
+    const H = size.height;
+    const p = transition.progress;
+    const R = apertureRadius(W, H) * 1.16;
+    const half = Math.hypot(W, H) / 2;
+    const pull = D * 0.86 * easeInOut(scanFraction(p)) * (W < 640 ? 0.8 : 1);
+    const appear = smooth(0, 0.16, p);
+    const pos = geometry.getAttribute("position") as THREE.BufferAttribute;
+    const col = geometry.getAttribute("color") as THREE.BufferAttribute;
+    for (let k = 0; k < shown; k++) {
+      const z = -k * FRAME_GAP + pull;
+      const shown = z < D - 120 ? R * (D / (D - z)) : Infinity;
+      const base = 0.72 - 0.1 * k;
+      const alpha = z < D - 120 ? base * appear * (1 - smooth(half * 0.85, half * 1.4, shown)) : 0;
+      for (let i = 0; i < 8; i++) {
+        const a0 = Math.PI / 8 + (i * Math.PI) / 4;
+        const a1 = a0 + Math.PI / 4;
+        const v = (k * 8 + i) * 2;
+        pos.setXYZ(v, R * Math.cos(a0), R * Math.sin(a0), z);
+        pos.setXYZ(v + 1, R * Math.cos(a1), R * Math.sin(a1), z);
+        col.setXYZW(v, 0.09, 0.09, 0.11, alpha);
+        col.setXYZW(v + 1, 0.09, 0.09, 0.11, alpha);
+      }
+    }
+    pos.needsUpdate = true;
+    col.needsUpdate = true;
+  });
+  return <lineSegments ref={ref} args={[geometry, material]} frustumCulled={false} renderOrder={-0.5} visible={false} />;
+}
+
+/**
+ * Draws one frame each time the master timeline moves, from inside that same
+ * update. The canvas has no loop of its own (`frameloop="never"`), so a run has
+ * one frame callback chain, GSAP's, and the particles are always drawn with the
+ * progress the page has just been painted with (no second requestAnimationFrame
+ * that could run first and lag the scanner by a frame).
+ */
+function Drive() {
+  const advance = useThree((s) => s.advance);
+  useEffect(
+    () =>
+      subscribeProgress(() => {
+        if (transition.running && transition.style === "scanner") advance(performance.now() / 1000);
+      }),
+    [advance],
+  );
+  return null;
+}
+
 /** Clears the last run's frame so a later snapshot never shows stale particles. */
 function ClearWhenIdle({ running }: { running: boolean }) {
   const gl = useThree((s) => s.gl);
@@ -474,7 +709,7 @@ export default function ScannerCanvas() {
   const running = useSyncExternalStore(subscribeTransition, isRunning, () => false);
   return (
     <Canvas
-      frameloop={running ? "always" : "never"}
+      frameloop="never"
       dpr={[1, 1.5]}
       gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
       camera={{ position: [0, 0, D], near: 10, far: 5000, fov: 50 }}
@@ -487,6 +722,8 @@ export default function ScannerCanvas() {
       <directionalLight position={[-400, 800, 1000]} intensity={1.7} />
       <Scene />
       <Warmup />
+      <DepthFrames />
+      <Drive />
       <ClearWhenIdle running={running} />
     </Canvas>
   );

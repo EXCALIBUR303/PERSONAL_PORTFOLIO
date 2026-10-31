@@ -360,6 +360,9 @@ const TURNS = [0, 12, -12, 24, -24, 36, -36].map(deg);
 /** How far a portrait stage turns the overview so the archipelago's long axis runs up the screen. */
 const PORTRAIT_TURN = 62;
 
+/** The opening shot's starting pose: the same framing from higher, farther and a little round, before it settles. */
+export const establishingPose = (goal: Pose): Pose => ({ ...goal, dist: goal.dist * 1.34, el: goal.el + 0.17, az: goal.az - 0.34 });
+
 export function poseFor(shot: Shot, stage: Stage): Pose {
   const aspect = stage.width / stage.height;
   const portrait = aspect < 0.95;

@@ -1,12 +1,13 @@
 "use client";
 import { lazyView } from "./lazy-view";
+import { SceneWait } from "../skeleton/primitives";
 import { useEffect, useRef, useState } from "react";
 import { useMode } from "@/components/mode";
 import { dogCommands, matchCommand, pipeline, type DogCommand } from "./dog-data";
 import { SceneToolbar, useSceneControls } from "./scene-controls";
 import { useWebGL } from "./use-webgl";
 
-const DogCanvas = lazyView(() => import("./three/dog-canvas"), () => <div className="s3-loading mono">Loading the robot dog…</div>);
+const DogCanvas = lazyView(() => import("./three/dog-canvas"), "Loading the robot dog", "stage");
 /** Fetches the 3D canvas code early, so a scene built during a mode switch is ready at once. */
 export const preloadCanvas = () => DogCanvas.preload();
 
@@ -56,7 +57,7 @@ export default function DogScene() {
       ) : webgl === false ? (
         flat
       ) : (
-        <div className="s3-loading mono">Checking for 3D support…</div>
+        <SceneWait label="Checking for 3D support" />
       )}
       <div className="lz-chips" role="group" aria-label="Commands">
         {dogCommands.map((c) => (

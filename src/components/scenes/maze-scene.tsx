@@ -1,5 +1,6 @@
 "use client";
 import { lazyView } from "./lazy-view";
+import { SceneWait } from "../skeleton/primitives";
 import { useEffect, useMemo, useState } from "react";
 import { Pause, Play, RotateCcw, Shuffle, StepForward } from "lucide-react";
 import { useMode } from "@/components/mode";
@@ -16,7 +17,7 @@ import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { SceneToolbar, useSceneControls } from "./scene-controls";
 import { useWebGL } from "./use-webgl";
 
-const MazeCanvas = lazyView(() => import("./three/maze-canvas"), () => <div className="s3-loading mono">Loading the 3D maze…</div>);
+const MazeCanvas = lazyView(() => import("./three/maze-canvas"), "Loading the 3D maze", "stage");
 /** Fetches the 3D canvas code early, so a scene built during a mode switch is ready at once. */
 export const preloadCanvas = () => MazeCanvas.preload();
 
@@ -112,7 +113,7 @@ export default function MazeScene() {
       ) : webgl === false ? (
         flat
       ) : (
-        <div className="s3-loading mono">Checking for 3D support…</div>
+        <SceneWait label="Checking for 3D support" />
       )}
       <div className="lz-chips" role="group" aria-label="Search algorithm">
         {ALGORITHMS.map((name) => (
