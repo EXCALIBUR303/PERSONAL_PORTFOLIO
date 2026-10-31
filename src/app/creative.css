@@ -491,6 +491,23 @@ html[data-mode="creative"] .portfolio-root {
       font-size: 18px;
     }
   }
+  @media (max-width: 400px) {
+    .c-brand {
+      gap: 6px;
+      padding: 4px 11px 4px 4px;
+      font-size: 16px;
+    }
+    .c-brand-mark {
+      width: 30px;
+      height: 30px;
+    }
+    .c-header-row {
+      gap: 8px;
+    }
+    .c-actions {
+      gap: 6px;
+    }
+  }
 
   /* ---------- home hero: the studio map ---------- */
   .c-hero {

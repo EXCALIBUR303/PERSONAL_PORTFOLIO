@@ -317,6 +317,7 @@ canvas {
   height: 40px;
 }
 .nav-contact {
+  white-space: nowrap;
   display: flex;
   align-items: center;
   gap: 17px;
@@ -1829,9 +1830,12 @@ h2 em {
   :root {
     --space: 40px;
   }
+  .nav-container {
+    gap: 16px;
+  }
   .desktop-nav {
     padding-left: 0;
-    gap: 25px;
+    gap: 16px;
   }
   h1 {
     font-size: clamp(58px, 7vw, 83px);
@@ -1932,23 +1936,9 @@ h2 em {
     gap: 5px;
   }
 }
-@media (max-width: 760px) {
-  :root {
-    --space: 24px;
-  }
-  .site-header {
-    height: 77px;
-  }
-  .wordmark {
-    font-size: 19px;
-  }
+/* The desktop links give way to the menu from here down, so the mode switch can keep its words (see modes.css). */
+@media (max-width: 1020px) {
   .desktop-nav {
-    display: none;
-  }
-  .nav-actions {
-    gap: 8px;
-  }
-  .nav-contact {
     display: none;
   }
   .mobile-menu-toggle {
@@ -1984,6 +1974,26 @@ h2 em {
   }
   .mobile-nav a > svg {
     margin-left: auto;
+  }
+}
+@media (max-width: 760px) {
+  :root {
+    --space: 24px;
+  }
+  .site-header {
+    height: 77px;
+  }
+  .wordmark {
+    font-size: 19px;
+  }
+  .nav-container {
+    gap: 8px;
+  }
+  .nav-actions {
+    gap: 8px;
+  }
+  .nav-contact {
+    display: none;
   }
   .hero {
     padding-top: 20px;
