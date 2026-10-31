@@ -10,9 +10,9 @@ test.beforeEach(async ({ page }) => {
   await setMode(page, "creative");
 });
 
-test("the 20 stations match the registry: same projects, same districts", () => {
-  expect(stations).toHaveLength(20);
-  expect(new Set(stations.map((s) => s.slug)).size).toBe(20);
+test("the 21 stations match the registry: same projects, same districts", () => {
+  expect(stations).toHaveLength(projects.length);
+  expect(new Set(stations.map((s) => s.slug)).size).toBe(projects.length);
   for (const s of stations) {
     const project = projects.find((p) => p.slug === s.slug);
     expect(project, s.slug).toBeTruthy();
@@ -42,15 +42,15 @@ test("district chips focus one district and dim the others, and can be undone", 
   await expect(page.locator(".c-island[data-dim]")).toHaveCount(0);
 });
 
-test("List view shows all 20 stations, is searchable, and enters exhibits", async ({ page }) => {
+test("List view shows all the stations, is searchable, and enters exhibits", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "List", exact: true }).click();
-  await expect(page.locator(".c-row")).toHaveCount(20);
+  await expect(page.locator(".c-row")).toHaveCount(projects.length);
   await expect(page.locator(".c-map")).toBeHidden();
   await page.getByRole("searchbox", { name: "Find a station" }).fill("maze");
   const rows = await page.locator(".c-row").count();
   expect(rows).toBeGreaterThan(0);
-  expect(rows).toBeLessThan(20);
+  expect(rows).toBeLessThan(projects.length);
   await page.getByRole("searchbox", { name: "Find a station" }).fill("");
   await page.getByRole("button", { name: "Enter exhibit for SmartPark DBMS" }).click();
   await expect(page.locator("#ex-title")).toHaveText("The Concurrency Garage");
@@ -129,7 +129,7 @@ test("the Studio opens a panel with the way to About, the bench and the passport
   await expect(panel).toBeVisible();
   await expect(panel.getByRole("link", { name: /The person behind the experiments/ })).toHaveAttribute("href", "#about");
   await expect(panel).toContainText("On the bench");
-  await expect(panel).toContainText("0 of 20 stations opened and 0 of 6 challenges tried");
+  await expect(panel).toContainText(`0 of ${projects.length} stations opened and 0 of 6 challenges tried`);
   await panel.getByRole("button", { name: /^Algorithms/ }).click();
   await expect(page.locator(".c-map")).toHaveAttribute("data-focus", "algorithms");
   await expect(page.locator("#about h2")).toContainText("The person behind");
@@ -168,7 +168,7 @@ test("without WebGL, or with ?world=2d, the map is the illustrated 2D campus", a
   await page.goto("/?world=2d");
   await expect(page.locator('.c-map[data-engine="2d"]')).toBeVisible();
   await expect(page.locator(".c-plate")).toHaveCount(3);
-  await expect(page.locator(".c-pin")).toHaveCount(20);
+  await expect(page.locator(".c-pin")).toHaveCount(projects.length);
   await page.addInitScript(() => {
     const original = HTMLCanvasElement.prototype.getContext;
     HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type: string, ...args: unknown[]) {

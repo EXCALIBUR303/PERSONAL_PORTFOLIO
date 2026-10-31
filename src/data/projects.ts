@@ -881,7 +881,7 @@ export const projects: Project[] = [
       type: "simulation",
       url: null,
       summary:
-        "An independent browser penalty game made for this portfolio. It does not use code or assets from any related repository.",
+        "A small independent browser penalty study made for this portfolio. The owner's separate 3D game, Penalty Kings, is a different project and is not embedded here.",
       commands: [],
       environment: [],
       runtimeStatus: "Runs entirely in this portfolio using local game state.",
@@ -889,7 +889,9 @@ export const projects: Project[] = [
         "Shot, score, mode and reset behavior are covered by portfolio browser tests.",
       verifiedOn: "2026-10-22",
       notes: [
-        "Independent portfolio implementation. The ownership, attribution and licence of the related football repository have not been verified, so nothing from that game or its assets is used here.",
+        "Independent portfolio implementation; no code or assets from the separate 3D game are used.",
+        "The separate game (Penalty Kings) lives in the owner's FootBall_Penalty_Shootout repository, which has no licence file. Its credits list CC0 models and sounds. It was read, not built or run, for this page.",
+        "Its newest work is on the main branch (a night-league arena, an instanced crowd, a broadcast interface). The repository's default branch is an older, earlier version of the same game.",
       ],
     },
     slug: "football-penalty-shootout",
@@ -897,10 +899,10 @@ export const projects: Project[] = [
     title: "Penalty Shootout",
     tagline: "One ball. Three possibilities.",
     description:
-      "An independent, playable penalty study made for this portfolio. The related football repository's ownership and licence have not been verified, so this experience is implemented independently.",
+      "A small independent penalty study made for this portfolio, beside the owner's separate 3D game, Penalty Kings (Three.js, Rapier physics, an AI keeper, replays).",
     categories: ["Interactive Systems"],
     stack: ["React", "TypeScript", "SVG"],
-    status: "Independent portfolio study",
+    status: "Independent study · a separate 3D game exists",
     kind: "penalty",
     accent: "#82cda0",
     featured: false,
@@ -910,16 +912,16 @@ export const projects: Project[] = [
     sourceVisibility: "independent",
     interactionLabel: "Independent portfolio demo · no code or assets from another game",
     overview:
-      "Choose your shot, set the power and read the goalkeeper. This lightweight local game is an independent portfolio interaction. Nothing from the related football repository or its assets is embedded, its ownership and licence have not been verified, and no claims are made about its implementation.",
+      "Choose your shot, set the power and read the goalkeeper. This lightweight local game is an independent portfolio interaction. The owner's separate game, Penalty Kings, is a full 3D browser game: a floodlit arena, Rapier physics with drag and spin, a keeper AI with four difficulty levels, cinematic cameras, replays, and keyboard and touch play. It is not embedded here because its repository has no licence file and it would add several megabytes and a physics engine to this page.",
     features: [
       "Keyboard-operable aim and power controls",
       "Deterministic goalkeeper sequence and local scoring",
       "No network requests, account or saved game data",
     ],
     limitations: [
-      "Nothing from the related football repository or its assets is used; its ownership, attribution and licence have not been verified.",
-      "The controls, game rules and technology tags describe this portfolio study only.",
-      "This is a small independent demonstration, not a deployment of any other game.",
+      "Nothing from the separate Penalty Kings repository or its assets is used here; that repository has no licence file.",
+      "The controls, game rules and technology tags describe this small portfolio study only.",
+      "Penalty Kings was read from its README, credits and source layout, not built or run, and its 27 unit tests were not run for this page.",
     ],
     architecture: {
       kind: "Architecture of this independent portfolio demo",
@@ -948,13 +950,29 @@ export const projects: Project[] = [
         ["flight", "result"],
       ],
     },
-    sources: [],
+    sources: [
+      {
+        label: "Penalty Kings: features, controls and run instructions (main branch)",
+        path: "README.md",
+        url: "https://github.com/EXCALIBUR303/FootBall_Penalty_Shootout/blob/baaec8b5df4314715500f0260942c537d2b3ea22/README.md",
+      },
+      {
+        label: "Penalty Kings: asset credits and licences",
+        path: "CREDITS.md",
+        url: "https://github.com/EXCALIBUR303/FootBall_Penalty_Shootout/blob/baaec8b5df4314715500f0260942c537d2b3ea22/CREDITS.md",
+      },
+      {
+        label: "Penalty Kings: the keeper's four difficulty levels",
+        path: "src/game/keeper-ai.js",
+        url: "https://github.com/EXCALIBUR303/FootBall_Penalty_Shootout/blob/baaec8b5df4314715500f0260942c537d2b3ea22/src/game/keeper-ai.js",
+      },
+    ],
     sourceCommit: null,
     eyebrow: "Play / aim / repeat",
     problem:
-      "A portfolio game should offer a meaningful interaction without reusing another project's code or assets, and without pretending to run its source.",
+      "A portfolio page should offer a quick, meaningful interaction without loading a physics engine and several megabytes of models, and without pretending to run a different project.",
     solution:
-      "Build an original local penalty study with clear controls, deterministic shot resolution, and a session-only scoreboard.",
+      "Build a small local penalty study with clear controls, deterministic shot resolution and a session-only scoreboard, and point to the full 3D game for the rest.",
   },
   {
     id: "green-mobility",
@@ -1147,6 +1165,8 @@ export const projects: Project[] = [
       "Mapping, localization, navigation, mission and evaluation source modules",
       "PPO implementation and feed-forward/recurrent networks described in phase-14 report",
       "FastSim and higher-fidelity simulation boundaries documented",
+      "A safety layer (envelope, shield, supervisor, watchdog) and a replay recorder and reader in the source",
+      "PPO validated on known-answer toy tasks; whether it learns local navigation is the next phase's gate",
     ],
     limitations: [
       "README phase-2 status table is stale; phase reports through 14 and actual later source are the stronger evidence.",
@@ -1154,6 +1174,7 @@ export const projects: Project[] = [
       "Physical flight is explicitly out of scope.",
       "Phase-14 report retains a flaky simulation boot failure and says no Tier H runs in that phase; do not erase reported limitations.",
       "Research benchmarks were not independently rerun during this portfolio audit.",
+      "An unmerged work branch adds a playback showcase with synthetic, seeded missions; it is not on the default branch and its data is illustrative, not evidence.",
     ],
     architecture: {
       kind: "Source-backed reconstruction; not a live simulator",
@@ -1188,6 +1209,18 @@ export const projects: Project[] = [
           description:
             "Mission states, replay and metrics keep experiments inspectable.",
         },
+        {
+          id: "safety",
+          label: "Safety layer",
+          description:
+            "A flight envelope, a shield, a supervisor and a watchdog sit between the autonomy and the vehicle.",
+        },
+        {
+          id: "fastsim",
+          label: "FastSim",
+          description:
+            "A fast CPU simulation tier with Gymnasium environments, for training without the full PX4 and Gazebo stack.",
+        },
       ],
       edges: [
         ["simulation", "mapping"],
@@ -1195,6 +1228,8 @@ export const projects: Project[] = [
         ["mapping", "policy"],
         ["planning", "mission"],
         ["policy", "mission"],
+        ["mission", "safety"],
+        ["fastsim", "policy"],
       ],
     },
     sources: [
@@ -1225,6 +1260,128 @@ export const projects: Project[] = [
       "Mapping, planning, missions and learned policies for a drone need a place to be built and tested together. This project does that in simulation, above an external PX4 flight controller, and states that physical flight is out of scope.",
     solution:
       "Separate modules for mapping, localization, navigation, missions and evaluation, an 8-connected A* planner, and a PPO learning stage, all run against documented simulation boundaries.",
+  },
+  {
+    id: "nexus",
+    collection: "Personal",
+    discipline: "Software",
+    classificationNote:
+      "Collection confirmed by the project owner. No physical robot is involved.",
+    demo: {
+      type: "local",
+      url: null,
+      summary:
+        "Read the exhibit's recorded evidence and status board. The platform itself needs a Python 3.9 conda environment with Habitat-Sim and does not run in a browser.",
+      commands: [
+        "# See docs/setup.md in the repository for the full conda setup.",
+        "nexus doctor",
+        "pytest",
+      ],
+      environment: [
+        {
+          name: "Habitat test scenes",
+          purpose:
+            "Small scenes with a non-commercial licence, downloaded by the setup guide; not bundled and not shown here.",
+        },
+        {
+          name: "HM3D scenes",
+          purpose:
+            "Needed for the real experiments. Licensed for academic non-commercial use with the owner's own Matterport token; not downloaded.",
+        },
+      ],
+      runtimeStatus:
+        "Not run during this portfolio audit: the environment (Habitat-Sim, PyTorch, conda) was not installed.",
+      testStatus:
+        "The repository's handoff reports 470 unit and architecture tests, 171 simulator tests and 1 slow test passing; 532 test functions were counted in the source. None were re-run here.",
+      verifiedOn: "2026-10-31",
+      notes: [
+        "The README's status table is stale (it says Phase 2); the phase reports and the source show Phases 0 to 7 complete",
+        "Phase 8 is in progress and blocked on the owner's own HM3D download",
+        "The recorded numbers in the exhibit come from committed summary files for a DEV run, which the repository itself says are not reportable results",
+        "The repository is private, so no source link is shown",
+      ],
+    },
+    slug: "nexus",
+    repository: "nexus",
+    title: "NEXUS",
+    tagline: "Perceive. Remember. Navigate. Learn.",
+    description:
+      "An embodied-intelligence research platform for simulated robots in Habitat: a simulator adapter, PointGoal scoring, baselines, an evaluator and a first PPO agent, with the real experiments still ahead.",
+    categories: ["AI/ML", "Algorithms", "Engineering"],
+    stack: ["Python", "PyTorch", "Habitat-Sim", "Habitat-Lab", "PPO", "Pydantic"],
+    status: "Simulation research · Phase 8 of 24 in progress",
+    kind: "architecture",
+    accent: "#a58bf0",
+    featured: false,
+    district: "intelligence",
+    githubUrl: null,
+    liveUrl: null,
+    sourceVisibility: "private",
+    interactionLabel: "Lab exhibit: the loop, a recorded DEV run, a status board",
+    overview:
+      "NEXUS studies how a simulated robot can learn to reach a goal in a 3D home, and is built to report results with pre-registered tests, several seeds and honest negative results. It is built one phase at a time against a written specification.",
+    features: [
+      "A simulator adapter around Habitat-Sim and Habitat-Lab, with the PointGoal task, reward and Success, SPL and SoftSPL scoring checked against Habitat's own code",
+      "Random, scripted-heuristic and shortest-path baselines and one evaluator shared by every agent",
+      "A PPO core: a blind actor-critic network of 84,005 parameters, GAE, checkpoints, resume and a smoke-before-full gate",
+      "A statistics aggregator and a pre-registered pass rule for the first real experiment",
+    ],
+    limitations: [
+      "The README's status table is out of date; the phase reports and the source are the stronger evidence.",
+      "No real experiment has run. Phase 8 waits on the owner's own download of the licensed HM3D scenes.",
+      "The one recorded comparison is a DEV run on three small test scenes with one training seed; the repository itself says DEV runs are not results.",
+      "The memory, mapping, exploration, language, services and registry packages are empty placeholders.",
+      "No physical robot or hardware is involved, and the test scenes' non-commercial licence means no scene images are shown.",
+      "The repository is private, and nothing was re-run for this portfolio.",
+    ],
+    architecture: {
+      kind: "Source-backed reconstruction; the platform is not running here",
+      nodes: [
+        {
+          id: "sim",
+          label: "Simulator adapter",
+          description:
+            "Habitat-Sim and Habitat-Lab sit behind one adapter package; the rest of the code never imports them.",
+        },
+        {
+          id: "task",
+          label: "PointGoal task",
+          description:
+            "Reward and the Success, SPL and SoftSPL scores, checked against Habitat's own scoring code.",
+        },
+        {
+          id: "agents",
+          label: "Agents",
+          description:
+            "Random, a scripted heuristic, a shortest-path oracle and a learned blind network share one interface.",
+        },
+        {
+          id: "train",
+          label: "PPO training",
+          description:
+            "Parallel environments, GAE, checkpoints at fixed fractions of the budget, and exact resume on the practice task.",
+        },
+        {
+          id: "eval",
+          label: "Evaluation and statistics",
+          description:
+            "One evaluator, confidence intervals and a multi-seed aggregator with a pre-registered gate.",
+        },
+      ],
+      edges: [
+        ["sim", "task"],
+        ["task", "agents"],
+        ["agents", "train"],
+        ["train", "eval"],
+      ],
+    },
+    sources: [],
+    sourceCommit: "1defebc21f35495af3a18043157d764bfe8c54d0",
+    eyebrow: "Embodied AI / research platform",
+    problem:
+      "To say a navigation agent works, it has to be compared with simple baselines on scenes it never trained on, with several seeds and honest reporting. That takes a simulator, a task, scoring and an evaluator built before any claim.",
+    solution:
+      "Build the platform one phase at a time against a written specification: the simulator adapter, task and metrics, baselines and evaluator, then PPO, with experiments pre-registered before they run.",
   },
   {
     id: "rupeerise",

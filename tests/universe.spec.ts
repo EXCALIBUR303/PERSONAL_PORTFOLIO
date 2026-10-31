@@ -100,7 +100,7 @@ test("demo registry is complete and distinguishes original applications from sim
   for (const project of projects) {
     expect(project.demo.runtimeStatus).not.toMatch(/in progress/i);
     expect(project.demo.testStatus).not.toMatch(/in progress/i);
-    expect(project.demo.verifiedOn).toMatch(/^2026-10-2\d$/);
+    expect(project.demo.verifiedOn).toMatch(/^2026-10-(2\d|3[01])$/);
     if (project.demo.type === "embedded")
       expect(project.demo.url).toMatch(/^\/demos\/[a-z0-9-]+\/$/);
     else expect(project.demo.url).toBeNull();

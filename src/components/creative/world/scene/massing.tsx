@@ -118,7 +118,7 @@ function buildIntelligence(p: Palette) {
   for (const r of [0.7, 1.3]) k.torus(p.intWall, r, 0.008, [0, cy + 0.016, 0], { seg: 56 });
   k.cyl(p.intTop, 0.45, 0.1, [0, court.top, 0], { seg: 32 });
   // Pavilion pads on the terrace.
-  for (const s of ["predictive-maintenance", "quadruped-rl", "aeris", "swarmmind", "sigsmith", "student-burnout-ai", "resume-screener"]) {
+  for (const s of ["nexus", "predictive-maintenance", "quadruped-rl", "aeris", "swarmmind", "sigsmith", "student-burnout-ai", "resume-screener"]) {
     const [x, , z] = local(PLACEMENTS[s], "intelligence");
     const [w, , d] = PLACEMENTS[s].size;
     k.box(p.intPad, [w + 0.2, 0.03, d + 0.2], [x, step.top, z], { r: 0.02 });
@@ -198,6 +198,14 @@ function massing(slug: string, p: Palette) {
       ])
         k.box(m, [0.05, 0.3, 0.05], [x, 0.03, z]);
       k.box(m, [0.16, 0.14, 0.18], [0.36, 0.42, 0], { r: 0.04 });
+      break;
+    case "nexus":
+      // A lab: a low plinth with a rounded block, a sensor mast and a ring for the loop.
+      k.box(a, [1.5, 0.05, 1.2], [0, 0, 0], { r: 0.02 });
+      k.box(m, [0.9, 0.4, 0.6], [-0.2, 0.05, -0.05], { r: 0.04 });
+      k.cyl(m, 0.03, 0.7, [0.5, 0.05, 0.25], { seg: 8 });
+      k.sphere(m, 0.09, [0.5, 0.8, 0.25], { seg: 12 });
+      k.torus(m, 0.3, 0.012, [0.1, 0.5, -0.05], { rx: Math.PI / 2, seg: 40 });
       break;
     case "aeris":
       k.cyl(a, 0.6, 0.04, [0, 0, 0], { seg: 32 });

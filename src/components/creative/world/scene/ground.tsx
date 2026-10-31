@@ -198,7 +198,7 @@ function groundingTexture() {
 /**
  * Contact grounding: a faint shadow pool under each landmark's footprint, where
  * walls meet the ground. It is ambient occlusion without a post-processing pass:
- * one texture, one draw call for all twenty.
+ * one texture, one draw call for every landmark.
  */
 export function Grounding() {
   const texture = useMemo(() => groundingTexture(), []);

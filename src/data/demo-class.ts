@@ -38,7 +38,11 @@ const bySlug: Record<string, { kind: DemoClass; note: string }> = {
   },
   "football-penalty-shootout": {
     kind: "working",
-    note: "An independent demonstration made for this portfolio. The related repository's ownership and licence have not been verified, so nothing from it is used.",
+    note: "A small independent study made for this portfolio. The owner's separate 3D game, Penalty Kings, is a different project with no licence file, so nothing from it is copied here.",
+  },
+  nexus: {
+    kind: "architecture",
+    note: "A drawn explanation and committed DEV numbers. The platform is not running here and no robot or scene images are involved.",
   },
   "smart-parking-dbms": {
     kind: "walkthrough",

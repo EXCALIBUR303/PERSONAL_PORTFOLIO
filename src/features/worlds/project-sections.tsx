@@ -3,6 +3,7 @@ import { ArrowUpRight, ExternalLink, Github } from "lucide-react";
 import type { Project } from "@/data/projects";
 import { demoClassFor } from "@/data/demo-class";
 import DemoConsole from "@/components/demo-console";
+import DemoVideo from "@/components/demo-video";
 import ArchitectureExplorer from "@/components/architecture-explorer";
 import WorldPlayground, { hasDedicatedDemo } from "./world-playground";
 
@@ -28,6 +29,7 @@ export function TryBody({ project }: { project: Project }) {
   return (
     <div className="ps-try">
       <DemoNote project={project} />
+      <DemoVideo project={project} />
       <WorldPlayground project={project} />
       <DemoConsole project={project} />
     </div>
@@ -113,7 +115,9 @@ export function SourceLinks({ project }: { project: Project }) {
         <p>
           {project.kind === "unavailable"
             ? "Only the name and college classification provided by the owner are displayed. Private source and internal project details are withheld."
-            : "No source link is shown. The related football repository's ownership, attribution and licence have not been verified, so nothing from it is used. All controls and visuals here belong to this independent portfolio demonstration."}
+            : project.sourceVisibility === "private"
+              ? "The source repository is private, so no link is shown. The evidence above says what was read and what was not run."
+              : "No source link is shown for this independent portfolio study. The owner's separate Penalty Kings game is a different project; its README and credits are listed in the evidence."}
         </p>
       )}
     </div>

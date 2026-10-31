@@ -10,7 +10,8 @@ export type SceneId =
   | "pathable"
   | "robot-dog"
   | "swarmmind"
-  | "maintenance";
+  | "maintenance"
+  | "nexus";
 
 export type SceneInfo = {
   id: SceneId;
@@ -148,6 +149,19 @@ export const scenes: SceneInfo[] = [
     why: "The project predicts how many cycles an engine has left from simulated NASA C-MAPSS data. The data steps here are small copies of its code run on invented engines; the result tables are copied from its committed results, and nothing is predicted on this page.",
     slug: "predictive-maintenance",
     project: "Predictive Maintenance",
+  },
+  {
+    id: "nexus",
+    category: "intelligence",
+    name: "NEXUS",
+    title: "The Embodied Intelligence Lab.",
+    badge: "Architecture and recorded evidence",
+    is3d: false,
+    seeing:
+      "The loop a simulated robot learns in, one recorded DEV comparison against scripted baselines, and a plain status board of what is built, in progress, blocked and not started.",
+    why: "NEXUS studies navigation for simulated robots in Habitat. Its foundations and a first PPO agent are built; the real experiments are waiting on a licensed dataset. Nothing here runs the project, and no robot hardware is involved.",
+    slug: "nexus",
+    project: "NEXUS",
   },
 ];
 

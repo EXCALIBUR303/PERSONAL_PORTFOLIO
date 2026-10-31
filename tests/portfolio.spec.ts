@@ -329,7 +329,7 @@ test("independent penalty demo scores shots and discloses its source limits", as
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/projects/football-penalty-shootout/");
-  await expect(page.locator(".module-disclaimer")).toContainText("have not been verified");
+  await expect(page.locator(".module-disclaimer")).toContainText("is not used here");
   await expect(page.locator(".module-disclaimer")).not.toContainText("private");
   await page.getByRole("button", { name: "Center", exact: true }).click();
   await page.getByRole("button", { name: "Shoot", exact: true }).click();
@@ -342,7 +342,7 @@ test("independent penalty demo scores shots and discloses its source limits", as
   await page.getByRole("button", { name: "Reset penalty game" }).click();
   await expect(page.locator(".penalty-score strong").first()).toHaveText("0");
   await page.locator("#decisions summary").click();
-  await expect(page.locator(".ps-sources")).toContainText("ownership");
+  await expect(page.locator(".ps-sources")).toContainText("Penalty Kings");
   await expect(page.locator(".ps-sources")).not.toContainText("private");
 });
 

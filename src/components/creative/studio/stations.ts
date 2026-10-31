@@ -36,7 +36,7 @@ export type Station = {
 };
 
 /**
- * The 20 stations. The district of each is the one named in the project
+ * The 21 stations. The district of each is the one named in the project
  * registry; this file never decides a district. Positions are only drawing
  * choices, laid out so that no label touches another.
  */
@@ -177,6 +177,16 @@ export const stations: Station[] = [
     exhibit: "The Diagnostic Workbench",
     scene: "maintenance",
     challenge: "maintenance",
+  },
+  {
+    slug: "nexus",
+    district: "intelligence",
+    tier: "exhibit",
+    short: "NEXUS",
+    purpose: "A research platform for simulated robot navigation: the loop, a recorded DEV run, what is built.",
+    at: [4.5, 1.9],
+    exhibit: "The Embodied Intelligence Lab",
+    scene: "nexus",
   },
   {
     slug: "quadruped-rl",

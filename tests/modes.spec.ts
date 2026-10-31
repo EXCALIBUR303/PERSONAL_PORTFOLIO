@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { projects } from "../src/data/projects";
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
@@ -189,22 +190,22 @@ test("Creative gallery shares every filter and keeps the empty states", async ({
     localStorage.setItem("portfolio-mode", "creative"),
   );
   await page.goto("/#projects");
-  await expect(page.locator(".c-card")).toHaveCount(20);
+  await expect(page.locator(".c-card")).toHaveCount(projects.length);
   await page.getByRole("button", { name: /College Projects/ }).click();
   const college = await page.locator(".c-card").count();
   expect(college).toBeGreaterThan(0);
-  expect(college).toBeLessThan(20);
+  expect(college).toBeLessThan(projects.length);
   await page.getByRole("button", { name: "Hardware", exact: true }).click();
   await expect(page.locator(".c-card")).toHaveCount(0);
   await expect(
     page.getByRole("heading", { name: /Physical builds/ }),
   ).toBeVisible();
   await page.getByRole("button", { name: /Reset filters/ }).click();
-  await expect(page.locator(".c-card")).toHaveCount(20);
+  await expect(page.locator(".c-card")).toHaveCount(projects.length);
   await page.getByRole("button", { name: "Index view" }).click();
   await expect(page.locator(".c-board-list")).toBeVisible();
   await page.getByRole("button", { name: "Featured only" }).click();
-  expect(await page.locator(".c-card").count()).toBeLessThan(20);
+  expect(await page.locator(".c-card").count()).toBeLessThan(projects.length);
   await page.getByRole("button", { name: "Professional" }).click();
   // Pro has no layout toggle; a shared "Featured only" filter shows as a chip.
   const chip = page.getByRole("button", { name: /Featured only/ });
@@ -213,7 +214,7 @@ test("Creative gallery shares every filter and keeps the empty states", async ({
   await expect(page.locator(".pg-row")).toHaveCount(0);
   await chip.click();
   await expect(chip).toHaveCount(0);
-  await expect(page.locator(".pg-row")).toHaveCount(14);
+  await expect(page.locator(".pg-row")).toHaveCount(projects.length - 6);
 });
 
 test("Creative project page is a mission board over the same project data", async ({

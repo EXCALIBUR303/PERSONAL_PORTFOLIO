@@ -223,9 +223,7 @@ export default function PenaltyWorld() {
         )}
       </div>
       <p className="module-disclaimer">
-        Independent local demonstration. Nothing from the related football
-        repository or its assets is used, and that repository&apos;s ownership and
-        licence have not been verified. Keeper movement is deterministic;
+        Independent local demonstration. The owner&apos;s separate 3D game, Penalty Kings, is a different project and is not used here. Keeper movement is deterministic;
         power above 90 sends the shot wide. Scores last only for this visit.
       </p>
     </div>

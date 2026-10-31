@@ -5,7 +5,7 @@ import { evidence } from "../src/data/evidence";
 const setMode = (page: Page, mode: "pro" | "creative") =>
   page.addInitScript((m) => localStorage.setItem("portfolio-mode", m), mode);
 
-/** The decided Studio Map split (8 / 5 / 7). Districts are assigned explicitly, never from tags. */
+/** The Studio Map split (8 / 5 / 8 since NEXUS joined Intelligence). Districts are assigned explicitly, never from tags. */
 const DISTRICTS: Record<string, string[]> = {
   systems: [
     "aura",
@@ -26,6 +26,7 @@ const DISTRICTS: Record<string, string[]> = {
   ],
   intelligence: [
     "swarmmind",
+    "nexus",
     "quadruped-rl",
     "predictive-maintenance",
     "aeris",
@@ -35,8 +36,8 @@ const DISTRICTS: Record<string, string[]> = {
   ],
 };
 
-test("districts are explicit and split 8 / 5 / 7 with the decided members", () => {
-  expect(projects).toHaveLength(20);
+test("districts are explicit and split 8 / 5 / 8 with the decided members", () => {
+  expect(projects).toHaveLength(21);
   for (const [district, slugs] of Object.entries(DISTRICTS)) {
     const actual = projects
       .filter((p) => p.district === district)
@@ -44,10 +45,10 @@ test("districts are explicit and split 8 / 5 / 7 with the decided members", () =
       .sort();
     expect(actual).toEqual([...slugs].sort());
   }
-  expect(new Set(projects.map((p) => p.slug)).size).toBe(20);
+  expect(new Set(projects.map((p) => p.slug)).size).toBe(21);
   expect(projects.filter((p) => p.district === "systems")).toHaveLength(8);
   expect(projects.filter((p) => p.district === "algorithms")).toHaveLength(5);
-  expect(projects.filter((p) => p.district === "intelligence")).toHaveLength(7);
+  expect(projects.filter((p) => p.district === "intelligence")).toHaveLength(8);
 });
 
 test("the featured six are the evidence-led set and featuring changes no district", () => {
@@ -67,13 +68,13 @@ test("the featured six are the evidence-led set and featuring changes no distric
   );
 });
 
-test("the Creative map renders the same 8 / 5 / 7 districts", async ({
+test("the Creative map renders the same 8 / 5 / 8 districts", async ({
   page,
 }) => {
   await setMode(page, "creative");
   await page.goto("/");
   await expect(page.locator(".c-island")).toHaveCount(3);
-  await expect(page.locator(".c-pin")).toHaveCount(20);
+  await expect(page.locator(".c-pin")).toHaveCount(projects.length);
   for (const [district, slugs] of Object.entries(DISTRICTS)) {
     const island = page.locator(`.c-island[data-district="${district}"]`);
     await expect(island.locator(".c-pin")).toHaveCount(slugs.length);

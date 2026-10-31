@@ -3,13 +3,14 @@ import { useRef } from "react";
 import { useShiftIntro } from "../shift-intro";
 import { ArrowDown, ArrowUpRight } from "lucide-react";
 import { profile } from "@/data/profile";
+import { projects } from "@/data/projects";
 import StudioMap from "./studio/studio-map";
 
 /**
  * Creative home: an illustrated studio map. Every project is a station on one
  * of three districts; stations with an exhibit open it in place, and every
  * station has a link to its full project page. The map is not the only way in:
- * the same 20 projects are a searchable list and the board below.
+ * the same projects are a searchable list and the board below.
  */
 export default function CreativeHero() {
   const section = useRef<HTMLElement>(null);
@@ -43,7 +44,7 @@ export default function CreativeHero() {
             </svg>
             <p>{profile.introduction}</p>
             <p className="c-note-how">
-              Three districts, twenty stations. Select one for a preview, step into an exhibit, or switch to the list.
+              Three districts, {projects.length} stations. Select one for a preview, step into an exhibit, or switch to the list.
             </p>
             <div className="c-hero-actions">
               <a href="#projects" className="c-btn c-btn-ink">

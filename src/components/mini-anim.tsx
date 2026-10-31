@@ -30,6 +30,7 @@ export const animForSlug: Record<string, AnimKind> = {
   "quadruped-rl": "dog",
   swarmmind: "flock",
   aeris: "drone",
+  nexus: "route",
   "private-local-ai": "chat",
   lifeos: "heatmap",
   aura: "orbit",

@@ -113,12 +113,15 @@ export const evidence: Record<string, ProjectEvidence> = {
   "football-penalty-shootout": {
     claimClass: "original logic",
     ran: ["Aiming, power, scoring and reset are covered by portfolio browser tests"],
-    read: [],
+    read: [
+      "The standalone Penalty Kings repository: Three.js and Rapier physics, a four-level keeper AI, replays, touch and keyboard input, 27 unit tests",
+    ],
     notChecked: [
-      "Ownership, attribution and licence of the related repository are unverified",
+      "The standalone game was not built, run or tested here",
+      "The repository has no licence file, so none of its code or assets are reused",
     ],
     caveat:
-      "An independent demonstration made for this portfolio. Nothing from the related repository or its assets is used.",
+      "The playable demo here is a small independent study; the standalone 3D game is a separate project linked from this page.",
     auditedCommit: null,
   },
   "green-mobility": {
@@ -142,6 +145,21 @@ export const evidence: Record<string, ProjectEvidence> = {
     ],
     caveat: "Simulation research in progress; no physical flight.",
     auditedCommit: "b55ca2f",
+  },
+  nexus: {
+    claimClass: "illustrative walkthrough",
+    ran: [],
+    read: [
+      "Phase reports 0 to 7 and the source: simulator adapter, PointGoal scoring, baselines, evaluator and PPO core are implemented",
+      "Committed DEV summaries: trained blind agent 0.60 success against the scripted heuristic's 0.33 on 100 episodes of three small test scenes",
+    ],
+    notChecked: [
+      "No tests were run here; the reported 470 + 171 + 1 passing were not re-run",
+      "Phase 8's real experiments have not run (HM3D download pending)",
+    ],
+    caveat:
+      "A research platform in progress. The one trained result is a DEV run and not a reportable result.",
+    auditedCommit: "1defebc",
   },
   rupeerise: {
     claimClass: "adapted algorithm",

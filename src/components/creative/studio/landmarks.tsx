@@ -316,6 +316,17 @@ const art: Record<string, () => ReactNode> = {
       <Cyl cx={16} cy={9} r={3.2} z={11} h={0.6} c={PAPER} />
     </>
   ),
+  nexus: () => (
+    <>
+      <Shadow x={-24} y={-16} w={48} d={32} />
+      <Slab x={-24} y={-16} w={48} d={32} h={3} c={PAPER} />
+      <Box x={-18} y={-10} z={3} w={22} d={15} h={9} c={T} />
+      <Box x={6} y={-10} z={3} w={12} d={8} h={5} c={INK} />
+      <Ring cx={-7} cy={-2} r={13} z={3} />
+      <Pole x={14} y={6} z={3} h={14} c={INK} s={1.6} />
+      <Sphere cx={14} cy={6} z={17} r={2.6} c={LIME} />
+    </>
+  ),
   aeris: () => (
     <>
       <Shadow x={-14} y={-14} w={28} d={28} />

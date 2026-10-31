@@ -252,6 +252,33 @@ function Probe({ tier }: { tier: Tier }) {
         const both = read();
         return { scene: scene_, withShadows: both };
       },
+      /**
+       * Back-to-back frames with the GPU drained after each (a one-pixel read waits for it), so the cost of a frame is measured without the
+       * display's refresh rate in the way: milliseconds per frame without and with the shadow pass.
+       */
+      bench: (frames = 40) => {
+        const { scene, camera } = get();
+        const ctx = gl.getContext();
+        const pixel = new Uint8Array(4);
+        const drain = () => ctx.readPixels(0, 0, 1, 1, ctx.RGBA, ctx.UNSIGNED_BYTE, pixel);
+        const run = (shadows: boolean) => {
+          gl.shadowMap.needsUpdate = shadows;
+          gl.render(scene, camera);
+          drain();
+          const times: number[] = [];
+          for (let i = 0; i < frames; i++) {
+            gl.shadowMap.needsUpdate = shadows;
+            const t0 = performance.now();
+            gl.render(scene, camera);
+            drain();
+            times.push(performance.now() - t0);
+          }
+          times.sort((a, b) => a - b);
+          const mean = times.reduce((a, c) => a + c, 0) / times.length;
+          return { mean: +mean.toFixed(2), p95: +times[Math.floor(times.length * 0.95)].toFixed(2), max: +times[times.length - 1].toFixed(2) };
+        };
+        return { scene: run(false), withShadows: run(true), dpr: gl.getPixelRatio() };
+      },
       /** Meshes that cast a shadow (or every visible mesh), biggest first, to see where the calls and triangles go. */
       casters: (all = false) => {
         const owner = (o: THREE.Object3D) => {
@@ -304,24 +331,30 @@ function useBuildSteps() {
 /**
  * Lowers the pixel ratio if camera moves run slowly on this device, once
  * enough moving frames have been seen to judge. It never raises it again.
+ * "Slowly" is relative to the display: the refresh interval is read from the
+ * fastest steady gap between frames (16.7 ms at 60 Hz, 8.3 ms at 120 Hz), and
+ * the pixel ratio drops when frames average more than 1.55 intervals. On a
+ * 60 Hz display that is the old 26 ms limit; on a 120 Hz display it is about
+ * 13 ms, so a screen that can show 120 frames a second is not left at 45.
  */
 function Adapt({ floor }: { floor: number }) {
-  const sample = useRef({ last: 0, total: 0, count: 0 });
+  const sample = useRef({ last: 0, gaps: [] as number[] });
   useFrame((state) => {
     const now = performance.now();
     const s = sample.current;
     const gap = now - s.last;
     s.last = now;
     // Only consecutive frames say anything about the frame rate.
-    if (gap > 70) return;
-    s.total += gap;
-    s.count += 1;
-    if (s.count < 45) return;
-    const mean = s.total / s.count;
-    s.total = 0;
-    s.count = 0;
+    if (gap > 70 || gap < 4) return;
+    s.gaps.push(gap);
+    if (s.gaps.length < 45) return;
+    const sorted = [...s.gaps].sort((a, b) => a - b);
+    const mean = s.gaps.reduce((a, c) => a + c, 0) / s.gaps.length;
+    s.gaps.length = 0;
+    // 144 Hz at the fastest, 60 Hz at the slowest: a display below 60 Hz is judged as if it were 60.
+    const refresh = Math.min(16.7, Math.max(6.9, sorted[Math.floor(sorted.length * 0.1)]));
     const dpr = state.viewport.dpr;
-    if (mean > 26 && dpr > floor) state.setDpr(Math.max(floor, Math.round(dpr * 0.75 * 100) / 100));
+    if (mean > refresh * 1.55 && dpr > floor) state.setDpr(Math.max(floor, Math.round(dpr * 0.75 * 100) / 100));
   });
   return null;
 }

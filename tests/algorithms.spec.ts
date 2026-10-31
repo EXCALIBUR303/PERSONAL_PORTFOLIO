@@ -93,9 +93,13 @@ test("project and skill references remain valid, and public claims have evidence
       project.sources.forEach((s) =>
         expect(s.url).toContain(`/blob/${project.sourceCommit}/`),
       );
-    } else {
+    } else if (project.sourceVisibility === "private") {
       expect(project.githubUrl).toBeNull();
       expect(project.sources).toEqual([]);
+    } else {
+      project.sources.forEach((s) =>
+        expect(s.url).toMatch(/\/blob\/[a-f0-9]{40}\//),
+      );
     }
   }
   for (const skill of skills)

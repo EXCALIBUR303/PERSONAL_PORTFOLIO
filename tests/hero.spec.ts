@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { projects } from "../src/data/projects";
 
 const setMode = (page: Page, mode: "pro" | "creative") =>
   page.addInitScript((m) => localStorage.setItem("portfolio-mode", m), mode);
@@ -34,7 +35,9 @@ test.describe("Professional hero: project scenes in three categories", () => {
     ] as const;
     for (const [category, scene, badge, slug] of cases) {
       await pickScene(page, category, scene);
-      await expect(page.locator(".s3-picker button")).toHaveCount(3);
+      await expect(page.locator(".s3-picker button")).toHaveCount(
+        category === "03 / Intelligence" ? 4 : 3,
+      );
       await expect(page.locator(".lz-badge")).toHaveText(badge);
       await expect(page.locator(".lz-caption")).toContainText("Why it is here.");
       await expect(page.locator(".lz-caption a")).toHaveAttribute(
@@ -266,7 +269,7 @@ test.describe("Creative home: the studio map", () => {
   test("every project is a station and selecting one opens a preview with four missions", async ({
     page,
   }) => {
-    await expect(page.locator(".c-pin")).toHaveCount(20);
+    await expect(page.locator(".c-pin")).toHaveCount(projects.length);
     await expect(page.locator(".c-island")).toHaveCount(3);
     await expect(page.locator(".c-hero .lz-explorer")).toHaveCount(0);
     await page
@@ -335,7 +338,7 @@ test.describe("Creative home: the studio map", () => {
   test("progress counts only what this tab opened, and can be cleared", async ({
     page,
   }) => {
-    await expect(page.locator(".c-progress")).toContainText("Explored 0 of 20");
+    await expect(page.locator(".c-progress")).toContainText(`Explored 0 of ${projects.length}`);
     await page
       .locator(".c-map")
       .getByRole("button", { name: /Mazera/ })
@@ -348,17 +351,17 @@ test.describe("Creative home: the studio map", () => {
     await expect(page).toHaveURL(/mazera-ai-maze-solver\/#try/);
     await page.goBack();
     await page.waitForURL("**/");
-    await expect(page.locator(".c-progress")).toContainText("Explored 1 of 20");
+    await expect(page.locator(".c-progress")).toContainText(`Explored 1 of ${projects.length}`);
     await expect(page.locator(".c-pin[data-visited]")).toHaveCount(1);
     await page.getByRole("button", { name: "Clear" }).click();
-    await expect(page.locator(".c-progress")).toContainText("Explored 0 of 20");
+    await expect(page.locator(".c-progress")).toContainText(`Explored 0 of ${projects.length}`);
   });
 
   test("board filters dim the stations that do not match", async ({ page }) => {
     await page
       .getByRole("searchbox", { name: "Search project worlds" })
       .fill("PostgreSQL");
-    await expect(page.locator('.c-pin[data-match="true"]')).not.toHaveCount(20);
+    await expect(page.locator('.c-pin[data-match="true"]')).not.toHaveCount(projects.length);
     await expect(page.locator(".c-map-filter")).toBeVisible();
     await page.getByRole("button", { name: "Clear project search" }).click();
     await expect(page.locator(".c-map-filter")).toHaveCount(0);

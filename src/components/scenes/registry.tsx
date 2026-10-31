@@ -28,6 +28,7 @@ export const views: Record<SceneId, ReturnType<typeof scene>> = {
   "robot-dog": scene(() => import("./dog-scene")),
   swarmmind: scene(() => import("./swarm-scene")),
   maintenance: scene(() => import("./maintenance-scene")),
+  nexus: scene(() => import("./nexus-scene")),
 };
 
 /** The scene the Professional hero opens on, fetched before a switch back to it. */

@@ -14,7 +14,7 @@ import type { Palette } from "./palette";
  * The Studio: the archipelago's headquarters on its own round podium, raised
  * above the districts so it reads first. A U-shaped pavilion round a small
  * courtyard: a two-storey back wing with lit workspaces behind glass and an
- * exhibition wall of twenty plaques (one per station, lit in the district's
+ * exhibition wall of plaques (one per station, lit in the district's
  * colour once visited in this tab); a low east wing with vertical fins; and on
  * the west a tall prow whose front wall carries the oculus, the brand's spark
  * as the tracery of a round lit window. Each bridge leaves through a gate in
@@ -146,7 +146,7 @@ function buildBuilding(p: Palette, interior: THREE.Material, spark: THREE.Materi
   return k.build();
 }
 
-/* ---------- the exhibition wall: twenty plaques, one per station ---------- */
+/* ---------- the exhibition wall: a plaque, one per station ---------- */
 
 type Cell = { slug: string; position: V3; district: "systems" | "algorithms" | "intelligence" };
 function plaqueCells(): Cell[] {

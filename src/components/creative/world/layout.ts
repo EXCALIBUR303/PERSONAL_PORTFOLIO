@@ -106,6 +106,7 @@ const local: Record<District, [slug: string, x: number, y: number, z: number, w:
     ["parkscan-swarm", 0, 0.5, 0, 2.0, 0.5, 2.0],
   ],
   intelligence: [
+    ["nexus", 0, 0.25, -3.85, 1.7, 1.0, 1.4],
     ["predictive-maintenance", -2.75, 0.25, -2.0, 1.9, 1.1, 1.7],
     ["quadruped-rl", 2.75, 0.25, -2.0, 1.9, 0.9, 1.7],
     ["aeris", -3.6, 0.25, 0.75, 1.7, 1.2, 1.7],
