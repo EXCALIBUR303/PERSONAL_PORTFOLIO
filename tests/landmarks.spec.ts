@@ -104,3 +104,46 @@ test("ambient light drifts over the world, and stops under reduced motion and wh
   expect(await still.locator(".w-drift").count()).toBe(0);
   await calm.close();
 });
+
+test("the view leans towards a mouse pointer, comes back to rest, and holds still under reduced motion", async ({ page, browser }) => {
+  test.setTimeout(60_000);
+  const studioAt = (p: Page) => p.locator(".w-studio").evaluate((el) => { const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
+  const settle = (p: Page) => p.waitForTimeout(1800);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/?world=medium");
+  await page.waitForSelector(".w-stage[data-ready]", { state: "attached", timeout: 30000 });
+  await page.locator(".w-stage").scrollIntoViewIfNeeded();
+  await settle(page);
+  const box = (await page.locator(".w-stage").boundingBox())!;
+  await page.mouse.move(box.x + 6, box.y + box.height / 2);
+  await settle(page);
+  const left = await studioAt(page);
+  await page.mouse.move(box.x + box.width - 6, box.y + box.height / 2);
+  await settle(page);
+  const right = await studioAt(page);
+  expect(Math.abs(right[0] - left[0]), "the Studio moves across the stage as the pointer does").toBeGreaterThan(8);
+  expect(Math.abs(right[0] - left[0]), "but only a little").toBeLessThan(120);
+  await page.mouse.move(box.x - 40, box.y - 40);
+  await settle(page);
+  const rest = await studioAt(page);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await settle(page);
+  const centre = await studioAt(page);
+  expect(Math.abs(rest[0] - centre[0]) + Math.abs(rest[1] - centre[1]), "leaving the stage returns the view to its centre").toBeLessThan(3);
+
+  const calm = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 1440, height: 900 } });
+  const still = await calm.newPage();
+  await still.addInitScript(() => localStorage.setItem("portfolio-mode", "creative"));
+  await still.goto("/?world=medium");
+  await still.waitForSelector(".w-stage[data-ready]", { state: "attached", timeout: 30000 });
+  await still.locator(".w-stage").scrollIntoViewIfNeeded();
+  const b2 = (await still.locator(".w-stage").boundingBox())!;
+  await still.mouse.move(b2.x + b2.width / 2, b2.y + b2.height / 2);
+  await settle(still);
+  const a = await studioAt(still);
+  await still.mouse.move(b2.x + b2.width - 6, b2.y + b2.height / 2);
+  await settle(still);
+  const c = await studioAt(still);
+  expect(Math.abs(a[0] - c[0]) + Math.abs(a[1] - c[1])).toBeLessThan(1);
+  await calm.close();
+});

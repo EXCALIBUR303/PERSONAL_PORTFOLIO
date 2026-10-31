@@ -47,7 +47,7 @@ function CameraMirror({ rig }: { rig: Rig }) {
   }, [rig, invalidate]);
   useFrame((state) => {
     const moving = rig.step(performance.now());
-    const p = rig.pose;
+    const p = rig.shown;
     const camera = state.camera as THREE.PerspectiveCamera;
     const [x, y, z] = eye(p);
     camera.position.set(x, y, z);

@@ -19,7 +19,7 @@ import { micro } from "../../motion-config";
 import { lazyView } from "../../scenes/lazy-view";
 import { districts, toneFor, type District } from "../identity";
 import { tierWords, type Station } from "../studio/stations";
-import { easeInCubic, easeInOutCubic, Projector, type Pose } from "./camera";
+import { easeInCubic, easeInOutCubic, easeOutCubic, Projector, type Pose } from "./camera";
 import { boxOf, PLACEMENTS, plateOf, PLATES, poseFor, STUDIO, type Shot, type Stage } from "./layout";
 import { guessTier, readOverride, type Tier } from "./quality";
 import { Rig } from "./rig";
@@ -313,7 +313,7 @@ export default function WorldStage({
       first.current = false;
       if (!reduced && shot.kind === "overview") {
         establishing.current = true;
-        rig.snap({ ...goal, dist: goal.dist * 1.14, el: goal.el + 0.07, az: goal.az - 0.06 });
+        rig.snap({ ...goal, dist: goal.dist * 1.34, el: goal.el + 0.17, az: goal.az - 0.34 });
       } else rig.snap(goal);
       return;
     }
@@ -342,7 +342,8 @@ export default function WorldStage({
   useEffect(() => {
     if (!ready || !establishing.current || !measured) return;
     establishing.current = false;
-    rig.glide(poseFor(shot, { width: measured.w, height: measured.h, insetRight: inset, insetBottom: sheet }), 0.7);
+    // The opening shot: the world settles into its framing from higher and a little round, slowing as it arrives.
+    rig.fly(poseFor(shot, { width: measured.w, height: measured.h, insetRight: inset, insetBottom: sheet }), 1500, easeOutCubic);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
 
@@ -354,7 +355,7 @@ export default function WorldStage({
   }, [zoomedNow]);
   useLayoutEffect(() => {
     labels.current = { focus, selected, hover, layout };
-    place(rig.pose, true);
+    place(rig.shown, true);
   }, [focus, selected, hover, layout, matching, place, rig, zoomedNow]);
 
   // Build the canvas after the page has painted, and never during a mode transition.
@@ -367,13 +368,35 @@ export default function WorldStage({
   }, [mountCanvas, running, measured, tier]);
 
   const onReady = useCallback(() => setReady(true), []);
+
+  // The view leans a little towards a mouse pointer, so the world has depth when the hand moves. It rests with
+  // the pointer, never for touch or pen, never under reduced motion, and not while entering an exhibit.
+  const leanOn = !reduced && ready && shot.kind !== "approach";
+  useEffect(() => {
+    if (!leanOn) rig.look(0, 0);
+  }, [leanOn, rig]);
+  const onLean = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!leanOn || event.pointerType !== "mouse") return;
+    const r = event.currentTarget.getBoundingClientRect();
+    const k = shot.kind === "station" ? 0.5 : 1;
+    rig.look(((event.clientX - r.left) / r.width - 0.5) * 2 * k, ((event.clientY - r.top) / r.height - 0.5) * 2 * k);
+  };
+  const onLeanEnd = () => rig.look(0, 0);
   const byDistrict = districts.map((d) => ({ ...d, list: stations.filter((s) => s.district === d.id) }));
   const zoomed = focus !== "all" || !!selected;
   const selectedDistrict = selected && PLACEMENTS[selected] ? PLACEMENTS[selected].district : null;
 
   return (
     <>
-      <div className="w-stage" ref={frame} data-ready={ready || undefined} data-paused={paused || undefined} data-shot={shot.kind}>
+      <div
+        className="w-stage"
+        ref={frame}
+        data-ready={ready || undefined}
+        data-paused={paused || undefined}
+        data-shot={shot.kind}
+        onPointerMove={onLean}
+        onPointerLeave={onLeanEnd}
+      >
         <div className="w-backdrop" aria-hidden="true" />
         {mountCanvas && tier && (
           <WorldCanvas
