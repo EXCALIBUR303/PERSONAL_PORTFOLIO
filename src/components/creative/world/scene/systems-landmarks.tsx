@@ -4,6 +4,8 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { Kit, Model, useDisposal, type V3 } from "./kit";
 import { briefPad, car, exhibitPad, letterTexture, useOwn, type LandmarkProps } from "./landmark";
+import type { Palette } from "./palette";
+import { DISTRICTS, PLACEMENTS } from "../layout";
 import { along, smooth, span, tick, useLevel, usePlay } from "./motion";
 import { showTrail, useTrail, type Block } from "./trail";
 
@@ -273,11 +275,80 @@ const VAULT: V3 = [-0.3, 0.06, -0.05];
 /** The note's way in, over the vault's plinth, and the answer's way out to the reading desk (all on the island). */
 const NOTE_IN: Block[] = [0.5, 0.42, 0.34].map((x) => ({ size: [0.065, 0.014, 0.05], at: [x, 0.2, -0.3] }));
 const ANSWER_OUT: Block[] = [0.2, 0.3, 0.4, 0.5, 0.6].map((x) => ({ size: [0.085, 0.014, 0.05], at: [x, 0.08, 0.6] }));
+/** The note's last hop, from the shelf into the vault (the journey before it is the ServiceNote's). */
 const NOTE_PATH: V3[] = [
   [0.62, 0.27, -0.3],
   [0.3, 0.27, -0.3],
 ];
-export function Vault({ palette: p, active, dim, reduced }: LandmarkProps) {
+/** One timeline for the vault and the note that reaches it: the note travels from LifeOS first. */
+const VAULT_SECONDS = 5.2;
+const PHASE = { note: [0.16, 0.5], door: [0.52, 0.62], answer: [0.62, 0.85], lift: [0.87, 1] } as const;
+
+/** The service conduit on the upper terrace's front, as the ground draws it (local x from -3.9 to 4.4). */
+const CONDUIT_FROM = -3.9;
+const CONDUIT_LEN = 8.3;
+
+/**
+ * The note that Private Local AI answers from starts at the LifeOS workstation,
+ * rises to the service conduit on the upper terrace's front and follows it
+ * across the island to the vault's shelf. It stays on the island and never
+ * crosses a bridge. It plays with the vault's own timeline, so they stay in step.
+ */
+export function ServiceNote({ palette: p, active, replay, reduced }: { palette: Palette; active: boolean; replay: boolean; reduced: boolean }) {
+  const c = DISTRICTS.systems.centre;
+  const c0 = c[0];
+  const run = usePlay(active, reduced, VAULT_SECONDS, replay);
+  const mesh = useRef<THREE.Mesh>(null);
+  const fill = useRef<THREE.Mesh>(null);
+  const card = useOwn(p.lime, (m) => (m.emissiveIntensity = 0.8));
+  const lane = useOwn(p.lime, (m) => (m.emissiveIntensity = 0.6));
+  const path = useMemo<V3[]>(() => {
+    const desk = PLACEMENTS.lifeos;
+    const vault = PLACEMENTS["private-local-ai"];
+    const c = DISTRICTS.systems.centre;
+    const at = (b: readonly number[], s: number, l: V3): V3 => [b[0] + l[0] * s, b[1] + l[1] * s, b[2] + l[2] * s];
+    const conduit = c[1] + 1.05;
+    const start = at(desk.base, desk.scale, [0.45, 0.62, -0.5]);
+    const shelf = at(vault.base, vault.scale, NOTE_PATH[0]);
+    return [
+      start,
+      [start[0], conduit + 0.5, start[2]],
+      [c[0] - 3.9, conduit + 0.2, c[2] - 1.72],
+      [c[0] + 4.4, conduit, c[2] - 1.72],
+      [shelf[0], shelf[1] + 0.25, c[2] - 1.72],
+      [shelf[0], shelf[1], shelf[2]],
+      at(vault.base, vault.scale, NOTE_PATH[1]),
+    ];
+  }, []);
+  useFrame(() => {
+    const travel = span(run.current, PHASE.note[0], PHASE.note[1]);
+    const m = mesh.current;
+    if (!m) return;
+    // The note waits at its desk for a moment, then goes.
+    m.visible = active && travel < 1;
+    const at = along(path, smooth(travel));
+    m.position.set(at.x, at.y, at.z);
+    // The conduit fills with lime behind it, as far as it has got: the route this project's note takes.
+    const inlay = fill.current;
+    if (inlay) {
+      inlay.visible = active && (run.current > 0 || reduced);
+      const reach = Math.max(span(travel, 0.12, 0.8), 0.001);
+      inlay.scale.x = reach;
+      inlay.position.x = c0 + (CONDUIT_FROM + CONDUIT_LEN * reach * 0.5);
+    }
+  });
+  return (
+    <>
+      <mesh ref={mesh} visible={false} material={card} castShadow>
+        <boxGeometry args={[0.26, 0.035, 0.19]} />
+      </mesh>
+      <mesh ref={fill} visible={false} position={[c0 + CONDUIT_FROM, c[1] + 0.918, c[2] - 1.72]} material={lane}>
+        <boxGeometry args={[CONDUIT_LEN, 0.008, 0.05]} />
+      </mesh>
+    </>
+  );
+}
+export function Vault({ palette: p, active, dim, reduced, replay }: LandmarkProps) {
   const status = useOwn(p.coral, (m) => m.emissive.set("#ee8466"));
   const card = useOwn(p.card, (m) => m.emissive.set("#f4ffd6"));
   const model = useMemo(() => {
@@ -306,11 +377,10 @@ export function Vault({ palette: p, active, dim, reduced }: LandmarkProps) {
   }, [p]);
   useDisposal(model);
 
-  const run = usePlay(active, reduced, 2.8);
+  const run = usePlay(active, reduced, VAULT_SECONDS, replay);
   const wheel = useRef<THREE.Group>(null);
   const cite = useRef<THREE.Mesh>(null);
   const tag = useRef<THREE.Mesh>(null);
-  const note = useRef<THREE.Mesh>(null);
   const inTrail = useTrail(NOTE_IN);
   const outTrail = useTrail(ANSWER_OUT);
   const wire = useOwn(p.cyan);
@@ -318,25 +388,19 @@ export function Vault({ palette: p, active, dim, reduced }: LandmarkProps) {
     const t = run.current;
     // A note goes in over the plinth, the door wheel turns and the light goes from coral to lime,
     // then the answer comes out to the desk with its source tag. Nothing leaves the island.
-    const door = smooth(span(t, 0.24, 0.44));
+    const door = smooth(span(t, PHASE.door[0], PHASE.door[1]));
     if (wheel.current) wheel.current.rotation.z = door * Math.PI;
     status.setValues({
       color: door > 0.5 ? "#c8f13b" : "#ee8466",
       emissive: door > 0.5 ? "#a6cf1f" : "#ee8466",
       emissiveIntensity: 0.25 + door * 0.6,
     });
-    const lift = smooth(span(t, 0.82, 1));
+    const lift = smooth(span(t, PHASE.lift[0], PHASE.lift[1]));
     card.setValues({ emissiveIntensity: lift * 0.55 });
     if (cite.current) cite.current.position.y = 0.52 + lift * 0.2;
     if (tag.current) tag.current.visible = lift > 0.4;
-    if (note.current) {
-      const travel = span(t, 0, 0.24);
-      note.current.visible = active && travel > 0 && travel < 1;
-      const at = along(NOTE_PATH, smooth(travel));
-      note.current.position.set(at.x, at.y, at.z);
-    }
-    showTrail(inTrail, active ? span(t, 0, 0.24) * NOTE_IN.length + 0.001 : 0);
-    showTrail(outTrail, active ? span(t, 0.44, 0.8) * ANSWER_OUT.length + 0.001 : 0);
+    showTrail(inTrail, active ? span(t, 0.42, PHASE.note[1]) * NOTE_IN.length + 0.001 : 0);
+    showTrail(outTrail, active ? span(t, PHASE.answer[0], PHASE.answer[1]) * ANSWER_OUT.length + 0.001 : 0);
     wire.setValues({ emissiveIntensity: 0.9 });
   });
   const [vx, , vz] = VAULT;
@@ -345,9 +409,6 @@ export function Vault({ palette: p, active, dim, reduced }: LandmarkProps) {
       <Model model={model} swap={dim ? p.card : null} />
       <mesh geometry={inTrail} material={dim ? p.card : wire} />
       <mesh geometry={outTrail} material={dim ? p.card : wire} />
-      <mesh ref={note} visible={false} rotation={[-Math.PI / 2, 0, 0]} material={dim ? p.card : card}>
-        <planeGeometry args={[0.12, 0.09]} />
-      </mesh>
       <group ref={wheel} position={[vx, 0.6, vz + 0.66]}>
         <mesh material={dim ? p.card : p.brass}>
           <torusGeometry args={[0.13, 0.014, 6, 32]} />

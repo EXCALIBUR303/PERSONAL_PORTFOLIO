@@ -50,7 +50,7 @@ export function useLevel(on: boolean, reduced: boolean, up = 0.28, down = 0.5) {
  * A one-shot run from 0 to 1 over `seconds`, started each time `on` turns
  * true. It rests at 1 while `on` stays true and returns to 0 when it turns off.
  */
-export function usePlay(on: boolean, reduced: boolean, seconds: number) {
+export function usePlay(on: boolean, reduced: boolean, seconds: number, replay?: boolean) {
   const t = useRef(0);
   const running = useRef(false);
   const invalidate = useThree((s) => s.invalidate);
@@ -64,7 +64,7 @@ export function usePlay(on: boolean, reduced: boolean, seconds: number) {
     }
     markShadows();
     invalidate();
-  }, [on, reduced, invalidate]);
+  }, [on, reduced, replay, invalidate]);
   useFrame((_, delta) => {
     if (!running.current) return;
     t.current = Math.min(1, t.current + tick(delta) / seconds);

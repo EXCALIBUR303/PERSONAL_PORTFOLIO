@@ -123,7 +123,7 @@ html[data-mode="creative"] .portfolio-root {
     }
     /* Entering an exhibit: the interface steps aside while the camera moves in. */
     &[data-entering] .w-overlay,
-    &[data-entering] .w-back,
+    &[data-entering] .w-where,
     &[data-entering] .w-stage > .c-brief {
       opacity: 0;
       transition: opacity 0.24s ease;
@@ -421,14 +421,75 @@ html[data-mode="creative"] .portfolio-root {
       display: none;
     }
 
-    .w-back {
+    .w-where {
       position: absolute;
       z-index: 6;
       left: 14px;
       top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      max-width: calc(100% - 28px);
+      transition: opacity 0.28s ease;
+    }
+    .w-back {
       padding: 6px 13px 6px 10px;
       font-size: 13px;
-      transition: opacity 0.28s ease;
+    }
+    /* Where you are, in words: the district, then the open station. The district is a way back to its own view. */
+    .w-crumb {
+      --dc: var(--ink-soft, #4a4a52);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 30px;
+      padding: 0 11px;
+      border: 1.5px solid rgb(23 23 29 / 0.55);
+      border-radius: 999px;
+      background: rgb(255 252 244 / 0.92);
+      font-size: 13px;
+      color: var(--ink, #17171d);
+    }
+    .w-crumb[data-district="systems"] {
+      --dc: var(--d-systems);
+    }
+    .w-crumb[data-district="algorithms"] {
+      --dc: var(--d-algorithms);
+    }
+    .w-crumb[data-district="intelligence"] {
+      --dc: var(--d-intelligence);
+    }
+    .w-crumb i {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--dc);
+    }
+    .w-crumb b {
+      font-weight: 600;
+    }
+    .w-crumb button {
+      border: 0;
+      background: none;
+      padding: 0;
+      font: inherit;
+      font-weight: 600;
+      color: inherit;
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+      cursor: pointer;
+    }
+    .w-crumb button:focus-visible {
+      outline: 2px solid var(--ink, #17171d);
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+    .w-crumb-here {
+      background: var(--ink, #17171d);
+      color: #fffcf4;
+      border-color: var(--ink, #17171d);
     }
 
     /* The station panel docks to the right of the stage; the camera frames the station beside it. */
@@ -484,7 +545,8 @@ html[data-mode="creative"] .portfolio-root {
       border-width: 1px;
       border-color: var(--w-line);
     }
-    .w-back {
+    .w-back,
+    .w-crumb {
       box-shadow: var(--w-lift);
       border-width: 1.5px;
     }
@@ -673,13 +735,12 @@ html[data-mode="creative"] .portfolio-root {
       order: 2;
     }
     .c-brief > .c-brief-tag,
-    .c-brief > .c-brief-exhibit {
+    .c-brief > .c-brief-explore {
       order: 3;
     }
     .c-brief > .c-brief-actions {
       order: 4;
     }
-    .c-brief > .c-brief-facts,
     .c-brief > .c-brief-badges {
       order: 5;
     }
@@ -800,6 +861,25 @@ html[data-mode="creative"] .portfolio-root {
         scroll-padding-inline: 14px;
         overscroll-behavior-x: contain;
       }
+      /* In a district's own view every station shows at once, wrapped, so none hides off the edge of a strip. */
+      .w-overlay[data-zoomed] .c-pins {
+        flex-wrap: wrap;
+        overflow-x: visible;
+        scroll-snap-type: none;
+      }
+      .w-overlay[data-zoomed] .w-slot {
+        flex: 1 1 calc(50% - 8px);
+        min-width: 0;
+      }
+      .w-overlay[data-zoomed] .w-plaque {
+        display: grid;
+        min-width: 0;
+        line-height: 1.2;
+      }
+      .w-overlay[data-zoomed] .w-plaque small {
+        display: block;
+        font-size: 10px;
+      }
       /* Each station is a chip: the slot is drawn as the chip, its button is a click layer over it. */
       .w-slot,
       .w-studio-slot {
@@ -869,9 +949,15 @@ html[data-mode="creative"] .portfolio-root {
         position: static;
         flex: none;
       }
-      .w-back {
+      .w-where {
         left: 10px;
         top: 10px;
+        max-width: calc(100% - 20px);
+      }
+      .w-crumb {
+        font-size: 12px;
+        min-height: 28px;
+        padding: 0 9px;
       }
     }
   }

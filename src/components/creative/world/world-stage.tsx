@@ -58,11 +58,15 @@ type Props = {
   onChoose: (station: Station) => void;
   onStudio: () => void;
   onOverview: () => void;
+  /** Back to a district's own view, leaving the selected station. */
+  onDistrict: (district: District) => void;
   onHover: (slug: string | null) => void;
   onEntered: (slug: string) => void;
   onFailed: () => void;
 };
 
+/** The one project whose reaction crosses the island: its note starts at LifeOS and ends in the vault (times in ms, matching the vault's timeline). */
+const JOURNEY = { from: "lifeos", to: "private-local-ai", reveal: 700, follow: 1900 };
 /** Width the docked panel takes from the stage (its CSS width plus margins). */
 const PANEL = 328 + 28;
 /** The share of the stage a tablet's panel sheet covers. */
@@ -101,6 +105,7 @@ export default function WorldStage({
   onChoose,
   onStudio,
   onOverview,
+  onDistrict,
   onHover,
   onEntered,
   onFailed,
@@ -304,6 +309,7 @@ export default function WorldStage({
   // short establishing glide once the world has drawn); after that every
   // change eases, and entering an exhibit flies into the landmark first.
   const first = useRef(true);
+  const journeyKey = useRef<string | null>(null);
   const establishing = useRef(false);
   useLayoutEffect(() => {
     if (!measured) return;
@@ -330,6 +336,15 @@ export default function WorldStage({
     }
     if (establishing.current && !ready) return;
     establishing.current = false;
+    // Private Local AI's note starts at the LifeOS workstation. The camera shows that origin first, then follows
+    // the note along the conduit and settles on the vault, so the whole route is seen without framing it all at once.
+    if (shot.kind === "station" && shot.slug === JOURNEY.to && journeyKey.current !== shotKey) {
+      journeyKey.current = shotKey;
+      const origin = poseFor({ ...shot, slug: JOURNEY.from }, stage);
+      rig.fly(origin, JOURNEY.reveal, easeInOutCubic, () => rig.fly(goal, JOURNEY.follow, easeInOutCubic));
+      return;
+    }
+    if (shot.kind !== "station" || shot.slug !== JOURNEY.to) journeyKey.current = null;
     // A long move lifts over what lies between; a short one glides.
     const travel = Math.hypot(goal.target[0] - rig.pose.target[0], goal.target[2] - rig.pose.target[2]);
     if (travel > 12) rig.fly(goal, 900, easeInOutCubic, undefined, travel * 0.18);
@@ -385,6 +400,12 @@ export default function WorldStage({
   const byDistrict = districts.map((d) => ({ ...d, list: stations.filter((s) => s.district === d.id) }));
   const zoomed = focus !== "all" || !!selected;
   const selectedDistrict = selected && PLACEMENTS[selected] ? PLACEMENTS[selected].district : null;
+  // Where the visitor is, said in words: the district they are in and the station they have open.
+  const hereId = selectedDistrict ?? (focus !== "all" ? focus : null);
+  const here = {
+    district: districts.find((d) => d.id === hereId) ?? null,
+    station: selected === "studio" ? "The Studio" : (stations.find((s) => s.slug === selected)?.short ?? null),
+  };
 
   return (
     <>
@@ -426,9 +447,28 @@ export default function WorldStage({
           </p>
         )}
         {zoomed && (
-          <button type="button" className="w-back c-btn c-btn-paper" onClick={onOverview}>
-            <ArrowLeft size={15} aria-hidden="true" /> All districts
-          </button>
+          <nav className="w-where" aria-label="Where you are">
+            <button type="button" className="w-back c-btn c-btn-paper" onClick={onOverview}>
+              <ArrowLeft size={15} aria-hidden="true" /> All districts
+            </button>
+            {here.district && (
+              <span className="w-crumb" data-district={here.district.id}>
+                <i aria-hidden="true" />
+                {here.station ? (
+                  <button type="button" onClick={() => onDistrict(here.district!.id)}>
+                    {here.district.label}
+                  </button>
+                ) : (
+                  <b aria-current="location">{here.district.label}</b>
+                )}
+              </span>
+            )}
+            {here.station && (
+              <span className="w-crumb w-crumb-here">
+                <b aria-current="location">{here.station}</b>
+              </span>
+            )}
+          </nav>
         )}
         {layout !== "phone" && card}
       </div>

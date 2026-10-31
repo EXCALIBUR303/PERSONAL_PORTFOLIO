@@ -377,6 +377,7 @@ export default function StudioMap() {
                 onChoose={choose}
                 onStudio={openStudio}
                 onOverview={() => update({ focus: "all", slug: null })}
+                onDistrict={(d) => update({ focus: d, slug: null })}
                 onHover={setHover}
                 onEntered={onEntered}
                 onFailed={() => setFailed(true)}
@@ -440,7 +441,7 @@ export default function StudioMap() {
                     <div className="c-row-actions">
                       {s.tier === "exhibit" && (
                         <button type="button" className="c-btn c-btn-lime" onClick={() => enter(s)}>
-                          Enter exhibit <ArrowRight size={15} aria-hidden="true" />
+                          Explore exhibit <ArrowRight size={15} aria-hidden="true" />
                           <span className="sr-only"> for {p.title}</span>
                         </button>
                       )}

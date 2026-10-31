@@ -5,7 +5,7 @@ import { DISTRICTS } from "../layout";
 import { Kit, Model, roundRect, useDisposal } from "./kit";
 import { car, lamp, Placed, tree, type LandmarkProps } from "./landmark";
 import type { Palette } from "./palette";
-import { Aura, BlueprintApi, CoinBoard, Garage, Kiosk, Mobility, Vault, Workstation } from "./systems-landmarks";
+import { Aura, BlueprintApi, CoinBoard, Garage, Kiosk, Mobility, ServiceNote, Vault, Workstation } from "./systems-landmarks";
 
 /*
  * Systems, "the workshop campus": a terraced island that climbs away from the
@@ -159,11 +159,12 @@ export function Systems({
   return (
     <group>
       <Model model={ground} />
+      <ServiceNote palette={palette} active={selected === "private-local-ai" || hot === "private-local-ai"} replay={selected === "private-local-ai"} reduced={reduced} />
       {LANDMARKS.map(([slug, Landmark]) => {
         const active = hot === slug || selected === slug;
         return (
           <Placed key={slug} slug={slug} active={active} reduced={reduced}>
-            <Landmark palette={palette} active={active} dim={!matching.has(slug)} reduced={reduced} />
+            <Landmark palette={palette} active={active} dim={!matching.has(slug)} reduced={reduced} replay={selected === slug} />
           </Placed>
         );
       })}

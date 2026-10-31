@@ -308,7 +308,7 @@ test.describe("Creative home: the studio map", () => {
       .locator(".c-map")
       .getByRole("button", { name: /Mazera/ })
       .click();
-    await page.getByRole("button", { name: /Enter exhibit/ }).click();
+    await page.getByRole("button", { name: /Explore exhibit/ }).click();
     await expect(page.locator(".ex")).toBeVisible();
     await expect(page.locator('.ex .lz[data-scene="mazera"]')).toBeVisible();
     await expect(page.locator(".ex .lz-chips button")).toHaveCount(6);
@@ -331,7 +331,7 @@ test.describe("Creative home: the studio map", () => {
       .getByRole("button", { name: "Student Burnout AI" })
       .click();
     await expect(
-      page.getByRole("button", { name: /Enter exhibit/ }),
+      page.getByRole("button", { name: /Explore exhibit/ }),
     ).toHaveCount(0);
   });
 

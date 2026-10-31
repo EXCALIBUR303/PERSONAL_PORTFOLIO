@@ -3,7 +3,7 @@ import { useMemo, type ComponentType } from "react";
 import * as THREE from "three";
 import { ALGORITHMS_PIER, ALGORITHMS_PLATES, BOWL, DISTRICTS, PLACEMENTS, type Placement } from "../layout";
 import { circle, Kit, Model, useDisposal, type V3 } from "./kit";
-import { Placed, tree, type LandmarkProps } from "./landmark";
+import { Placed, tree, useOwn, type LandmarkProps } from "./landmark";
 import { LastMile, Mazera, ParkScan, PathAble, Penalty } from "./algorithms-landmarks";
 import { Aeris, Burnout, Maintenance, Resume, RobotDog, Sigsmith, Swarmmind } from "./intelligence-landmarks";
 import type { Palette } from "./palette";
@@ -22,20 +22,20 @@ const local = (p: Placement, d: "algorithms" | "intelligence"): V3 => {
 };
 
 /** A slender deck between two points (a graph edge). */
-function edge(k: Kit, m: THREE.Material, a: V3, b: V3, width = 0.34) {
+function edge(k: Kit, m: THREE.Material, a: V3, b: V3, width = 0.34, lift = 0) {
   const dx = b[0] - a[0];
   const dz = b[2] - a[2];
   const run = Math.hypot(dx, dz);
   const yaw = Math.atan2(dz, dx);
   const pitch = Math.atan2(b[1] - a[1], run);
-  k.box(m, [Math.hypot(run, b[1] - a[1]), 0.06, width], [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 - 0.03, (a[2] + b[2]) / 2], {
+  k.box(m, [Math.hypot(run, b[1] - a[1]), 0.06, width], [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 - 0.03 + lift, (a[2] + b[2]) / 2], {
     ry: -yaw,
     rz: pitch,
   });
 }
 
 /** A beam from the edge of one plate to the edge of another: a graph edge, kept clear of the landmarks. */
-function link(k: Kit, m: THREE.Material, a: V3, ah: number, b: V3, bh: number) {
+function link(k: Kit, m: THREE.Material, a: V3, ah: number, b: V3, bh: number, width = 0.34, lift = 0) {
   const dx = b[0] - a[0];
   const dz = b[2] - a[2];
   const run = Math.hypot(dx, dz);
@@ -44,8 +44,37 @@ function link(k: Kit, m: THREE.Material, a: V3, ah: number, b: V3, bh: number) {
   const out = (h: number) => h / Math.max(Math.abs(ux), Math.abs(uz)) - 0.04;
   const s0 = out(ah);
   const s1 = run - out(bh);
-  edge(k, m, [a[0] + ux * s0, a[1] + 0.01, a[2] + uz * s0], [a[0] + ux * s1, b[1] + 0.01, a[2] + uz * s1]);
+  edge(k, m, [a[0] + ux * s0, a[1] + 0.01, a[2] + uz * s0], [a[0] + ux * s1, b[1] + 0.01, a[2] + uz * s1], width, lift);
 }
+
+/** The graph's edges: which plates the beams join. */
+const ALGORITHMS_EDGES: [string, string][] = [
+  ["mazera-ai-maze-solver", "pathable"],
+  ["mazera-ai-maze-solver", "last-mile-daa"],
+  ["pathable", "football-penalty-shootout"],
+  ["last-mile-daa", "football-penalty-shootout"],
+  ["parkscan-swarm", "mazera-ai-maze-solver"],
+  ["parkscan-swarm", "football-penalty-shootout"],
+];
+
+/** While a project is open, the beams that reach its plate are inlaid in lime: its edges in the graph. */
+function EdgeGlow({ palette: p, selected }: { palette: Palette; selected: string | null }) {
+  const inlay = useOwn(p.lime, (m) => (m.emissiveIntensity = 0.7));
+  const model = useMemo(() => {
+    const mine = ALGORITHMS_EDGES.filter(([a, b]) => a === selected || b === selected);
+    if (!mine.length) return null;
+    const k = new Kit(DISTRICTS.algorithms.centre);
+    for (const [a, b] of mine) {
+      const A = local(PLACEMENTS[a], "algorithms");
+      const B = local(PLACEMENTS[b], "algorithms");
+      link(k, inlay, A, ALGORITHMS_PLATES[a], B, ALGORITHMS_PLATES[b], 0.12, 0.012);
+    }
+    return k.build();
+  }, [selected, inlay]);
+  useDisposal(model ?? EMPTY);
+  return model ? <Model model={model} cast={false} /> : null;
+}
+const EMPTY = { parts: [], lines: [] };
 
 /*
  * Algorithms is a graph: five separate plates at different heights, one per
@@ -60,15 +89,7 @@ function buildAlgorithms(p: Palette) {
   const nodes = Object.fromEntries(slugs.map((s) => [s, local(PLACEMENTS[s], "algorithms")]));
   const pier: V3 = [ALGORITHMS_PIER.x, 0, ALGORITHMS_PIER.z];
   // Edges first, so the plates sit on top of their ends.
-  const pairs: [string, string][] = [
-    ["mazera-ai-maze-solver", "pathable"],
-    ["mazera-ai-maze-solver", "last-mile-daa"],
-    ["pathable", "football-penalty-shootout"],
-    ["last-mile-daa", "football-penalty-shootout"],
-    ["parkscan-swarm", "mazera-ai-maze-solver"],
-    ["parkscan-swarm", "football-penalty-shootout"],
-  ];
-  for (const [a, b] of pairs) link(k, p.card, nodes[a], ALGORITHMS_PLATES[a], nodes[b], ALGORITHMS_PLATES[b]);
+  for (const [a, b] of ALGORITHMS_EDGES) link(k, p.card, nodes[a], ALGORITHMS_PLATES[a], nodes[b], ALGORITHMS_PLATES[b]);
   // The pier: a small landing joined to the nearest plate.
   link(k, p.card, pier, ALGORITHMS_PIER.half, nodes["last-mile-daa"], ALGORITHMS_PLATES["last-mile-daa"]);
   terrace(k, rect(pier[0] - ALGORITHMS_PIER.half, pier[2] - ALGORITHMS_PIER.half, pier[0] + ALGORITHMS_PIER.half, pier[2] + ALGORITHMS_PIER.half, 0.2), -0.5, 0, g, p.charcoal);
@@ -294,6 +315,7 @@ export function StudyDistrict({
   return (
     <group>
       <Model model={ground} />
+      {id === "algorithms" && <EdgeGlow palette={palette} selected={selected} />}
       {slugs.map((slug) => {
         const active = hot === slug || selected === slug;
         const Landmark = DETAILED[slug];

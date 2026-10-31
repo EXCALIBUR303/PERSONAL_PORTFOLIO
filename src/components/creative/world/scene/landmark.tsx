@@ -8,7 +8,8 @@ import { smooth, useLevel } from "./motion";
 import type { Palette } from "./palette";
 
 /** What every landmark is told: its materials, whether it is the one in focus, and whether a filter dims it. */
-export type LandmarkProps = { palette: Palette; active: boolean; dim: boolean; reduced: boolean };
+/** `replay` turns true when a landmark is chosen, so a reaction that began on hover starts again with the camera. */
+export type LandmarkProps = { palette: Palette; active: boolean; dim: boolean; reduced: boolean; replay?: boolean };
 
 /** A flat rounded frame around a footprint, drawn on the ground. */
 function frameGeometry(w: number, d: number) {

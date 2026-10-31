@@ -66,27 +66,33 @@ export function StationCard({
       </p>
       <h2>{project.title}</h2>
       <p className="c-brief-tag">{station.purpose}</p>
-      <p className="c-brief-facts mono">
-        {project.collection} project · {project.status}
+      <p className="c-brief-explore">
+        <span className="mono">{station.tier === "exhibit" ? "You can explore" : station.tier === "briefing" ? "You can read" : "What it is"}</span>
+        {station.tier === "exhibit" && station.exhibit
+          ? station.exhibit
+          : station.tier === "briefing"
+            ? "A short briefing, then the full project page"
+            : "A design or link-out, described honestly on its page"}
       </p>
-      <ul className="c-brief-badges c-brief-evidence" aria-label="What the scene shows">
-        {item && (
+      <ul className="c-brief-badges c-brief-evidence" aria-label="What this scene is">
+        {item ? (
           <li className="evidence-chip">
             {item.claimClass}
             <span className="sr-only">. {claimClassNote[item.claimClass]}</span>
           </li>
+        ) : (
+          <li data-kind={demo.kind}>{sceneForSlug(project.slug)?.badge ?? demo.label}</li>
         )}
-        <li data-kind={demo.kind}>{sceneForSlug(project.slug)?.badge ?? demo.label}</li>
       </ul>
-      {item && <p className="c-brief-claim">{item.caveat}</p>}
+      {item && <p className="c-brief-claim">{claimClassNote[item.claimClass]} {item.caveat}</p>}
       {station.note && <p className="c-brief-note">{station.note}</p>}
-      {station.tier === "exhibit" && station.exhibit && (
-        <p className="c-brief-exhibit mono">Exhibit: {station.exhibit}</p>
-      )}
+      <p className="c-brief-facts mono">
+        {project.collection} project · {project.status}
+      </p>
       <div className="c-brief-actions">
         {station.tier === "exhibit" && (
           <button type="button" className="c-btn c-btn-lime c-brief-enter" onClick={onEnter}>
-            Enter exhibit <ArrowRight size={16} aria-hidden="true" />
+            Explore exhibit <ArrowRight size={16} aria-hidden="true" />
             <span className="sr-only">: {station.exhibit}</span>
           </button>
         )}
@@ -96,7 +102,7 @@ export function StationCard({
           className={`c-btn ${station.tier === "exhibit" ? "c-btn-paper" : "c-btn-lime"}`}
           onClick={() => onStep("problem")}
         >
-          Open project page <ArrowUpRight size={16} aria-hidden="true" />
+          Open full project page <ArrowUpRight size={16} aria-hidden="true" />
         </Link>
         {project.sourceVisibility === "public" && project.githubUrl && (
           <a className="c-btn c-btn-paper" href={project.githubUrl} target="_blank" rel="noopener noreferrer">

@@ -346,11 +346,20 @@ html[data-mode="creative"] .portfolio-root {
     color: var(--c-paper);
     font-size: 10px;
   }
-  .c-brief-exhibit {
+  /* What a visitor can do here: a small label over the exhibit's name. */
+  .c-brief .c-brief-explore {
+    display: grid;
+    gap: 1px;
     margin: 10px 0 0;
-    font-family: var(--font-body);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
+    line-height: 1.3;
+  }
+  .c-brief .c-brief-explore .mono {
+    font-size: 10.5px;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--c-graphite);
   }
   .c-brief-more {

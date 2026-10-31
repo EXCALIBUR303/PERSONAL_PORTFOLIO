@@ -52,7 +52,7 @@ test("List view shows all the stations, is searchable, and enters exhibits", asy
   expect(rows).toBeGreaterThan(0);
   expect(rows).toBeLessThan(projects.length);
   await page.getByRole("searchbox", { name: "Find a station" }).fill("");
-  await page.getByRole("button", { name: "Enter exhibit for SmartPark DBMS" }).click();
+  await page.getByRole("button", { name: "Explore exhibit for SmartPark DBMS" }).click();
   await expect(page.locator("#ex-title")).toHaveText("The Concurrency Garage");
   // Every row, exhibit or not, still links to the project page.
   await page.keyboard.press("Escape");
@@ -72,7 +72,7 @@ test("an exhibit can be opened by address, switched, and closed with Back", asyn
   // Opened from the map, Back returns to the map.
   await page.goto("/");
   await page.locator('[data-station="smart-parking-dbms"]').click();
-  await page.getByRole("button", { name: /Enter exhibit/ }).click();
+  await page.getByRole("button", { name: /Explore exhibit/ }).click();
   await expect(page.locator(".ex")).toBeVisible();
   await page.goBack();
   await expect(page.locator(".ex")).toHaveCount(0);
@@ -155,7 +155,7 @@ test("the camera follows district focus and station selection, and Escape steps 
 test("entering an exhibit from the world opens it, and Back returns to the selected station", async ({ page }) => {
   await page.goto("/");
   await page.locator('[data-station="private-local-ai"]').click();
-  await page.getByRole("button", { name: /Enter exhibit/ }).click();
+  await page.getByRole("button", { name: /Explore exhibit/ }).click();
   await expect(page.locator("#ex-title")).toHaveText("The Evidence Vault");
   await page.goBack();
   await expect(page.locator(".ex")).toHaveCount(0);
@@ -186,7 +186,7 @@ test("without WebGL, or with ?world=2d, the map is the illustrated 2D campus", a
 test("selection survives a trip to a project page and back", async ({ page }) => {
   await page.goto("/");
   await page.locator('[data-station="aura"]').click();
-  await page.locator(".c-brief").getByRole("link", { name: "Open project page" }).click();
+  await page.locator(".c-brief").getByRole("link", { name: "Open full project page" }).click();
   await expect(page).toHaveURL(/projects\/aura/);
   await page.goBack();
   await expect(page.locator(".c-brief h2")).toHaveText("AURA");
@@ -214,7 +214,7 @@ test("the map, preview and an exhibit have no automatic accessibility violations
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
   expect(map.violations.map((v) => ({ id: v.id, nodes: v.nodes.map((n) => n.target) }))).toEqual([]);
-  await page.getByRole("button", { name: /Enter exhibit/ }).click();
+  await page.getByRole("button", { name: /Explore exhibit/ }).click();
   await page.locator(".ex-optional summary", { hasText: "Try a challenge" }).click();
   await page.locator(".ex-optional", { hasText: "Try a challenge" }).locator(".ch-choices").last().getByRole("button").first().click();
   const exhibit = await new AxeBuilder({ page })
@@ -308,7 +308,7 @@ test("on a tablet the station panel is a sheet inside the stage, and the station
   expect(b!.y + b!.height).toBeLessThanOrEqual(s!.y + s!.height + 1);
   // The landmark's centre is above the top of the sheet.
   expect(pin!.y + pin!.height / 2).toBeLessThan(b!.y);
-  await expect(sheet.getByRole("button", { name: /Enter exhibit/ })).toBeVisible();
+  await expect(sheet.getByRole("button", { name: /Explore exhibit/ })).toBeVisible();
 });
 
 test("on a phone the station panel is a bottom sheet that stays inside the screen", async ({ page }) => {
@@ -326,7 +326,7 @@ test("on a phone the station panel is a bottom sheet that stays inside the scree
   const stage = (await page.locator(".w-stage").boundingBox())!;
   expect(stage.y).toBeGreaterThanOrEqual(0);
   expect(stage.y + stage.height).toBeLessThanOrEqual(b.y + 2);
-  await expect(sheet.getByRole("button", { name: /Enter exhibit/ })).toBeVisible();
+  await expect(sheet.getByRole("button", { name: /Explore exhibit/ })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.locator(".c-brief")).toHaveCount(0);
 });
@@ -353,10 +353,11 @@ test("the station panel header: one facts line, then the evidence chips, then th
   const card = page.locator(".c-brief").first();
   await expect(card.locator(".c-brief-facts")).toContainText("College project");
   const chips = card.locator(".c-brief-evidence li");
-  await expect(chips).toHaveCount(2);
+  await expect(chips).toHaveCount(1);
   await expect(chips.first()).toHaveClass(/evidence-chip/);
-  // The caveat is its own paragraph, not run on after a chip.
+  // The note is its own paragraph, not run on after the chip.
   await expect(card.locator(".c-brief-claim")).not.toContainText("Simplified Simulation");
+  await expect(card.locator(".c-brief-explore")).toContainText("You can explore");
 });
 
 test("at 820px the search field is wide enough to read its placeholder", async ({ page }) => {
@@ -368,4 +369,58 @@ test("at 820px the search field is wide enough to read its placeholder", async (
   // "Find a station" at 13px needs about 90px beside its icon.
   expect(box!.width).toBeGreaterThanOrEqual(100);
   await expect(input).toHaveAttribute("placeholder", "Find a station");
+});
+
+test("the location trail names the district and station, and every part leads back", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator(".w-where")).toHaveCount(0);
+  await page.getByRole("group", { name: "District" }).getByRole("button", { name: /^Systems/ }).click();
+  const trail = page.getByRole("navigation", { name: "Where you are" });
+  await expect(trail.locator('[aria-current="location"]')).toHaveText("Systems");
+  await page.locator('[data-station="private-local-ai"]').click();
+  await expect(trail.locator('[aria-current="location"]')).toHaveText("Private Local AI");
+  await expect(page.locator(".c-brief h2")).toHaveText("Private Local AI");
+  // The district crumb steps back to the district and closes the panel; the first button goes all the way out.
+  await trail.getByRole("button", { name: "Systems" }).click();
+  await expect(page.locator(".c-brief")).toHaveCount(0);
+  await expect(trail.locator('[aria-current="location"]')).toHaveText("Systems");
+  await trail.getByRole("button", { name: "All districts" }).click();
+  await expect(page.locator(".w-where")).toHaveCount(0);
+  await expect(page.locator(".w-stage")).toHaveAttribute("data-shot", "overview");
+});
+
+test("on a phone a district's view lists all of its stations inside the screen", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await page.getByRole("group", { name: "District" }).getByRole("button", { name: /^Systems/ }).click();
+  const slots = page.locator(".w-island:not([data-dim]) .w-slot");
+  await expect(slots).toHaveCount(stations.filter((s) => s.district === "systems").length);
+  for (const box of await Promise.all((await slots.all()).map((s) => s.boundingBox()))) {
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(390);
+  }
+  await page.locator('[data-station="private-local-ai"]').click();
+  await expect(page.locator(".c-brief h2")).toHaveText("Private Local AI");
+  await expect(page.locator(".c-brief .c-brief-explore")).toContainText("The Evidence Vault");
+});
+
+test("Private Local AI: its journey settles on the vault, and with reduced motion it goes straight there", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto("/");
+  await page.getByRole("group", { name: "District" }).getByRole("button", { name: /^Systems/ }).click();
+  await page.locator('[data-station="private-local-ai"]').click();
+  await expect(page.locator(".w-stage")).toHaveAttribute("data-shot", "station");
+  await expect(page.locator(".c-brief h2")).toHaveText("Private Local AI");
+  // Back out and in again: the journey plays again without errors.
+  await page.getByRole("navigation", { name: "Where you are" }).getByRole("button", { name: "Systems" }).click();
+  await page.locator('[data-station="private-local-ai"]').click();
+  await expect(page.locator(".c-brief h2")).toHaveText("Private Local AI");
+  await page.waitForTimeout(3200);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.getByRole("navigation", { name: "Where you are" }).getByRole("button", { name: "Systems" }).click();
+  await page.locator('[data-station="private-local-ai"]').click();
+  await expect(page.locator(".c-brief h2")).toHaveText("Private Local AI");
+  await expect(page.locator(".w-stage")).toHaveAttribute("data-shot", "station");
+  expect(errors).toEqual([]);
 });
