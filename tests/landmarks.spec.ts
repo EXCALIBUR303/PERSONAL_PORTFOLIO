@@ -81,3 +81,26 @@ test("in each district view a station's name does not sit on its own landmark", 
     expect(covered, `${name} view`).toEqual([]);
   }
 });
+
+test("ambient light drifts over the world, and stops under reduced motion and while the stage is paused", async ({ page, browser }) => {
+  test.setTimeout(60_000);
+  await page.goto("/?world=medium");
+  await page.waitForSelector(".w-stage[data-ready]", { state: "attached", timeout: 30000 });
+  const running = () => page.evaluate(() => document.getAnimations().filter((a) => a.playState === "running" && (a.effect as KeyframeEffect)?.target?.closest?.(".w-drift")).length);
+  await expect.poll(running).toBe(3);
+  // The overlay never takes the pointer.
+  expect(await page.evaluate(() => getComputedStyle(document.querySelector(".w-drift")!).pointerEvents)).toBe("none");
+
+  // While the stage is paused (hidden, or an exhibit open) the layers hold still.
+  await page.evaluate(() => document.querySelector(".w-stage")!.setAttribute("data-paused", ""));
+  await expect.poll(running).toBe(0);
+  await page.evaluate(() => document.querySelector(".w-stage")!.removeAttribute("data-paused"));
+
+  const calm = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 1440, height: 1000 } });
+  const still = await calm.newPage();
+  await still.addInitScript(() => localStorage.setItem("portfolio-mode", "creative"));
+  await still.goto("/?world=medium");
+  await still.waitForSelector(".w-stage[data-ready]", { state: "attached", timeout: 30000 });
+  expect(await still.locator(".w-drift").count()).toBe(0);
+  await calm.close();
+});

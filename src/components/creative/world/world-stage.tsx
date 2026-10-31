@@ -373,7 +373,7 @@ export default function WorldStage({
 
   return (
     <>
-      <div className="w-stage" ref={frame} data-ready={ready || undefined} data-shot={shot.kind}>
+      <div className="w-stage" ref={frame} data-ready={ready || undefined} data-paused={paused || undefined} data-shot={shot.kind}>
         <div className="w-backdrop" aria-hidden="true" />
         {mountCanvas && tier && (
           <WorldCanvas
@@ -388,6 +388,13 @@ export default function WorldStage({
             onReady={onReady}
             onLost={onFailed}
           />
+        )}
+        {ready && tier && tier !== "low" && !reduced && (
+          <div className="w-drift" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+          </div>
         )}
         <div className="w-vignette" aria-hidden="true" />
         {!ready && (
